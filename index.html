@@ -554,12 +554,12 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927192324';
+const BUILD='20260927193002';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},tut:null,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},tut:null,tutV:2,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
 function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
@@ -729,7 +729,7 @@ function finishExp(defeated){
                  :`Back from ${l.name}: ${got||'nothing this time'}.${rel?` Found a relic: ${rel.name}!`:''}`);
   if(defeated) chronicle(`Your hero was beaten back in ${l.name}. They need rest.`);
   else S.stats.trips[l.id]=(S.stats.trips[l.id]||0)+1;
-  if(tutActive()) tutEnd(true);   // an unfinished tutorial wraps up quietly before Arthrex speaks
+  if(tutActive()&&S.tut<TUT_ARRIVAL){ S.tut=TUT_ARRIVAL; $('tut').hidden=true; }   // skip ahead: the story takes over on return
   if(!S.story.met) setTimeout(meetArthrex,1800);
   scene&&scene.burst(360,250,12);
   eventKey=''; if(view==='journey') setTimeout(()=>{ if(!S.exp) setView('keep'); },2500);
@@ -781,6 +781,16 @@ function meetArthrex(){
     'Here. Ten of each, to get you started. Spend them wisely. And come and see me at the spire now and then. I will have errands, and I pay in kind.',
   ],'Thank you, Arthrex',()=>{ S.story.met=true; CRYS.forEach(c=>S.cry[c]+=10); S.questNext=now()+15000; S.questSpan=15000;
     toast('Arthrex gives you 10 Ember, 10 Frost, 10 Verdant and 10 Storm crystals.'); chronicle('Arthrex, the court sorcerer, has taken an interest in you.'); refresh(); });
+}
+const BROM='Brom, Master Smith';
+function meetBrom(){
+  showDialog('smith',[
+    'You’ll be the new lord, then. Brom. I keep the forge in the yard. Arthrex tells me you’ve been out in the woods with your bare hands.',
+    'That won’t do. Bring me wood, stone and ore from your expeditions, and I’ll make you proper gear.',
+    'A weapon makes every tap count for more, and your hero hits harder. Armor means more health, and it gets you into the dangerous places. A pickaxe digs more ore, and more crystal from the mine.',
+    'Here: timber, stone and a bit of coin. Enough for your first piece. Let’s get you armed.',
+  ],'To the forge',()=>{ S.mat.wood+=15; S.mat.stone+=10; earn(50); S.story.brom=true;
+    toast('Brom gives you 15 Wood, 10 Stone and 50 gold.'); tutAdvance(); refresh(); });
 }
 function introStory(){
   showDialog('keep',[
@@ -845,26 +855,42 @@ function openSpire(){
 }
 
 /* ---------- Guided tutorial ---------- */
+// Tutorial steps. A step with `wait` shows nothing until its condition holds, then runs `go` once
+// (used to hand over to a story dialog); steps with `target` spotlight that element.
+const openTab=k=>{ document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===k)); ['build','up','explore','forge','magic','asc'].forEach(t=>$('p-'+t).hidden=t!==k); };
+const TUT_ARRIVAL=7;   // index of the step waiting for the first expedition to come home
 const TUT=[
-  {target:()=>$('realm'),before:()=>setView('keep'),start:()=>{ S.tutBase=S.taps; },
-   text:()=>`Your treasury is empty. Tap the castle to collect the tithe. ${Math.max(0,5-(S.taps-S.tutBase))} more taps.`,done:()=>S.taps>=S.tutBase+5},
-  {target:()=>$('tab-explore'),text:()=>'Your hero can bring back wood, stone and ore for better gear. Open the Explore tab.',done:()=>!$('p-explore').hidden},
+  {target:()=>$('realm'),before:()=>{ setView('keep'); openTab('build'); },
+   text:()=>`Your treasury is empty. Tap the castle to collect the tithe. You need 15 gold for your first farm: ${Math.min(15,Math.floor(S.gold))} / 15.`,done:()=>S.gold>=15||owned('farm')>0},
+  {target:()=>$('b-farm'),before:()=>openTab('build'),text:()=>'Build a Peasant Farm. Holdings earn gold on their own, even while you are away.',done:()=>owned('farm')>0},
+  {target:()=>$('tab-up'),text:()=>'Upgrades make your holdings earn far more. Open the Upgrades tab.',done:()=>!$('p-up').hidden},
+  {target:()=>$('uList'),text:()=>'Each holding unlocks techniques as you build more of it: at 1, 10, 25, 50 and 100. You can’t afford these yet. Come back once your farms have filled the treasury.',next:'Got it'},
+  {target:()=>$('tab-explore'),text:()=>'Your hero can bring back wood, stone and ore. Open the Explore tab.',done:()=>!$('p-explore').hidden},
   {target:()=>$('l-wood'),text:()=>'Send your hero into Whisperwood. Each trip costs a little health, and the loot comes home with them.',done:()=>!!S.exp},
   {target:()=>$('realm'),text:()=>'This is your hero on the road. Tap trees, rocks and beasts before your hero reaches them for extra loot, and half the damage from foes.',next:'Got it'},
+  {wait:()=>S.story.met&&!S.exp&&!dialogOpen(),go:()=>meetBrom()},
+  {target:()=>$('tab-forge'),text:()=>'Brom’s forge is in the keep’s yard. Open the Forge tab.',done:()=>!$('p-forge').hidden},
+  {target:()=>$('f-weapon'),before:()=>openTab('forge'),text:()=>'Forge an Oak Cudgel. A weapon multiplies every tap, and your hero hits harder on the road.',done:()=>S.gear.weapon>0},
+  {target:()=>$('gearNow'),text:()=>'Your hero’s kit. Armor adds health and opens dangerous regions. A pickaxe digs more ore and more crystal. Bring Brom materials from your expeditions to upgrade each piece.',next:'Got it'},
 ];
 const tutActive=()=>S.tut!=null&&S.tut<TUT.length;
 function tutStart(){ S.tut=0; tutEnter(); }
-function tutEnter(){ const st=TUT[S.tut]; if(!st) return tutEnd(); st.before&&st.before(); st.start&&st.start();
+let tutFired=-1;
+function tutEnter(){ const st=TUT[S.tut]; if(!st) return tutEnd(); if(st.wait) return;
+  st.before&&st.before(); st.start&&st.start();
   $('tutNext').hidden=!st.next; if(st.next) $('tutNext').querySelector('span').textContent=st.next;
   setTimeout(()=>{ const el=st.target(); el&&el.scrollIntoView({block:'center',behavior:'smooth'}); },60); }
 function tutAdvance(){ S.tut++; if(S.tut>=TUT.length) tutEnd(); else tutEnter(); }
 function tutEnd(skipped){ S.tut=TUT.length; $('tut').hidden=true;
-  if(!skipped) toast('You’re on your way. When your hero returns, someone at the keep will want a word.'); }
+  if(!skipped){ chronicle('The realm is yours. Build, explore, forge and learn.'); toast('That\u2019s everything. The realm is yours: build, explore, forge, and keep an eye on Arthrex\u2019s spire.'); } }
 function tutRender(){
   const box=$('tut');
   if(!tutActive()||dialogOpen()){ box.hidden=true; return; }
   const st=TUT[S.tut]; if(st.done&&st.done()){ tutAdvance(); if(!tutActive()) return; }
-  const cur=TUT[S.tut], el=cur.target(); if(!el){ box.hidden=true; return; }
+  const cur=TUT[S.tut];
+  if(cur.wait){ box.hidden=true; if(tutFired!==S.tut&&cur.wait()){ tutFired=S.tut; cur.go(); } return; }
+  const el=cur.target(); if(!el){ box.hidden=true; return; }
+  const shown=TUT.filter(x=>!x.wait), idx=shown.indexOf(cur);
   box.hidden=false;
   const r=el.getBoundingClientRect(), pad=6, vw=innerWidth, vh=innerHeight;
   const L=Math.max(0,r.left-pad), T=Math.max(0,r.top-pad), Rr=Math.min(vw,r.right+pad), B=Math.min(vh,r.bottom+pad);
@@ -873,7 +899,7 @@ function tutRender(){
   Object.assign($('tbB').style,{left:0,top:B+'px',width:vw+'px',height:Math.max(0,vh-B)+'px'});
   Object.assign($('tbL').style,{left:0,top:T+'px',width:L+'px',height:(B-T)+'px'});
   Object.assign($('tbR').style,{left:Rr+'px',top:T+'px',width:Math.max(0,vw-Rr)+'px',height:(B-T)+'px'});
-  $('tutStep').textContent=`Step ${S.tut+1} of ${TUT.length}`;
+  $('tutStep').textContent=`Step ${idx+1} of ${shown.length}`;
   const txt=cur.text(); if($('tutText').textContent!==txt) $('tutText').textContent=txt;
   const card=$('tutCard'), ch=card.offsetHeight;
   if(vh-B>ch+24){ card.style.top=(B+14)+'px'; card.style.bottom='auto'; }
@@ -923,8 +949,8 @@ function showDialog(who,pages,doneLabel,onDone){
 }
 function renderDialog(){
   const d=dlg; if(!d) return; const last=d.i>=d.pages.length-1;
-  $('dlgPortrait').innerHTML=d.who==='arthrex'?ARTHREX_SVG:'<img src="icons/icon-180.png" alt="">';
-  $('dlgName').textContent=d.who==='arthrex'?ARTHREX:'Emberkeep';
+  $('dlgPortrait').innerHTML=d.who==='arthrex'?ARTHREX_SVG:d.who==='smith'?BROM_SVG:'<img src="icons/icon-180.png" alt="">';
+  $('dlgName').textContent=d.who==='arthrex'?ARTHREX:d.who==='smith'?BROM:'Emberkeep';
   $('dlgText').textContent=d.pages[d.i];
   $('dlgStep').textContent=d.pages.length>1?`${d.i+1} / ${d.pages.length}`:'';
   $('dlgNext').querySelector('span').textContent=last?d.doneLabel:'Next';
@@ -934,6 +960,14 @@ function dialogNext(){
   if(d.i<d.pages.length-1){ d.i++; renderDialog(); return; }
   dlg=null; $('dialog').hidden=true; d.onDone&&d.onDone();
 }
+const BROM_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="12" fill="#2a1d18"/>
+<circle cx="12" cy="52" r="14" fill="#d06a45" opacity=".25"/>
+<path d="M8 64 L14 38 Q32 30 50 38 L56 64Z" fill="#6a4a34"/><path d="M22 40 L42 40 L44 64 L20 64Z" fill="#4a3226"/>
+<rect x="28" y="36" width="8" height="6" fill="#c89a74"/>
+<circle cx="32" cy="27" r="9" fill="#c89a74"/><path d="M23 27 Q23 16 32 16 Q41 16 41 27 Q39 21 32 21 Q25 21 23 27Z" fill="#3a2a22"/>
+<path d="M24 29 Q32 46 40 29 Q36 34 32 34 Q28 34 24 29Z" fill="#8a4a2a"/>
+<rect x="27" y="25" width="3" height="1.6" fill="#2a1d18"/><rect x="34" y="25" width="3" height="1.6" fill="#2a1d18"/>
+<rect x="46" y="30" width="3" height="22" rx="1" fill="#6a4a2c" transform="rotate(20 47 41)"/><rect x="45" y="26" width="12" height="7" rx="1.5" fill="#8f98a5" transform="rotate(20 51 29)"/></svg>`;
 const ARTHREX_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="12" fill="#1b2336"/>
 <circle cx="50" cy="14" r="9" fill="#c7a8f0" opacity=".25"/><rect x="48" y="16" width="3" height="46" fill="#6a4a2c"/><path d="M49.5 6 L54 13 L49.5 20 L45 13Z" fill="#c7a8f0"/>
 <path d="M12 64 L22 30 L42 30 L52 64Z" fill="#2f5d62"/><path d="M22 30 L32 58 L42 30Z" fill="#244a4f"/>
@@ -1850,7 +1884,9 @@ function start(data){
   const lastB=S.chron.length&&BUILDINGS.find(b=>b.id===S.chron[S.chron.length-1]);
   chronicle(lastB?lastB.chron:'Your keep stands alone on the hill. Tap it to collect the tithe, and send your hero into Whisperwood.');
   if(!S.story.intro&&S.life>0) S.story.intro=true;
+  if(S.tut!=null&&!S.tutV) S.tut=TUT.length;   // saves from the old 4-step tutorial count as done
   if(S.tut==null&&S.life>0) S.tut=TUT.length;
+  S.tutV=2;
   if(tutActive()) setTimeout(tutEnter,800);
   tick(); refresh();
   if(!S.story.intro) setTimeout(introStory,600);

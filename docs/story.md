@@ -8,16 +8,27 @@ On a brand-new save, a short card from the keep sets the scene. The old lord is 
 
 ## Guided tutorial
 
-Right after the opening card, a spotlight tutorial starts. The whole screen goes into shadow except the one thing to tap, which gets a pulsing gold outline. A card beside it explains the step. Taps anywhere else are blocked until the step is done.
+Right after the opening card, a spotlight tutorial starts. The whole screen goes into shadow except the one thing to tap, which gets a pulsing gold outline, and a card beside it explains the step. Taps anywhere else are blocked until the step is done. It hands over to the story characters midway.
 
 | Step | Spotlight | Advances when |
 |---|---|---|
-| 1 | The keep | You've tapped it 5 times (the card counts down) |
-| 2 | The Explore tab | The Explore tab is open |
-| 3 | Whisperwood | The hero departs |
-| 4 | The Journey view | You tap **Got it** (it explains tapping ahead to help) |
+| 1 | The keep | You have 15 gold (the card counts up) |
+| 2 | Peasant Farm | You build your first farm |
+| 3 | The Upgrades tab | The Upgrades tab is open |
+| 4 | The upgrade list | **Got it**. It explains that techniques unlock at 1/10/25/50/100 of a holding, and that you can't afford one yet. |
+| 5 | The Explore tab | The Explore tab is open |
+| 6 | Whisperwood | The hero departs |
+| 7 | The Journey view | **Got it** (tap ahead to help) |
+| – | *(waits)* | The hero returns → **Arthrex** meets you and gives 10 of each crystal → **Brom** introduces the forge and gives 15 Wood, 10 Stone and 50 gold |
+| 8 | The Forge tab | The Forge tab is open |
+| 9 | Oak Cudgel | You forge it |
+| 10 | Your equipped gear | **Got it**. It explains armor and the pickaxe, then "The realm is yours". |
 
-If the tutorial is still showing when the hero returns from their first expedition, it completes itself automatically, before Arthrex appears. Every card has **Skip tutorial**. The tutorial resumes at the same step if the game is closed partway through, and it hides while a story dialog is open. Existing saves with progress never see it. **Start from nothing** shows it again.
+If the hero returns before steps 6–7 are finished, the tutorial skips straight to the story hand-over. Every card has **Skip tutorial**, but skipping also skips Brom's introduction and gift. The tutorial resumes at the same step if the game is closed partway through, and it hides while a story dialog is open. Existing saves with progress, or saves that finished the earlier short tutorial, never see it. **Start from nothing** shows it again.
+
+## Brom, Master Smith
+
+Brom keeps the forge in the keep's yard. He appears in the tutorial right after Arthrex's first meeting. He explains what each gear slot does (weapon: stronger taps and hits; armor: more health and dangerous regions; pickaxe: more ore and crystal) and hands over **15 Wood, 10 Stone and 50 gold**, which is enough for the Oak Cudgel.
 
 ## Arthrex, Court Sorcerer
 

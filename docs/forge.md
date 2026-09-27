@@ -1,5 +1,7 @@
 # Forge
 
+The forge is run by **Brom, Master Smith**, who introduces it during the tutorial (see [Story](story.md#brom-master-smith)).
+
 The hero has three equipment slots. Each slot upgrades one tier at a time using gold plus materials from [Expeditions](expeditions.md). Equipment is **kept through ascension**.
 
 Material progression: **wood and stone → copper → bronze (copper + tin) → iron**.
