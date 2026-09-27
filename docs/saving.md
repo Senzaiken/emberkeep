@@ -41,7 +41,9 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `favs` | Starred spell ids, in order (the quick-cast bar) |
 | `tut`, `tutV`, `tutBase` | Tutorial step index (`null` = not started, past the last step = finished or skipped), tutorial version (2), and an old tap-count field |
 | `quest`, `questNext`, `questSpan` | Arthrex's current errand (or `null`), when the next one is offered, and the length of that wait (for the progress bar) |
-| `stats` | Lifetime counters for errands: `trips{region}`, `foes`, `tapGold`, `relics` |
+| `stats` | Lifetime counters: `trips{region}`, `foes`, `foeKinds{}`, `tapGold`, `relics`, `quests`, `casts` |
+| `dynasty` | Current life number (1 + ascensions) |
+| `log`, `logNew`, `logInit` | Adventurer's Log entries `{id: {t, life}}`, unseen count, and whether the one-time backfill ran |
 | `mine`, `mineAcc` | Crystal Mine depth and progress toward the next crystal |
 | `forging` | Brom's current job `{slot, start, end}` or `null` |
 | `digging` | The gallery being dug `{level, start, end}` or `null` |
@@ -56,8 +58,8 @@ GitHub Pages lets browsers cache the page for about 10 minutes, and home-screen 
 - Every commit that touches the game stamps a new build id into `index.html` (`const BUILD`) and `version.json`, using the `tools/pre-commit` hook.
 - The game fetches `version.json` with caching disabled 3 seconds after opening, whenever it comes back to the foreground, and every 2 minutes. If the build differs, a **"A new version of Emberkeep is ready"** banner appears.
 - **Reload** saves the game, then reopens the page as `?v=<build>`. The unique URL forces fresh files.
-- Ascend tab → **Check for updates** does the same check on demand and reloads right away if there's a new build. The current build id is shown next to it.
+- Legacy tab → **Check for updates** does the same check on demand and reloads right away if there's a new build. The current build id is shown next to it.
 
 ## Resetting
 
-Ascend tab → **Start from nothing** (tap twice to confirm) wipes everything, including Renown.
+Legacy tab → **Start from nothing** (tap twice to confirm) wipes everything, including Renown.

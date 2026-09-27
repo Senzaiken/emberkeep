@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Adventurer's Log.** A permanent collection across every life: 67 collectibles (relics, resources, regions, bestiary, road events, gear, spells, mine galleries, folk of the keep), blacked out until found. Tapping one shows the life and time it was first found. There are also 80 achievements in five medal tiers, including 5/50/250/1,000/5,000 of every holding. The Ascend tab is now **Legacy**, and shows your life number. See [Adventurer's Log](log.md).
 - **Ascension is a full reset.** Gear, learned spells and relics no longer carry over. Only Renown (+5% gold per point), lifetime stats, story progress and UI preferences persist. A Renown tech tree is planned.
 - **Starred spells moved below the scene.** They're now in their own row under the castle scene, bigger and labelled, so tapping the keep can't cast them by accident.
 - **Starred spells.** Star (☆) any spellbook entry to pin it as a round icon on the castle scene. Icons are colored when castable, greyed when you lack crystals (tapping explains why), and show a draining ring with seconds left while active. You can star several. The errand pill moved to the top-left of the scene.
@@ -24,7 +25,7 @@ Newest first. Dates are US Eastern.
 - **Expeditions cost health.** Setting out costs health by region (10 / 15 / 22 / 30 / 45), on top of foe damage. The old "25% health to depart" rule is replaced by "more health than the trip costs".
 - **Crystal quick actions.** **Mend** (1 Verdant: +50% health) and **Hasten** (1 Storm: halve the remaining trip, once per trip) are now buttons under the health bar. Mending Light is no longer a spell to learn.
 - **iPhone top edge fix.** Opaque status bar for the home-screen app, a solid strip behind the top safe area, and more space above the header, so the top of the game no longer fades under the clock.
-- **Update banner and cache busting.** The game checks `version.json` (uncached) and shows a "new version is ready, Reload" banner when there's a new build. There's also a **Check for updates** button in the Ascend tab. Reloads save first and use a unique URL to get past the cache. See [Saving](saving.md#updates-and-caching).
+- **Update banner and cache busting.** The game checks `version.json` (uncached) and shows a "new version is ready, Reload" banner when there's a new build. There's also a **Check for updates** button in the Legacy tab. Reloads save first and use a unique URL to get past the cache. See [Saving](saving.md#updates-and-caching).
 - **Expeditions reworked.** Each trip is now a timeline of beats (trees, ore rocks, crystals, foes, treasure chests) with loot arriving as it happens. There's a new **Journey** view (a side-scrolling scene per region, with the hero drawn from their gear) and a Keep/Journey switch on the canvas. Tap what lies ahead to help: extra loot, and half damage from foes. See [Expeditions](expeditions.md).
 - **Road events.** Seven choice cards (Goblin Toll Bridge, A Glinting Vein, A Fallen Giant, Abandoned Camp, Wounded Traveller, Crystal Seep, Wayside Shrine). Each has a 20-second timer and a safe default if you don't choose.
 - **Hero health.** Foes and some events hurt the hero. At 0 health the trip ends early, and the hero needs 25% health to depart. They heal while resting at the keep. New spell: **Mending Light**. See [Hero](hero.md).

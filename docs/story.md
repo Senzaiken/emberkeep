@@ -4,7 +4,7 @@ Emberkeep has a light storyline told in dialog cards: a portrait, a name, a line
 
 ## Opening
 
-On a brand-new save, a short card from the keep sets the scene. The old lord is gone, the keep is yours, and the coffers are empty. It points you to tapping the keep, building holdings, and sending your hero to Whisperwood. Existing saves with progress skip this. **Start from nothing** in the Ascend tab shows it again.
+On a brand-new save, a short card from the keep sets the scene. The old lord is gone, the keep is yours, and the coffers are empty. It points you to tapping the keep, building holdings, and sending your hero to Whisperwood. Existing saves with progress skip this. **Start from nothing** in the Legacy tab shows it again.
 
 ## Guided tutorial
 

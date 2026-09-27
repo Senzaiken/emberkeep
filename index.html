@@ -234,6 +234,24 @@
   .qspell:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px;}
   .fav{font:inherit;background:transparent;border:0;color:var(--muted);font-size:20px;line-height:1;padding:4px 6px;cursor:pointer;}
   .fav[aria-pressed="true"]{color:var(--gold-hi);text-shadow:0 0 8px rgba(246,207,106,.6);}
+  /* Adventurer's Log */
+  .log-sec{margin-bottom:14px;}
+  .log-sec .label{margin-bottom:6px;}
+  .log-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;}
+  .log-tile{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;min-height:78px;}
+  .log-ico{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;overflow:hidden;}
+  .log-ico svg{width:100%;height:100%;}
+  .log-orb{width:30px;height:30px;border-radius:50%;background:var(--c);display:flex;align-items:center;justify-content:center;}
+  .log-orb svg{width:18px!important;height:18px!important;}
+  .log-name{font-size:10.5px;line-height:1.15;text-align:center;color:var(--ink);}
+  .log-tile.locked .log-ico{filter:brightness(0) opacity(.55);}
+  .log-tile.locked:not(.medal) .log-name{color:var(--muted);letter-spacing:.1em;}
+  .log-tile.medal.locked .log-ico{filter:grayscale(1) opacity(.35);}
+  .log-tile.medal.locked .log-name{color:var(--muted);}
+  .le-icon{width:84px;height:84px;margin:4px auto 0;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .le-icon svg{width:100%;height:100%;}
+  .le-icon .log-orb{width:70px;height:70px;} .le-icon .log-orb svg{width:40px!important;height:40px!important;}
+  .le-icon.locked{filter:brightness(0) opacity(.55);}
   /* Arthrex's spire */
   #sList,#spire{scroll-margin-top:110px;}
   .spire{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;}
@@ -306,7 +324,7 @@
     <button role="tab" id="tab-explore" data-tab="explore" aria-selected="false">Explore</button>
     <button role="tab" id="tab-forge" data-tab="forge" aria-selected="false">Forge<span id="forgeBadge" class="badge" hidden>0</span></button>
     <button role="tab" id="tab-magic" data-tab="magic" aria-selected="false">Magic<span id="magicBadge" class="badge" hidden>0</span></button>
-    <button role="tab" id="tab-asc" data-tab="asc" aria-selected="false">Ascend</button>
+    <button role="tab" id="tab-asc" data-tab="asc" aria-selected="false">Legacy<span id="logBadge" class="badge" hidden>0</span></button>
   </nav>
 
   <section id="p-build" class="panel">
@@ -352,7 +370,7 @@
   </section>
 
   <section id="p-asc" class="panel asc" hidden>
-    <div class="panel-head"><span class="label">Dynasty</span></div>
+    <div class="panel-head"><span class="label">Dynasty</span><span class="label num" id="lifeNo"></span></div>
     <p>Abdicate and found a new dynasty. Everything starts over: gold, holdings, upgrades, your hero\u2019s gear and spells, relics, materials, crystals and the mine. What you keep is <b>Renown</b>, earned from the gold this reign gathered. Each point adds 5% to all gold, forever, so every new dynasty rises faster.</p>
     <div class="stats">
       <div class="label">Renown<span id="renown">0</span></div>
@@ -364,6 +382,10 @@
       <button class="act" id="ascendBtn"><small>Ascend</small><span id="ascendTxt">Found a new dynasty</span></button>
       <span class="r-desc" id="ascendHint"></span>
     </div>
+    <div class="panel-head sub"><span class="label">Adventurer\u2019s Log</span></div>
+    <p class="r-desc" style="margin:0 0 10px">Everything you have ever found or achieved, across every life. Tap an entry to see when you first found it.</p>
+    <div class="r-meta num" id="logCount" style="margin-bottom:10px"></div>
+    <div id="logBody"></div>
     <div class="reset">
       <span class="r-desc">Lifetime gold <b class="num" id="lifeGold">0</b> · <b class="num" id="taps">0</b> taps</span>
       <div class="asc-actions">
@@ -387,6 +409,17 @@
     <div class="label" id="tutStep"></div>
     <p id="tutText"></p>
     <div class="tut-btns"><button class="act ghost" id="tutSkip"><span>Skip tutorial</span></button><button class="act" id="tutNext" hidden><span>Got it</span></button></div>
+  </div>
+</div>
+<div class="sheet-back" id="logSheet" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="leName" style="text-align:center">
+    <div class="sheet-grip"></div>
+    <div class="le-icon" id="leIcon"></div>
+    <div class="label" id="leCat" style="margin-top:10px"></div>
+    <div class="sheet-title" id="leName"></div>
+    <p class="r-desc" id="leDesc" style="margin:6px auto 10px;max-width:40ch"></p>
+    <div class="r-meta num" id="leFound" style="color:var(--gold-hi)"></div>
+    <button class="act ghost" id="leClose" style="margin:16px auto 0;min-width:120px"><span>Close</span></button>
   </div>
 </div>
 <div class="sheet-back" id="satchelSheet" hidden>
@@ -576,14 +609,14 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927203241';
+const BUILD='20260927203736';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],tut:null,tutV:2,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],tut:null,tutV:2,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats)}); }
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -646,7 +679,7 @@ function forge(slot){
   chronicle(`Brom fires up the forge for your ${t.name}.`); refresh();
 }
 function forgeDone(){
-  const f=S.forging; if(!f) return; const t=nextGear(f.slot); S.forging=null; S.gear[f.slot]++;
+  const f=S.forging; if(!f) return; const t=nextGear(f.slot); S.forging=null; S.gear[f.slot]++; logUnlock(`gear:${f.slot}:${S.gear[f.slot]}`);
   if(t){ toast(`Brom has finished your ${t.name}.`); chronicle(`Brom hands over a ${t.name}.`); }
   scene&&scene.burst(360,250,10);
 }
@@ -683,7 +716,7 @@ const goldMult=()=>renownMult()*(1+relicBonus('gold'));
 function findRelic(region){
   const pool=RELICS.filter(r=>r.region===region&&relicLvl(r.id)<RELIC_MAX); if(!pool.length) return null;
   const r=pool[rnd(0,pool.length-1)]; S.relics[r.id]=relicLvl(r.id)+1;
-  S.stats.relics++;
+  S.stats.relics++; logUnlock('relic:'+r.id);
   chronicle(`Relic found: ${r.name}${relicLvl(r.id)>1?`, now level ${relicLvl(r.id)}`:''}.`); return r;
 }
 
@@ -726,7 +759,7 @@ function tally(k,n){ if(S.exp) S.exp.haul[k]=(S.exp.haul[k]||0)+n; }
 function canDepart(l){ return !S.exp&&S.gear.armor>=l.danger&&S.hp>tripCost(l); }
 function depart(id){
   const l=LOC[id]; if(!l||!canDepart(l)) return;
-  S.hp-=tripCost(l);
+  S.hp-=tripCost(l); logUnlock('region:'+id);
   const t=now(); S.exp=makeExp(id,t,t+expDuration(l)*1000); setView('journey'); refresh();
 }
 function grantBeat(b,l,safe){
@@ -735,7 +768,7 @@ function grantBeat(b,l,safe){
   const n=Math.round(b.n*mult)+(b.bonus||0);
   if(n>0){ addRes(b.r,n); tally(b.r,n); }
   journey&&journey.grantFx(b,n>0?`+${n} ${NAMES[b.r]}`:'',CRYS.includes(b.r)?'#'+HEX[b.r].toString(16).padStart(6,'0'):RES_HEX[b.r]);
-  if(b.k==='foe'){ S.stats.foes++; if(!safe) hurt(foeDamage(l)*(b.tap?0.5:1)); }
+  if(b.k==='foe'){ S.stats.foes++; S.stats.foeKinds[b.foe]=1; logUnlock('foe:'+b.foe); if(!safe) hurt(foeDamage(l)*(b.tap?0.5:1)); }
 }
 // Tapping an approaching beat in the journey view: extra loot, half damage from foes
 function helpBeat(id){
@@ -748,7 +781,7 @@ function helpBeat(id){
 function resolveEvent(ev,i,auto){
   if(ev.done||!S.exp) return; const def=EVDEF[ev.id]; let o=def.opts[i];
   if(!o||(o.can&&!o.can())){ i=def.def; o=def.opts[i]; }
-  ev.done=true; ev.choice=i; const l=LOC[S.exp.id];
+  ev.done=true; ev.choice=i; const l=LOC[S.exp.id]; logUnlock('event:'+ev.id);
   const msg=o.run(l); if(msg) toast((auto?`${def.title}: `:'')+msg);
   eventKey=''; refresh();
 }
@@ -787,7 +820,7 @@ const DIG_TIME=[30,120,300,720], SPLIT_COST={frost:1};
 function digMine(){ const d=MINE[S.mine]; if(!d||S.digging||!canPay(d.cost)) return; pay(d.cost); const n=now();
   S.digging={level:S.mine,start:n,end:n+DIG_TIME[S.mine]*1000};
   chronicle(S.mine===0?'Miners clear the rubble from the old crystal mine.':`Miners start on the ${d.done}.`); refresh(); }
-function digDone(){ const g=S.digging; if(!g) return; S.digging=null; S.mine=g.level+1; const d=MINE[g.level];
+function digDone(){ const g=S.digging; if(!g) return; S.digging=null; S.mine=g.level+1; logUnlock('mine:'+g.level); const d=MINE[g.level];
   const msg=S.mine===1?'The crystal mine is open. Ember and Frost glitter in the rock.':`Your miners break into the ${d.done}.`;
   chronicle(msg); toast(msg); scene&&scene.crystalPing(d.els[d.els.length-1]); }
 const canSplit=()=>!!S.digging&&canPay(SPLIT_COST);
@@ -802,11 +835,11 @@ function mineCrystals(dt){
 }
 
 // Spells
-function learn(id){ const s=SPELLS.find(x=>x.id===id); if(!s||knows(id)||!canPay(s.learn)) return; pay(s.learn); S.known.push(id); chronicle(`You have learned ${s.name}.`); refresh(); }
+function learn(id){ const s=SPELLS.find(x=>x.id===id); if(!s||knows(id)||!canPay(s.learn)) return; pay(s.learn); S.known.push(id); logUnlock('spell:'+id); chronicle(`You have learned ${s.name}.`); refresh(); }
 function castable(s){ return knows(s.id) && canPay(s.cast) && !(s.dur&&active(s.id)) && !(s.id==='road'&&!S.exp); }
 function cast(id){
   const s=SPELLS.find(x=>x.id===id); if(!s||!castable(s)) return;
-  pay(s.cast);
+  pay(s.cast); S.stats.casts++;
   if(s.dur) S.spells[id]=now()+s.dur*1000;
   else if(id==='road') quickenRoad();
   else if(id==='tithe'){ const g=Math.max(gps()*300,tapValue()*60); earn(g); toast(`The dragon brings you ${fmt(g)} gold.`); scene&&scene.burst(360,200,40); }
@@ -826,7 +859,7 @@ function meetArthrex(){
     'So. You are the new lord of this keep. I am Arthrex. I have served as court sorcerer here for longer than your father lived, and I keep the spire on the east grounds.',
     ...CRYSTAL_LESSON,
     'Here. Ten of each, to get you started. Spend them wisely. And come and see me at the spire now and then. I will have errands, and I pay in kind.',
-  ],'Thank you, Arthrex',()=>{ S.story.met=true; CRYS.forEach(c=>S.cry[c]+=10); S.questNext=now()+15000; S.questSpan=15000;
+  ],'Thank you, Arthrex',()=>{ S.story.met=true; logUnlock('npc:arthrex'); CRYS.forEach(c=>S.cry[c]+=10); S.questNext=now()+15000; S.questSpan=15000;
     toast('Arthrex gives you 10 Ember, 10 Frost, 10 Verdant and 10 Storm crystals.'); chronicle('Arthrex, the court sorcerer, has taken an interest in you.'); refresh(); });
 }
 const BROM='Brom, Master Smith';
@@ -836,7 +869,7 @@ function meetBrom(){
     'That won’t do. Bring me wood, stone and ore from your expeditions, and I’ll make you proper gear.',
     'A weapon makes every tap count for more, and your hero hits harder. Armor means more health, and it gets you into the dangerous places. A pickaxe digs more ore, and more crystal from the mine.',
     'Here: timber, stone and a bit of coin. Enough for your first piece. Let’s get you armed.',
-  ],'To the forge',()=>{ S.mat.wood+=15; S.mat.stone+=10; earn(50); S.story.brom=true;
+  ],'To the forge',()=>{ S.mat.wood+=15; S.mat.stone+=10; earn(50); S.story.brom=true; logUnlock('npc:brom');
     toast('Brom gives you 15 Wood, 10 Stone and 50 gold.'); tutAdvance(); refresh(); });
 }
 function introStory(){
@@ -889,7 +922,7 @@ function claimQuest(){
   const q=S.quest; if(!questDone(q)) return;
   if(q.type==='gather') S.mat[q.mat]-=q.need;
   const got=[]; for(const [k,v] of Object.entries(q.reward)){ addRes(k,v); got.push(k==='gold'?`${fmt(v)} gold`:`${v} ${NAMES[k]}`); }
-  S.quest=null; S.questNext=now()+QUEST_COOLDOWN; S.questSpan=QUEST_COOLDOWN;
+  S.quest=null; S.questNext=now()+QUEST_COOLDOWN; S.questSpan=QUEST_COOLDOWN; S.stats.quests++;
   const lines=['Well done. This will keep my furnaces lit a while longer.','Hm. Better than I hoped, if I am honest.','You have your father’s stubbornness. That is a compliment.','Good. Rest now. I will have more for you soon.'];
   showDialog('arthrex',[`${lines[rnd(0,lines.length-1)]} Take these: ${got.join(', ')}.`],'Farewell',()=>refresh());
   chronicle(`Quest complete: ${q.title}.`); refresh();
@@ -1020,6 +1053,93 @@ function renderBook(){
   $('bookMore').textContent=(S.favs.length?'':'Tap \u2606 to pin a spell to your keep screen. ')+(unlearned?`${unlearned} more spell${unlearned>1?'s':''} can be learned from the grimoire.`:'You know every spell in the grimoire.');
 }
 
+/* ---------- Adventurer's Log: permanent across every life ---------- */
+const LOG_GLYPH={
+  relic:'<circle cx="12" cy="14" r="5.5" fill="#e3ad45"/><circle cx="12" cy="14" r="2.3" fill="#8e6420"/><path d="M8 4q4 5 8 0" stroke="#c9bea2" stroke-width="1.6" fill="none"/><path d="M12 6.5v2" stroke="#c9bea2" stroke-width="1.6"/>',
+  foe:'<g stroke="#e8744a" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M6 4l3 16M11 3l2 18M16 4l1.5 15"/></g>',
+  region:'<path d="M2 20 9 8l4 6 3-4 6 10Z" fill="#8fa5c4"/><path d="M9 8l2 3-2 1-2-1Z" fill="#eef2f7"/>',
+  event:'<path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2Z" fill="#c9bea2"/><path d="M8 8h8M8 11h8M8 14h5" stroke="#6a5a40" stroke-width="1.3"/>',
+  weapon:'<path d="M18 3l3 3-11 11-3-3Z" fill="#c9ced6"/><path d="M6 15l3 3-2 2-3-3Z" fill="#8a6a2a"/><path d="M4 20l2 2" stroke="#6a4a2c" stroke-width="2"/>',
+  armor:'<path d="M12 2 20 5v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5Z" fill="#9aa3b0"/><path d="M12 2v20" stroke="#6e7784" stroke-width="1.2"/>',
+  pick:'<path d="M4 8q8-7 16 0l-2 1q-6-5-12 0Z" fill="#c9ced6"/><path d="M11.5 6h1.5l-1 16h-1.5Z" fill="#8a6a44"/>',
+  mine:'<path d="M3 21 9 9h6l6 12Z" fill="#3a3346"/><path d="M12 11l2 3-2 4-2-4Z" fill="#c7a8f0"/>',
+  medal:'<path d="M8 2h3l1 5-3 1ZM16 2h-3l-1 5 3 1Z" fill="#8a2f2a"/><circle cx="12" cy="15" r="6.5" fill="var(--mc)"/><circle cx="12" cy="15" r="4" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.2"/>',
+};
+const glyphSvg=g=>`<svg viewBox="0 0 24 24" aria-hidden="true">${g}</svg>`;
+const MEDAL=['#c07a45','#c3c7cf','#e3ad45','#8fd0f0','#c7a8f0'];
+const plural=b=>({farm:'Peasant Farms',mill:'Watermills',tavern:'Taverns',silver:'Silver Mines',market:'Market Squares',guild:'Merchant Guilds',tower:'Apprentice Halls',dragon:'Dragon’s Lairs'})[b.id];
+function logCatalog(){
+  if(logCatalog.c) return logCatalog.c;
+  const regionsFor=f=>LOCS.filter(l=>l.foes.includes(f)).map(l=>l.name).join(' and ');
+  const cats=[
+    {id:'npc',title:'Folk of the keep',items:[
+      {id:'npc:arthrex',name:'Arthrex',desc:'Court sorcerer. Keeps the spire on the east grounds and pays in crystal for errands.',hint:'Waits for your hero’s first return.',icon:()=>ARTHREX_SVG},
+      {id:'npc:brom',name:'Brom',desc:'Master smith of the keep’s forge.',hint:'Keeps the forge in the yard.',icon:()=>BROM_SVG}]},
+    {id:'relic',title:'Relics',items:RELICS.map(r=>({id:'relic:'+r.id,name:r.name,desc:`${fxLine(r.fx,1)} per level, up to level ${RELIC_MAX}.`,hint:`Somewhere in ${LOC[r.region].name}.`,icon:()=>glyphSvg(LOG_GLYPH.relic)}))},
+    {id:'res',title:'Resources',items:[...MATS,...CRYS].map(k=>({id:'res:'+k,name:NAMES[k]+(CRYS.includes(k)?' crystal':''),desc:CRYS.includes(k)?'A crystal of bound elemental magic.':'A crafting material from the wilds.',hint:CRYS.includes(k)?'Deep in the earth.':'Out on the roads.',icon:()=>ICON(k)}))},
+    {id:'region',title:'Regions',items:LOCS.map(l=>({id:'region:'+l.id,name:l.name,desc:l.desc,hint:l.danger?`Needs armor for danger ${l.danger}.`:'Close to the keep.',icon:()=>glyphSvg(LOG_GLYPH.region)}))},
+    {id:'foe',title:'Bestiary',items:Object.keys(FOE_NAMES).map(f=>({id:'foe:'+f,name:FOE_NAMES[f],desc:`Defeated on the road in ${regionsFor(f)}.`,hint:`Roams ${regionsFor(f)}.`,icon:()=>glyphSvg(LOG_GLYPH.foe)}))},
+    {id:'event',title:'Road events',items:EVENTS.map(e=>({id:'event:'+e.id,name:e.title,desc:e.text,hint:'Met on longer expeditions.',icon:()=>glyphSvg(LOG_GLYPH.event)}))},
+    {id:'gear',title:'Arms & armor',items:Object.entries(GEAR).flatMap(([k,g])=>g.tiers.slice(1).map((t,i)=>({id:`gear:${k}:${i+1}`,name:t.name,desc:`${g.label}, tier ${i+1}. ${g.effect(i+1)}.`,hint:`Forged by Brom (${g.label.toLowerCase()}).`,icon:()=>glyphSvg(LOG_GLYPH[k==='pick'?'pick':k])})))},
+    {id:'spell',title:'Spells',items:SPELLS.map(sp=>({id:'spell:'+sp.id,name:sp.name,desc:sp.text,hint:'Written in the grimoire.',icon:()=>`<span class="log-orb" style="--c:${(SPELL_LOOK[sp.id]||[])[0]||'var(--storm)'}">${spellGlyph(sp.id)}</span>`}))},
+    {id:'mine',title:'Crystal Mine',items:MINE.map((m,i)=>({id:'mine:'+i,name:m.done,desc:`Yields ${m.els.map(e=>NAMES[e]).join(', ')}.`,hint:'Beneath the keep.',icon:()=>glyphSvg(LOG_GLYPH.mine)}))},
+  ];
+  const tiers=[5,50,250,1000,5000];
+  const ach=[
+    ...BUILDINGS.map(b=>({title:plural(b),goals:tiers.map(n=>({id:`ach:own:${b.id}:${n}`,name:`${fmt(n)} ${plural(b)}`,need:`Own ${fmt(n)} ${plural(b)} at once.`,test:()=>owned(b.id)>=n}))})),
+    {title:'Treasury',goals:[1e3,1e6,1e9,1e12,1e15].map(n=>({id:'ach:gold:'+n,name:`${fmt(n)} gold`,need:`Earn ${fmt(n)} gold across all your lives.`,test:()=>S.life>=n}))},
+    {title:'Tapping',goals:[100,1e3,1e4,1e5,1e6].map(n=>({id:'ach:taps:'+n,name:`${fmt(n)} taps`,need:`Tap the keep ${fmt(n)} times.`,test:()=>S.taps>=n}))},
+    {title:'Expeditions',goals:[1,10,100,500,2500].map(n=>({id:'ach:trips:'+n,name:`${fmt(n)} ${n===1?'expedition':'expeditions'}`,need:`Complete ${fmt(n)} expeditions.`,test:()=>Object.values(S.stats.trips).reduce((a,b)=>a+b,0)>=n}))},
+    {title:'Monster slaying',goals:[10,100,1000,5000,25000].map(n=>({id:'ach:foes:'+n,name:`${fmt(n)} foes`,need:`Defeat ${fmt(n)} foes on the road.`,test:()=>S.stats.foes>=n}))},
+    {title:'Relic hunting',goals:[1,10,50,150,500].map(n=>({id:'ach:relics:'+n,name:`${fmt(n)} ${n===1?'relic':'relics'}`,need:`Find ${fmt(n)} relics.`,test:()=>S.stats.relics>=n}))},
+    {title:'Errands for Arthrex',goals:[1,10,50,150,500].map(n=>({id:'ach:quests:'+n,name:`${fmt(n)} ${n===1?'errand':'errands'}`,need:`Complete ${fmt(n)} of Arthrex’s errands.`,test:()=>S.stats.quests>=n}))},
+    {title:'Spellcraft',goals:[10,100,1000,5000,25000].map(n=>({id:'ach:casts:'+n,name:`${fmt(n)} spells cast`,need:`Cast ${fmt(n)} spells from the grimoire.`,test:()=>S.stats.casts>=n}))},
+    {title:'Dynasties',goals:[2,5,10,25,100].map(n=>({id:'ach:life:'+n,name:`Life ${n}`,need:`Reach your ${n}${n===2?'nd':'th'} life by ascending.`,test:()=>(S.dynasty||1)>=n}))},
+  ];
+  const byId={}; cats.forEach(c=>c.items.forEach(it=>byId[it.id]=it)); ach.forEach(g=>g.goals.forEach((it,i)=>{ it.tier=i; it.group=g.title; byId[it.id]=it; }));
+  return logCatalog.c={cats,ach,byId};
+}
+let logQueue=[], logFlushT=null;
+function logUnlock(id){
+  if(!S.log||S.log[id]) return; S.log[id]={t:now(),life:S.dynasty||1}; S.logNew=(S.logNew||0)+1;
+  const it=logCatalog().byId[id]; if(!it) return; logQueue.push(it.name);
+  clearTimeout(logFlushT); logFlushT=setTimeout(()=>{ if(!logQueue.length) return;
+    toast(logQueue.length===1?`New in your Adventurer’s Log: ${logQueue[0]}`:`${logQueue.length} new entries in your Adventurer’s Log.`); logQueue=[]; },1200);
+}
+let achT=0;
+function checkAchievements(){ const c=logCatalog(); c.ach.forEach(g=>g.goals.forEach(it=>{ if(!S.log[it.id]&&it.test()) logUnlock(it.id); })); }
+function backfillLog(){ // record what an existing save already has, as found in this life
+  const q=[]; Object.keys(S.relics).forEach(r=>q.push('relic:'+r)); Object.keys(S.seen).forEach(k=>q.push('res:'+k));
+  S.known.forEach(id=>q.push('spell:'+id)); Object.keys(GEAR).forEach(k=>{ for(let t=1;t<=S.gear[k];t++) q.push(`gear:${k}:${t}`); });
+  for(let i=0;i<S.mine;i++) q.push('mine:'+i); Object.keys(S.stats.trips||{}).forEach(r=>q.push('region:'+r));
+  Object.keys(S.stats.foeKinds||{}).forEach(f=>q.push('foe:'+f)); if(S.story.met) q.push('npc:arthrex'); if(S.story.brom) q.push('npc:brom');
+  const n0=S.logNew; q.forEach(id=>{ if(!S.log[id]) S.log[id]={t:now(),life:S.dynasty||1}; }); S.logNew=n0; }
+const logDate=t=>new Date(t).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+let logSig='';
+function renderLog(){
+  if($('p-asc').hidden) return;
+  const c=logCatalog(), found=id=>!!S.log[id];
+  const collect=c.cats.flatMap(x=>x.items), achs=c.ach.flatMap(g=>g.goals);
+  const sig=Object.keys(S.log).length+'|'+(S.dynasty||1);
+  $('logCount').textContent=`${collect.filter(i=>found(i.id)).length} / ${collect.length} found · ${achs.filter(i=>found(i.id)).length} / ${achs.length} achievements`;
+  if(sig===logSig) return; logSig=sig;
+  const tile=(it)=>`<button class="log-tile${found(it.id)?'':' locked'}" data-log="${it.id}"><span class="log-ico">${it.icon()}</span><span class="log-name">${found(it.id)?it.name:'???'}</span></button>`;
+  const medal=(it)=>`<button class="log-tile medal${found(it.id)?'':' locked'}" data-log="${it.id}" style="--mc:${MEDAL[it.tier]}"><span class="log-ico">${glyphSvg(LOG_GLYPH.medal)}</span><span class="log-name">${it.name}</span></button>`;
+  $('logBody').innerHTML=c.cats.map(x=>`<div class="log-sec"><div class="label">${x.title} <span class="num">${x.items.filter(i=>found(i.id)).length}/${x.items.length}</span></div><div class="log-grid">${x.items.map(tile).join('')}</div></div>`).join('')
+    +`<div class="panel-head sub"><span class="label">Achievements</span></div>`
+    +c.ach.map(g=>`<div class="log-sec"><div class="label">${g.title} <span class="num">${g.goals.filter(i=>found(i.id)).length}/${g.goals.length}</span></div><div class="log-grid">${g.goals.map(medal).join('')}</div></div>`).join('');
+}
+function openLogEntry(id){
+  const it=logCatalog().byId[id]; if(!it) return; const f=S.log[id], isAch=id.startsWith('ach:');
+  $('leIcon').innerHTML=isAch?`<span style="--mc:${MEDAL[it.tier]};display:block">${glyphSvg(LOG_GLYPH.medal)}</span>`:it.icon();
+  $('leIcon').classList.toggle('locked',!f);
+  $('leName').textContent=f||isAch?it.name:'Undiscovered';
+  $('leCat').textContent=isAch?`Achievement · ${it.group}`:logCatalog().cats.find(c=>c.items.includes(it)).title;
+  $('leDesc').textContent=isAch?it.need:(f?it.desc:it.hint);
+  $('leFound').textContent=f?`${isAch?'Earned':'First found'} in Life ${f.life} · ${logDate(f.t)}`:(isAch?'Not yet earned.':'Not yet found in any life.');
+  $('logSheet').hidden=false;
+}
+
 /* ---------- Dialog overlay ---------- */
 let dlg=null;
 const dialogOpen=()=>!!dlg;
@@ -1061,6 +1181,7 @@ function ascend(){
   const p=pendingRenown(); if(p<1) return;
   // Full reset: only Renown, lifetime stats, story progress and UI preferences carry over.
   const keep={renown:S.renown+p,life:S.life,taps:S.taps,story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats)),
+    dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:1,
     seen:{...S.seen},favs:S.favs.slice(),tut:S.tut,tutV:S.tutV};
   S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set();
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
@@ -1257,7 +1378,7 @@ function refresh(){
 
   // stockpile
   { // a resource joins the satchel the first time the player holds any of it
-    MATS.forEach(k=>{ if(S.mat[k]>0) S.seen[k]=1; }); CRYS.forEach(k=>{ if(S.cry[k]>0) S.seen[k]=1; });
+    MATS.forEach(k=>{ if(S.mat[k]>0){ S.seen[k]=1; logUnlock('res:'+k); } }); CRYS.forEach(k=>{ if(S.cry[k]>0){ S.seen[k]=1; logUnlock('res:'+k); } });
     const known=[...MATS.filter(k=>S.seen[k]).map(k=>[k,S.mat[k]]),...CRYS.filter(k=>S.seen[k]).map(k=>[k,S.cry[k]])];
     setHTML($('stock'), known.length?known.map(([k,v])=>miniChip(k,v)).join(''):'<span class="r-desc">Empty. Your hero fills it on expeditions.</span>');
     renderSatchel(); }
@@ -1271,6 +1392,10 @@ function refresh(){
   $('hpFill').style.width=(100*S.hp/mhp)+'%'; $('hpFill').classList.toggle('low',S.hp<=LOCS[0].cost);
   $('bookDot').hidden=!(canMend()&&S.hp<maxHP()*0.5||canHasten());
   renderBook(); renderQuickbar();
+  if(now()-achT>1000){ achT=now(); checkAchievements(); }
+  badge('logBadge',$('p-asc').hidden?(S.logNew||0):0); if(!$('p-asc').hidden) S.logNew=0;
+  $('lifeNo').textContent=`Life ${S.dynasty||1}`;
+  renderLog();
 
   $('vJourney').disabled=!S.exp;
 
@@ -1424,6 +1549,9 @@ function wireUI(){
   $('buildTxt').textContent=`Build ${BUILD}`;
   $('updateBtn').addEventListener('click',()=>reloadFresh(newBuild));
   $('dlgNext').addEventListener('click',dialogNext);
+  $('logBody').addEventListener('click',e=>{ const b=e.target.closest('[data-log]'); if(b) openLogEntry(b.dataset.log); });
+  $('leClose').addEventListener('click',()=>$('logSheet').hidden=true);
+  $('logSheet').addEventListener('click',e=>{ if(e.target.id==='logSheet') $('logSheet').hidden=true; });
   $('tutSkip').addEventListener('click',()=>tutEnd(true));
   $('tutNext').addEventListener('click',tutAdvance);
   $('scroller').addEventListener('scroll',()=>{ if(tutActive()) tutRender(); },{passive:true});
@@ -2004,6 +2132,7 @@ function start(data){
   const lastB=S.chron.length&&BUILDINGS.find(b=>b.id===S.chron[S.chron.length-1]);
   chronicle(lastB?lastB.chron:'Your keep stands alone on the hill. Tap it to collect the tithe, and send your hero into Whisperwood.');
   if(!S.story.intro&&S.life>0) S.story.intro=true;
+  if(!S.logInit){ backfillLog(); S.logInit=1; }
   if(S.tut!=null&&!S.tutV) S.tut=TUT.length;   // saves from the old 4-step tutorial count as done
   if(S.tut==null&&S.life>0) S.tut=TUT.length;
   S.tutV=2;
