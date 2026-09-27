@@ -24,7 +24,7 @@ Each purchase multiplies the next one's price by **1.15**. The Build tab can buy
 | Silver Mine | 12,000 | 47 | Mine entrance in the eastern hill |
 | Market Square | 130,000 | 260 | Tents by the gate |
 | Merchant Guild | 1.4M | 1,400 | Banners on the towers |
-| Wizard Tower | 20M | 7,800 | Also speeds the Crystal Mine by 10% each |
+| Apprentice Hall | 20M | 7,800 | Arthrex's apprentices. Each also speeds the Crystal Mine by 10%, and adds a floating light around the spire (up to 6). The save id is still `tower`. |
 | Dragon's Lair | 330M | 44,000 | A dragon circles the sky |
 
 A holding is revealed once the previous one is owned, or once the reign has earned half its base cost. The next hidden one shows as "Unknown holding".

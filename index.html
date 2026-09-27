@@ -159,6 +159,26 @@
   #evFill{height:100%;background:var(--gold);}
   .ev-default{font-size:12px;color:var(--muted);margin-top:6px;}
 
+  /* story dialog */
+  .dialog-back{position:fixed;inset:0;z-index:8;background:rgba(6,7,14,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
+  .dialog{width:min(520px,100%);background:var(--panel);border:1px solid var(--gold-deep);border-radius:14px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:12px;}
+  .dlg-head{display:flex;gap:12px;align-items:center;}
+  .portrait{width:64px;height:64px;flex:none;border-radius:12px;overflow:hidden;border:1px solid var(--line);}
+  .portrait svg,.portrait img{width:100%;height:100%;display:block;}
+  .dlg-name{font-family:var(--display);font-size:21px;line-height:1.15;}
+  .dlg-text{margin:0;font-size:17px;line-height:1.5;max-width:60ch;}
+  .dialog .act{align-self:flex-end;min-width:140px;}
+  /* Arthrex's spire */
+  #spire{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 150px);}
+  .spire{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+  .spire-head{display:flex;gap:12px;align-items:center;}
+  .spire-head .portrait{width:52px;height:52px;}
+  .quest-title{font-family:var(--display);font-size:19px;}
+  .qbar{height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden;}
+  .qbar div{height:100%;background:var(--storm);}
+  .spire .row-btns{display:flex;gap:8px;flex-wrap:wrap;}
+  .spire .act{min-width:0;flex:1;}
+  .act.ghost{background:transparent;color:var(--ink);border-color:var(--line);}
   /* relic book */
   .relics{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
   .relic{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:3px;}
@@ -263,7 +283,9 @@
   </section>
 
   <section id="p-magic" class="panel" hidden>
-    <div class="panel-head"><span class="label">Crystal mine</span><span class="label num" id="mineRate"></span></div>
+    <div class="panel-head" id="spire"><span class="label">Arthrex’s spire</span><span class="label num" id="questNote"></span></div>
+    <div class="spire" id="spireBox"></div>
+    <div class="panel-head sub"><span class="label">Crystal mine</span><span class="label num" id="mineRate"></span></div>
     <div id="mList" class="list"></div>
     <div class="panel-head sub"><span class="label">Grimoire</span></div>
     <div id="sList" class="list"></div>
@@ -297,6 +319,13 @@
   <span>A new version of Emberkeep is ready.</span>
   <button class="act" id="updateBtn"><span>Reload</span></button>
 </div>
+<div class="dialog-back" id="dialog" hidden>
+  <div class="dialog" role="dialog" aria-labelledby="dlgName">
+    <div class="dlg-head"><div class="portrait" id="dlgPortrait"></div><div><div class="label" id="dlgStep"></div><div class="dlg-name" id="dlgName"></div></div></div>
+    <p class="dlg-text" id="dlgText"></p>
+    <button class="act" id="dlgNext"><span>Next</span></button>
+  </div>
+</div>
 <div class="event" id="eventCard" hidden role="dialog" aria-labelledby="evTitle">
   <div class="label" id="evWhere"></div>
   <div class="ev-title" id="evTitle"></div>
@@ -322,7 +351,7 @@ const BUILDINGS=[
   ['silver','Silver Mine',12000,47,'Bright veins beneath the eastern hills.',['Pit Ponies','Pumping Engines','Dwarven Surveyors','Deep Lodes','Heart of the Mountain'],'Miners break ground in the eastern hills.'],
   ['market','Market Square',130000,260,'Stalls, spice and endless haggling.',['Weights & Measures','Fair Days','Foreign Traders','Royal Mint','Endless Bazaar'],'Merchants pitch their tents by the gate.'],
   ['guild','Merchant Guild',1.4e6,1400,'Charters, caravans and ledgers.',['Letters of Credit','Caravan Routes','Salt Monopoly','Counting House','The Golden Compact'],'Guild banners fly from the towers.'],
-  ['tower','Wizard Tower',2e7,7800,'Transmutes lead. Each tower also speeds the crystal mine by 10%.',['Apprentices','Scrying Pools','Arcane Library','Archmage’s Seat','Star-Forged Spire'],'A wizard’s spire rises over the realm.'],
+  ['tower','Apprentice Hall',2e7,7800,'Arthrex\u2019s apprentices transmute lead for coin. Each hall also speeds the crystal mine by 10%.',['Chalk Circles','Scrying Pools','Arcane Library','Archmage\u2019s Seat','Star-Forged Spire'],'Apprentices gather at the foot of Arthrex\u2019s spire.'],
   ['dragon','Dragon’s Lair',3.3e8,44000,'A tamed wyrm broods on a growing hoard.',['Gilded Scales','Wyrm Eggs','Hoard Tithes','Elder Wyrm','Dragonlord’s Pact'],'A dragon has made its lair in your realm.'],
 ].map(([id,name,base,rate,desc,ups,chron])=>({id,name,base,rate,desc,ups,chron}));
 const BI=Object.fromEntries(BUILDINGS.map((b,i)=>[b.id,i]));
@@ -458,14 +487,14 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927183213';
+const BUILD='20260927184358';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics)}); }
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),stats:Object.assign(f.stats,d.stats)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -550,6 +579,7 @@ const goldMult=()=>renownMult()*(1+relicBonus('gold'));
 function findRelic(region){
   const pool=RELICS.filter(r=>r.region===region&&relicLvl(r.id)<RELIC_MAX); if(!pool.length) return null;
   const r=pool[rnd(0,pool.length-1)]; S.relics[r.id]=relicLvl(r.id)+1;
+  S.stats.relics++;
   chronicle(`Relic found: ${r.name}${relicLvl(r.id)>1?`, now level ${relicLvl(r.id)}`:''}.`); return r;
 }
 
@@ -601,7 +631,7 @@ function grantBeat(b,l,safe){
   const n=Math.round(b.n*mult)+(b.bonus||0);
   if(n>0){ addRes(b.r,n); tally(b.r,n); }
   journey&&journey.grantFx(b,n>0?`+${n} ${NAMES[b.r]}`:'',CRYS.includes(b.r)?'#'+HEX[b.r].toString(16).padStart(6,'0'):RES_HEX[b.r]);
-  if(b.k==='foe'&&!safe) hurt(foeDamage(l)*(b.tap?0.5:1));
+  if(b.k==='foe'){ S.stats.foes++; if(!safe) hurt(foeDamage(l)*(b.tap?0.5:1)); }
 }
 // Tapping an approaching beat in the journey view: extra loot, half damage from foes
 function helpBeat(id){
@@ -631,6 +661,8 @@ function finishExp(defeated){
   toast(defeated?`Your hero was beaten back in ${l.name} and limped home with ${got||'nothing'}.`
                  :`Back from ${l.name}: ${got||'nothing this time'}.${rel?` Found a relic: ${rel.name}!`:''}`);
   if(defeated) chronicle(`Your hero was beaten back in ${l.name}. They need rest.`);
+  else S.stats.trips[l.id]=(S.stats.trips[l.id]||0)+1;
+  if(!S.story.met) setTimeout(meetArthrex,1800);
   scene&&scene.burst(360,250,12);
   eventKey=''; if(view==='journey') setTimeout(()=>{ if(!S.exp) setView('keep'); },2500);
   refresh();
@@ -666,15 +698,118 @@ function cast(id){
   refresh();
 }
 
-function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto) S.taps++; scene&&scene.fx(x,y,v,auto); }
+/* ---------- Story: Arthrex, court sorcerer ---------- */
+const ARTHREX='Arthrex, Court Sorcerer';
+const CRYSTAL_LESSON=[
+  'Magic in this land is not drawn from the air. It is bound in crystal: Ember, Frost, Verdant and Storm. Each answers to its own element.',
+  'Where to find them? The old Crystal Mine beneath the keep can be reopened. Dig it deeper and it yields more kinds. The deep places, Ironroot and the Caldera, have them lying loose in the rock.',
+  'What are they for? Verdant mends wounds, so tap Mend when you are hurt. Storm quickens the road: Hasten halves a journey. And every spell in my grimoire needs them as reagents. You will find it in the Magic tab.',
+];
+function meetArthrex(){
+  if(S.story.met||dialogOpen()) return;
+  showDialog('arthrex',[
+    'So. You are the new lord of this keep. I am Arthrex. I have served as court sorcerer here for longer than your father lived, and I keep the spire on the east grounds.',
+    ...CRYSTAL_LESSON,
+    'Here. Ten of each, to get you started. Spend them wisely. And come and see me at the spire now and then. I will have errands, and I pay in kind.',
+  ],'Thank you, Arthrex',()=>{ S.story.met=true; CRYS.forEach(c=>S.cry[c]+=10); S.questNext=now()+15000;
+    toast('Arthrex gives you 10 Ember, 10 Frost, 10 Verdant and 10 Storm crystals.'); chronicle('Arthrex, the court sorcerer, has taken an interest in you.'); refresh(); });
+}
+function introStory(){
+  showDialog('keep',[
+    'The old lord is gone, and the keep on the hill is yours. The coffers are empty and the fields untilled.',
+    'Tap the keep to collect what tithe remains, build holdings to bring in more, and send your hero out to Whisperwood for timber. The Explore tab has the road.',
+  ],'Begin',()=>{ S.story.intro=true; refresh(); });
+}
+
+/* ---------- Quests from Arthrex ---------- */
+const QUEST_COOLDOWN=90000;
+const regionsOpen=()=>LOCS.filter(l=>l.danger<=S.gear.armor);
+function questTier(){ return Math.max(0,regionsOpen().length-1); }
+function questReward(tier,type){
+  const els=shuffle(CRYS.slice()).slice(0,type==='gather'?2:rnd(1,2)), r={};
+  els.forEach(c=>r[c]=2+tier+rnd(0,2)+(type==='gather'?2:0));
+  if(Math.random()<0.5) r.gold=Math.round(Math.max(150,tapValue()*60+gps(false)*90));
+  return r;
+}
+function makeQuest(){
+  const tier=questTier(), open=regionsOpen(), types=['trip','foes','gather','tapgold'];
+  if(tier>=1) types.push('relic');
+  const type=types[rnd(0,types.length-1)], q={type,state:'offered',reward:questReward(tier,type)};
+  if(type==='trip'){ const l=open[rnd(0,open.length-1)]; q.region=l.id; q.need=l.id==='wood'?3:l.id==='quarry'?2:1;
+    q.title='Restless Roads'; q.text=`Something stirs in ${l.name}. Walk it ${q.need===1?'once':q.need+' times'} and tell me what you see.`; }
+  else if(type==='foes'){ q.need=3+tier*2; q.title='Thin the Herds'; q.text=`The beasts are bolder than they should be. Put down ${q.need} of them on your travels.`; }
+  else if(type==='gather'){ const mats=[...new Set(open.flatMap(l=>Object.keys(l.loot)))], m=mats[rnd(0,mats.length-1)];
+    q.mat=m; q.need={wood:25,stone:20,copper:15,tin:8,iron:10}[m]+tier*4; q.title='Supplies for the Spire'; q.text=`My experiments hunger for ${NAMES[m].toLowerCase()}. Bring me ${q.need}.`; }
+  else if(type==='tapgold'){ q.need=Math.round(Math.max(200,tapValue()*150)); q.title='A Leaking Roof'; q.text=`The spire roof leaks again. Raise ${fmt(q.need)} gold with your own hand, and I will see to the rest.`; }
+  else { q.need=1; q.title='Old Things Waking'; q.text='Old things are stirring in the wild places. Bring me word of a relic, any relic.'; }
+  return q;
+}
+function questProgress(q){
+  if(!q||q.state!=='active') return 0;
+  if(q.type==='gather') return Math.min(q.need,S.mat[q.mat]);
+  const cur={trip:()=>S.stats.trips[q.region]||0,foes:()=>S.stats.foes,tapgold:()=>S.stats.tapGold,relic:()=>S.stats.relics}[q.type]();
+  return Math.min(q.need,cur-q.base);
+}
+const questDone=q=>q&&q.state==='active'&&questProgress(q)>=q.need;
+function questTick(){ if(S.story.met&&!S.quest&&now()>=S.questNext){ S.quest=makeQuest(); scene&&scene.questPing(); } }
+function acceptQuest(){
+  const q=S.quest; if(!q||q.state!=='offered') return;
+  q.state='active'; q.base={trip:S.stats.trips[q.region]||0,foes:S.stats.foes,tapgold:S.stats.tapGold,relic:S.stats.relics,gather:0}[q.type]; refresh();
+}
+function rerollQuest(){ const q=S.quest; if(!q||q.state!=='offered'||q.rerolled) return; S.quest=makeQuest(); S.quest.rerolled=true; refresh(); }
+function abandonQuest(){ if(!S.quest) return; S.quest=null; S.questNext=now()+QUEST_COOLDOWN/2; refresh(); }
+function claimQuest(){
+  const q=S.quest; if(!questDone(q)) return;
+  if(q.type==='gather') S.mat[q.mat]-=q.need;
+  const got=[]; for(const [k,v] of Object.entries(q.reward)){ addRes(k,v); got.push(k==='gold'?`${fmt(v)} gold`:`${v} ${NAMES[k]}`); }
+  S.quest=null; S.questNext=now()+QUEST_COOLDOWN;
+  const lines=['Well done. This will keep my furnaces lit a while longer.','Hm. Better than I hoped, if I am honest.','You have your father’s stubbornness. That is a compliment.','Good. Rest now. I will have more for you soon.'];
+  showDialog('arthrex',[`${lines[rnd(0,lines.length-1)]} Take these: ${got.join(', ')}.`],'Farewell',()=>refresh());
+  chronicle(`Quest complete: ${q.title}.`); refresh();
+}
+function openSpire(){
+  document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab==='magic'));
+  ['build','up','explore','forge','magic','asc'].forEach(k=>$('p-'+k).hidden=k!=='magic');
+  $('spire').scrollIntoView({behavior:'smooth',block:'start'});
+  if(!S.story.met) toast('The spire door is shut. Arthrex keeps to himself, for now.');
+}
+
+/* ---------- Dialog overlay ---------- */
+let dlg=null;
+const dialogOpen=()=>!!dlg;
+function showDialog(who,pages,doneLabel,onDone){
+  dlg={who,pages,i:0,doneLabel,onDone}; renderDialog(); $('dialog').hidden=false;
+}
+function renderDialog(){
+  const d=dlg; if(!d) return; const last=d.i>=d.pages.length-1;
+  $('dlgPortrait').innerHTML=d.who==='arthrex'?ARTHREX_SVG:'<img src="icons/icon-180.png" alt="">';
+  $('dlgName').textContent=d.who==='arthrex'?ARTHREX:'Emberkeep';
+  $('dlgText').textContent=d.pages[d.i];
+  $('dlgStep').textContent=d.pages.length>1?`${d.i+1} / ${d.pages.length}`:'';
+  $('dlgNext').querySelector('span').textContent=last?d.doneLabel:'Next';
+}
+function dialogNext(){
+  const d=dlg; if(!d) return;
+  if(d.i<d.pages.length-1){ d.i++; renderDialog(); return; }
+  dlg=null; $('dialog').hidden=true; d.onDone&&d.onDone();
+}
+const ARTHREX_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="12" fill="#1b2336"/>
+<circle cx="50" cy="14" r="9" fill="#c7a8f0" opacity=".25"/><rect x="48" y="16" width="3" height="46" fill="#6a4a2c"/><path d="M49.5 6 L54 13 L49.5 20 L45 13Z" fill="#c7a8f0"/>
+<path d="M12 64 L22 30 L42 30 L52 64Z" fill="#2f5d62"/><path d="M22 30 L32 58 L42 30Z" fill="#244a4f"/>
+<path d="M18 34 Q32 4 46 34 Q40 26 32 26 Q24 26 18 34Z" fill="#244a4f"/>
+<circle cx="32" cy="31" r="7.5" fill="#e0b48a"/><path d="M24.5 33 Q32 54 39.5 33 Q36 38 32 38 Q28 38 24.5 33Z" fill="#ece6da"/>
+<rect x="27.5" y="29" width="3" height="1.6" fill="#1b2336"/><rect x="33.5" y="29" width="3" height="1.6" fill="#1b2336"/>
+<path d="M21 46 L26 42 L28 48Z" fill="#e3ad45"/></svg>`;
+
+function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto){ S.taps++; S.stats.tapGold+=v; } scene&&scene.fx(x,y,v,auto); }
 function pendingRenown(){ return Math.floor(Math.sqrt(S.total/1e6)); }
 function ascend(){
   const p=pendingRenown(); if(p<1) return;
-  const keep={renown:S.renown+p,life:S.life,taps:S.taps,known:S.known.slice(),gear:{...S.gear},relics:{...S.relics}};
+  const keep={renown:S.renown+p,life:S.life,taps:S.taps,known:S.known.slice(),gear:{...S.gear},relics:{...S.relics},story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats))};
   S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set();
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
-function wipe(){ S=fresh(); S.hp=maxHP(); upSet=new Set(); setView('keep'); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); }
+function wipe(){ S=fresh(); S.hp=maxHP(); upSet=new Set(); setView('keep'); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); setTimeout(introStory,300); }
 
 function tick(){
   const t=now(); let dt=(t-S.last)/1000; S.last=t;
@@ -685,6 +820,7 @@ function tick(){
     const before=CRYS.reduce((a,c)=>a+S.cry[c],0); mineCrystals(dt); const cr=CRYS.reduce((a,c)=>a+S.cry[c],0)-before;
     if(g>=1||cr) toast(`While you were away: ${fmt(g)} gold${cr?` and ${cr} crystal${cr>1?'s':''}`:''}.`);
   } else { earn(gps()*dt); mineCrystals(dt); }
+  questTick();
   const wasAway=!!S.exp;
   expTick(t);
   if(!S.exp&&!wasAway) heal(maxHP()/HP_REGEN_FULL*dt);
@@ -798,6 +934,28 @@ function setView(v){
   if(scene){ scene.scene.setVisible(v==='keep'); scene.input.enabled=v==='keep'; }
   if(journey) journey.setShown(v==='journey');
 }
+let spireKey='';
+function renderSpire(){
+  const q=S.quest; let key, html;
+  const head=(sub)=>`<div class="spire-head"><div class="portrait">${ARTHREX_SVG}</div><div><div class="quest-title">Arthrex</div><div class="r-desc">${sub}</div></div></div>`;
+  if(!S.story.met){ key='closed'; html=head('The spire door is shut. Perhaps after your first expedition…'); $('questNote').textContent=''; }
+  else if(!q){ const left=Math.max(0,S.questNext-now()); key='wait'+Math.ceil(left/1000);
+    html=head(left?`Deep in his studies. He will have an errand in ${fmtTime(left/1000)}.`:'Arthrex is looking for you.')+`<div class="row-btns"><button class="act ghost" data-spire="lesson"><span>Ask about crystals</span></button></div>`;
+    $('questNote').textContent=''; }
+  else { const prog=questProgress(q), done=questDone(q);
+    const reward=`<div class="cost">${Object.entries(q.reward).map(([k,v])=>chip(k,v,false)).join('')}</div>`;
+    key=[q.title,q.state,prog,done,q.type==='gather'?S.mat[q.mat]:0].join('|');
+    const btns=q.state==='offered'
+      ?`<button class="act arcane" data-spire="accept"><span>Accept errand</span></button>${q.rerolled?'':'<button class="act ghost" data-spire="reroll"><span>Another errand?</span></button>'}`
+      :done?`<button class="act arcane" data-spire="claim"><span>${q.type==='gather'?`Hand over ${q.need} ${NAMES[q.mat]}`:'Claim reward'}</span></button>`
+           :`<button class="act ghost" data-spire="abandon"><span>Abandon</span></button>`;
+    html=head(q.state==='offered'?'Has an errand for you.':done?'Your errand is done. Return to him.':'Waiting on your errand.')
+      +`<div><div class="quest-title">${q.title}</div><div class="r-desc">“${q.text}”</div></div>`
+      +(q.state==='active'?`<div class="r-meta num">${fmt(prog)} / ${fmt(q.need)}</div><div class="qbar"><div style="width:${100*prog/q.need}%"></div></div>`:'')
+      +`<div><div class="r-meta">Reward</div>${reward}</div><div class="row-btns">${btns}</div>`;
+    $('questNote').textContent=q.state==='active'?(done?'Ready':'In progress'):'New errand'; }
+  if(key!==spireKey){ spireKey=key; $('spireBox').innerHTML=html; }
+}
 function refresh(){
   $('gold').textContent=fmt(S.gold);
   $('gps').textContent=fmt(gps());
@@ -897,6 +1055,9 @@ function refresh(){
     setHTML($('mc'), costHTML(d.cost)); $('mb').disabled=!canPay(d.cost); $('mb').hidden=false;
   } else { $('mn').textContent=MINE[S.mine-1].done; $('md').textContent='Every gallery is open.'; setHTML($('mc'),''); $('mb').hidden=true; }
 
+  // Arthrex's spire
+  renderSpire();
+
   // grimoire
   let magicReady=0;
   SPELLS.forEach(s=>{
@@ -915,6 +1076,7 @@ function refresh(){
     }
   });
   if(d&&canPay(d.cost)) magicReady++;
+  if(S.story.met&&S.quest&&(S.quest.state==='offered'||questDone(S.quest))) magicReady++;
   badge('magicBadge',magicReady);
 
   // ascend
@@ -951,6 +1113,7 @@ async function checkForUpdate(manual){
 function wireUI(){
   $('buildTxt').textContent=`Build ${BUILD}`;
   $('updateBtn').addEventListener('click',()=>reloadFresh(newBuild));
+  $('dlgNext').addEventListener('click',dialogNext);
   $('mendBtn').addEventListener('click',mend); $('hasteBtn').addEventListener('click',hasten);
   $('checkBtn').addEventListener('click',()=>checkForUpdate(true));
   setTimeout(()=>checkForUpdate(false),3000);
@@ -971,6 +1134,8 @@ function wireUI(){
     if(d.view) setView(d.view);
     else if(d.ev!==undefined){ const ev=pendingEvent(); if(ev) resolveEvent(ev,+d.ev,false); }
     else if(d.watch){ setView('journey'); $('realm').scrollIntoView({behavior:'smooth',block:'center'}); refresh(); }
+    else if(d.spire){ ({accept:acceptQuest,reroll:rerollQuest,abandon:abandonQuest,claim:claimQuest,
+        lesson:()=>showDialog('arthrex',CRYSTAL_LESSON,'I understand',()=>{})})[d.spire](); }
     else if(d.buy) buyBuilding(d.buy); else if(d.up) buyUpgrade(d.up); else if(d.go) depart(d.go);
     else if(d.forge) forge(d.forge); else if(d.dig) digMine();
     else if(d.spell) knows(d.spell)?cast(d.spell):learn(d.spell);
@@ -1039,6 +1204,8 @@ class Realm extends Phaser.Scene{
     this.crystals=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
     this.smoke=this.add.particles(0,0,'smoke',{x:228,y:246,speedY:{min:-28,max:-16},speedX:{min:-3,max:9},lifespan:2800,scale:{start:0.25,end:0.9},alpha:{start:0.3,end:0},frequency:280,emitting:false});
     this.orbGlow=this.add.circle(690,86,16,0xc7a8f0,0.25).setVisible(false);
+    this.halls=this.add.graphics().setPosition(690,110).setBlendMode(Phaser.BlendModes.ADD);
+    this.qMark=this.add.text(666,246,'!',{fontFamily:DISPLAY_FONT,fontSize:'26px',color:'#e4d4ff',stroke:'#0b0d19',strokeThickness:5,resolution:Z}).setOrigin(0.5).setVisible(false);
     this.orb=this.add.circle(690,86,6,0xf0e6ff).setVisible(false);
     this.wheel=this.add.graphics().setPosition(186,282).setVisible(false);
     this.wheel.lineStyle(2,0x5a4630); this.wheel.strokeCircle(0,0,12);
@@ -1060,7 +1227,9 @@ class Realm extends Phaser.Scene{
     this.coins=this.add.particles(0,0,'coin',{speed:{min:120,max:260},angle:{min:210,max:330},gravityY:520,lifespan:900,scale:{start:0.55,end:0.2},alpha:{start:1,end:0},emitting:false});
     this.sparks=this.add.particles(0,0,'spark',{speed:{min:30,max:90},lifespan:600,scale:{start:0.4,end:0},alpha:{start:0.9,end:0},blendMode:'ADD',emitting:false});
     this.floaters=0; this.famAcc=0; this.sig=''; this.lit=-1; this.lightKey='';
-    this.input.on('pointerdown',p=>tap(p.worldX,p.worldY,false));
+    this.input.on('pointerdown',p=>{ const x=p.worldX, y=p.worldY;
+      if(x>656&&x<716&&y>80&&y<300){ openSpire(); return; }
+      tap(x,y,false); });
     this.scene.setVisible(view==='keep'); this.input.enabled=view==='keep';
   }
   L(night,day){ return mixColor(night,day,this.light); }
@@ -1135,10 +1304,17 @@ class Realm extends Phaser.Scene{
         this.crystals.fillStyle(HEX[e],0.9); this.crystals.fillTriangle(x-3,y,x,y-h,x+3,y);
         this.crystals.fillStyle(HEX[e],0.18); this.crystals.fillCircle(x,y-h/2,h); }); }
     // Wizard tower
-    const tw=o('tower')>0;
-    if(tw){ b.fillStyle(this.L(0x22263b,0x7d7f95)); b.fillRect(678,128,24,166); b.fillStyle(this.L(0x1a1d2f,0x4d3f66)); b.fillTriangle(672,128,690,92,708,128);
-      b.fillStyle(0xc7a8f0); b.fillRect(686,160,8,12); b.fillRect(686,210,8,12); }
-    this.orb.setVisible(tw); this.orbGlow.setVisible(tw);
+    // Arthrex's spire (always there) and his apprentices' lights (Apprentice Halls)
+    b.fillStyle(this.L(0x22263b,0x7d7f95)); b.fillRect(678,128,24,166); b.fillStyle(this.L(0x1a1f33,0x686a80)); b.fillRect(693,128,9,166);
+    b.fillStyle(this.L(0x1a1d2f,0x4d3f66)); b.fillTriangle(672,128,690,92,708,128); b.fillStyle(this.L(0x14172a,0x3d3252)); b.fillTriangle(690,92,708,128,694,128);
+    b.fillStyle(this.L(0x2d334b,0xa7a6ae)); b.fillRect(674,126,32,4);
+    b.fillStyle(0xc7a8f0); b.fillRect(686,160,8,12); b.fillCircle(690,160,4); b.fillRect(686,210,8,12); b.fillCircle(690,210,4);
+    b.fillStyle(this.L(0x0b0d19,0x2a2230)); b.fillRect(684,276,12,18); b.fillCircle(690,276,6);
+    if(S.story.met){ const r=this.L(0x2a4a50,0x2f5d62); b.fillStyle(r); b.fillTriangle(662,294,666,276,671,294); b.fillStyle(this.L(0x7a6a5a,0xe0b48a)); b.fillCircle(666,275,2.6);
+      b.fillStyle(0xece6da); b.fillTriangle(664,276,668,276,666,282); b.fillStyle(this.L(0x3a2a1c,0x6a4a2c)); b.fillRect(670,268,1.5,26); b.fillStyle(0xc7a8f0); b.fillCircle(670.7,267,2); }
+    this.orb.setVisible(true); this.orbGlow.setVisible(true);
+    this.halls.clear(); const nh=Math.min(6,o('tower'));
+    for(let i=0;i<nh;i++){ this.halls.fillStyle(0xc7a8f0,0.8); this.halls.fillCircle(Math.cos(i*1.05)*18,Math.sin(i*1.05)*10,2); }
     // Castle: lit faces on the left, shade on the right, brick courses, conical roofs
     const stone=this.L(0x2a2f46,0x9d9ba4), shade=this.L(0x1f2335,0x7a7883), mortar=this.L(0x232840,0x87858f),
           trim=this.L(0x353b56,0xb8b6bf), roof=this.L(0x1d2034,0x6a4a5a), roofS=this.L(0x151827,0x523846), dark=this.L(0x090b15,0x1d1b22);
@@ -1199,6 +1375,7 @@ class Realm extends Phaser.Scene{
     if(!auto){ this.tweens.killTweensOf(this.castle); this.castle.setScale(1); this.tweens.add({targets:this.castle,scaleX:1.02,scaleY:0.985,duration:60,yoyo:true}); }
   }
   burst(x,y,n){ this.coins.explode(n,x,y); this.sparks.explode(Math.ceil(n/2),x,y); }
+  questPing(){ this.sparks.setParticleTint(0xc7a8f0); this.sparks.explode(10,690,90); }
   crystalPing(e){ this.sparks.setParticleTint(HEX[e]); this.sparks.explode(6,546,280); }
   update(time,delta){
     const t=time/1000;
@@ -1209,7 +1386,7 @@ class Realm extends Phaser.Scene{
     const arc=(u)=>({x:-30+u*780+0*u, y:285-245*Math.sin(Math.PI*u)});
     if(d.day){ const a=arc(d.u); this.sun.setVisible(true).setPosition(a.x,a.y); this.moon.setVisible(false); }
     else { const a=arc(d.u); this.moon.setVisible(true).setPosition(a.x,a.y); this.sun.setVisible(false); }
-    const sig=BUILDINGS.map(b=>Math.min(owned(b.id),100)).join()+'|'+S.mine;
+    const sig=BUILDINGS.map(b=>Math.min(owned(b.id),100)).join()+'|'+S.mine+'|'+S.story.met;
     if(sig!==this.sig){ this.sig=sig; this.drawScenery(); }
     const total=BUILDINGS.reduce((a,b)=>a+owned(b.id),0), lit=Math.min(WINDOWS.length,1+Math.floor(total/4));
     if(lit!==this.lit){ this.lit=lit; this.drawWindows(lit); }
@@ -1218,6 +1395,8 @@ class Realm extends Phaser.Scene{
     if(this.wheel.visible) this.wheel.rotation=t*0.8;
     if(S.mine) this.crystals.setAlpha(0.75+0.25*Math.sin(t*2));
     if(this.orb.visible){ const p=0.5+0.5*Math.sin(t*2.4); this.orbGlow.setScale(1+0.4*p).setAlpha(0.18+0.2*p); }
+    this.halls.rotation=t*0.6;
+    const qm=S.story.met&&S.quest&&(S.quest.state==='offered'||questDone(S.quest)); this.qMark.setVisible(!!qm).setY(246-Math.abs(Math.sin(t*3))*5);
     if(this.dragon.visible){ const a=t*0.22; this.dragon.setPosition(360+310*Math.sin(a),78+22*Math.sin(t*0.9)); this.dragon.setFlipX(Math.cos(a)>0); }
     // Hero's lantern walks out to the expedition and back
     if(S.exp){ const l=LOCS.find(x=>x.id===S.exp.id), p=Math.min(1,Math.max(0,(now()-S.exp.start)/(S.exp.end-S.exp.start)));
@@ -1487,7 +1666,9 @@ function start(data){
   buildRows(); wireUI();
   const lastB=S.chron.length&&BUILDINGS.find(b=>b.id===S.chron[S.chron.length-1]);
   chronicle(lastB?lastB.chron:'Your keep stands alone on the hill. Tap it to collect the tithe, and send your hero into Whisperwood.');
+  if(!S.story.intro&&S.life>0) S.story.intro=true;
   tick(); refresh();
+  if(!S.story.intro) setTimeout(introStory,600);
   setInterval(()=>{ tick(); refresh(); },100);
   setInterval(save,3000);
   const boot=()=>{ if(game) return; game=new Phaser.Game({type:Phaser.AUTO,parent:'realm',width:W*Z,height:H*Z,backgroundColor:'#0b0d1a',

@@ -25,10 +25,14 @@ Opened and deepened with gold and materials. Each gallery adds an element and di
 | 4 | The Heartvein | 2M gold, 80 iron, 40 tin | all four | 9s |
 
 ```
-secondsPerCrystal = baseTime / (pickaxeCrystalMult × (1 + 0.1 × wizardTowers) × (1 + relicMineBonus))
+secondsPerCrystal = baseTime / (pickaxeCrystalMult × (1 + 0.1 × apprenticeHalls) × (1 + relicMineBonus))
 ```
 
 Each crystal is a random element from those the current depth yields. The mine resets on ascension.
+
+## Arthrex
+
+The court sorcerer explains crystals after your first expedition and gives you 10 of each. He then sets errands that pay in crystals. See [Story and Arthrex](story.md).
 
 ## Spells
 

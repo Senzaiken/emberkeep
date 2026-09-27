@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Story and Arthrex.** An opening card for new games. After the first expedition, **Arthrex, the court sorcerer**, explains crystals and gives 10 of each. He then offers errands (walk a region, slay foes, bring supplies, tap gold, find a relic) that pay in crystals and gold. His spire always stands on the east grounds: tap it to visit him. The "Wizard Tower" holding is now **Apprentice Hall**. See [Story and Arthrex](story.md).
 - **Expeditions cost health.** Setting out costs health by region (10 / 15 / 22 / 30 / 45), on top of foe damage. The old "25% health to depart" rule is replaced by "more health than the trip costs".
 - **Crystal quick actions.** **Mend** (1 Verdant: +50% health) and **Hasten** (1 Storm: halve the remaining trip, once per trip) are now buttons under the health bar. Mending Light is no longer a spell to learn.
 - **iPhone top edge fix.** Opaque status bar for the home-screen app, a solid strip behind the top safe area, and more space above the header, so the top of the game no longer fades under the clock.

@@ -36,6 +36,9 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `exp` | Current expedition or `null`: `{id, start, end, beats[], events[], haul{}, blessed, seq}`. Each beat is `{id, t, k, r, n, done, tap, bonus?, foe?}`, and each event is `{id, t, deadline, done, choice}`. Old saves with only `{id, start, end}` are rebuilt into a timeline on load. |
 | `hp` | Hero health |
 | `relics` | Relic levels, by id |
+| `story` | `{intro, met}`: seen the opening, met Arthrex |
+| `quest`, `questNext` | Arthrex's current errand (or `null`) and when the next one is offered |
+| `stats` | Lifetime counters for errands: `trips{region}`, `foes`, `tapGold`, `relics` |
 | `mine`, `mineAcc` | Crystal Mine depth and progress toward the next crystal |
 | `taps`, `chron`, `last` | Tap count, chronicle flags, last tick timestamp |
 
