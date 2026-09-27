@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0c19"/><stop offset="1" stop-color="#2c2640"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.55" stop-color="#f1e6c8" stop-opacity="0.35"/><stop offset="1" stop-color="#f1e6c8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ember" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffb070" stop-opacity="0.9"/><stop offset="1" stop-color="#e8744a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <circle cx="256" cy="206" r="190" fill="url(#moonGlow)"/>
+  <circle cx="256" cy="206" r="128" fill="#f1e6c8"/>
+  <circle cx="216" cy="170" r="16" fill="#dcd0ad"/><circle cx="300" cy="236" r="12" fill="#dcd0ad"/><circle cx="292" cy="150" r="8" fill="#dcd0ad"/>
+  <!-- hills -->
+  <path d="M0 380 Q 128 340 256 372 T 512 360 V512 H0Z" fill="#1a1d31"/>
+  <!-- castle -->
+  <g fill="#161a2b">
+    <rect x="96" y="232" width="76" height="220"/>
+    <rect x="340" y="232" width="76" height="220"/>
+    <rect x="96" y="212" width="18" height="24"/><rect x="125" y="212" width="18" height="24"/><rect x="154" y="212" width="18" height="24"/>
+    <rect x="340" y="212" width="18" height="24"/><rect x="369" y="212" width="18" height="24"/><rect x="398" y="212" width="18" height="24"/>
+    <rect x="150" y="296" width="212" height="156"/>
+    <rect x="150" y="276" width="22" height="24"/><rect x="190" y="276" width="22" height="24"/><rect x="300" y="276" width="22" height="24"/><rect x="340" y="276" width="22" height="24"/>
+    <rect x="206" y="196" width="100" height="110"/>
+    <path d="M196 198 L256 116 L316 198Z"/>
+  </g>
+  <rect x="254" y="80" width="4" height="40" fill="#4a4f66"/>
+  <path d="M258 80 L292 90 L258 100Z" fill="#d06a45"/>
+  <path d="M226 452 V396 a30 30 0 0 1 60 0 V452Z" fill="#07080f"/>
+  <!-- lit windows -->
+  <g fill="#f0b44a">
+    <rect x="124" y="264" width="16" height="24"/><rect x="372" y="264" width="16" height="24"/>
+    <rect x="236" y="226" width="14" height="22"/><rect x="262" y="226" width="14" height="22"/>
+    <rect x="124" y="320" width="16" height="24"/><rect x="186" y="330" width="14" height="22"/>
+  </g>
+  <!-- ember crystal -->
+  <circle cx="256" cy="300" r="46" fill="url(#ember)"/>
+  <path d="M256 262 L278 300 L256 338 L234 300Z" fill="#e8744a"/>
+  <path d="M256 262 L278 300 L256 300Z" fill="#ffb07a"/>
+  <path d="M256 300 L234 300 L256 338Z" fill="#b84a2a"/>
+</svg>
