@@ -25,7 +25,7 @@ Opened and deepened with gold and materials. Each gallery adds an element and di
 | 4 | The Heartvein | 2M gold, 80 iron, 40 tin | all four | 9s |
 
 ```
-secondsPerCrystal = baseTime / (pickaxeCrystalMult × (1 + 0.1 × wizardTowers))
+secondsPerCrystal = baseTime / (pickaxeCrystalMult × (1 + 0.1 × wizardTowers) × (1 + relicMineBonus))
 ```
 
 Each crystal is a random element from those the current depth yields. The mine resets on ascension.
@@ -37,9 +37,10 @@ Spells must be **learned individually** (a one-time cost in gold and crystals). 
 | Spell | Learn cost | Reagents per cast | Effect |
 |---|---|---|---|
 | Midas Touch | 300 gold, 3 Ember | 1 Ember | Taps earn ×10 gold for 20s |
+| Mending Light | 1,500 gold, 3 Verdant | 1 Verdant | Heals the hero for 50% of max health, even on the road |
 | Summon Familiar | 2,500 gold, 3 Storm | 1 Storm | A wisp taps the keep 8×/sec for 20s |
-| Quickened Road | 4,000 gold, 3 Frost, 2 Storm | 1 Frost, 1 Storm | Hero returns from the current expedition at once |
+| Quickened Road | 4,000 gold, 3 Frost, 2 Storm | 1 Frost, 1 Storm | Hero returns at once: road events take their default, the rest of the road's loot is collected, and remaining foes do no harm |
 | Bountiful Harvest | 8,000 gold, 3 Verdant | 1 Verdant, 1 Frost | All holdings produce ×3 for 30s |
 | Dragon's Tithe | 1M gold, 5 of each crystal | 1 of each crystal | Collect 5 minutes of production at once |
 
-A timed spell can't be recast while it's active. Quickened Road can only be cast while the hero is away.
+A timed spell can't be recast while it's active. Quickened Road can only be cast while the hero is away, and Mending Light only when the hero is hurt.

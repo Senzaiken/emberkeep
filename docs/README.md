@@ -10,7 +10,9 @@ Design and technical documentation for Emberkeep, a medieval fantasy idle game. 
 |---|---|
 | [Overview](overview.md) | Concept, core loop, stack, hosting, how we work |
 | [Economy](economy.md) | Gold, tapping, holdings, upgrades, Renown and ascension |
-| [Expeditions](expeditions.md) | Regions, loot, travel time, the hero's lantern |
+| [Expeditions](expeditions.md) | Trip timeline, the Journey view, tap to help, road events, regions |
+| [Hero](hero.md) | Health, damage, defeat, healing, how the hero looks |
+| [Relics](relics.md) | Rare finds, levels, the full collection |
 | [Forge](forge.md) | Hero equipment slots, tiers, recipes and effects |
 | [Magic](magic.md) | Elemental crystals, the Crystal Mine, learning and casting spells |
 | [Day and Night](day-night.md) | The 10-minute cycle and what it affects |

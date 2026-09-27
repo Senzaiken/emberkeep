@@ -15,7 +15,8 @@ When the game resumes after more than 10 seconds away, it credits the time misse
 
 - Gold from holdings (temporary spell boosts don't count toward offline time).
 - Crystals from the Crystal Mine.
-- A finished expedition is collected.
+- The expedition timeline plays forward: beats are collected, foes deal damage, overdue road events take their default, and a finished trip comes home.
+- The hero heals while resting at the keep.
 
 A toast summarises what was earned while away.
 
@@ -32,7 +33,9 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `mat`, `cry` | Materials and crystals |
 | `gear` | Tier per slot: `weapon`, `armor`, `pick` |
 | `known`, `spells` | Learned spell ids; active spell expiry timestamps |
-| `exp` | Current expedition `{id, start, end}` or `null` |
+| `exp` | Current expedition or `null`: `{id, start, end, beats[], events[], haul{}, blessed, seq}`. Each beat is `{id, t, k, r, n, done, tap, bonus?, foe?}`, and each event is `{id, t, deadline, done, choice}`. Old saves with only `{id, start, end}` are rebuilt into a timeline on load. |
+| `hp` | Hero health |
+| `relics` | Relic levels, by id |
 | `mine`, `mineAcc` | Crystal Mine depth and progress toward the next crystal |
 | `taps`, `chron`, `last` | Tap count, chronicle flags, last tick timestamp |
 

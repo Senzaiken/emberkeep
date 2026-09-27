@@ -110,7 +110,59 @@
   .asc-actions .act{min-width:180px;}
   .reset{margin-top:28px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;}
 
-  #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:max-content;max-width:min(480px,calc(100% - 32px));
+  /* hero health */
+  .hp-row{display:flex;justify-content:space-between;align-items:baseline;width:100%;gap:8px;}
+  .hp-row span:last-child{font-size:13px;color:var(--ink);}
+  .hp-bar{width:100%;height:6px;border-radius:3px;background:#2a1c22;overflow:hidden;}
+  #hpFill{height:100%;width:100%;background:#d0584a;transition:width .3s;}
+  #hpFill.low{background:#e0453a;}
+
+  /* realm canvas + view switch */
+  .realm-wrap{position:relative;}
+  .view-toggle{position:absolute;top:8px;right:8px;display:flex;border:1px solid rgba(236,226,200,.25);border-radius:6px;overflow:hidden;background:rgba(10,12,25,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:1;}
+  .view-toggle button{font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#cfc6ad;background:transparent;border:0;padding:5px 10px;cursor:pointer;}
+  .view-toggle button[aria-pressed="true"]{background:rgba(227,173,69,.9);color:#1a1408;}
+  .view-toggle button:disabled{opacity:.4;cursor:default;}
+
+  /* compact bar shown once the header scrolls away */
+  .minibar{position:fixed;left:0;right:0;top:0;z-index:4;background:rgba(16,19,32,.94);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);transform:translateY(-110%);transition:transform .2s ease;}
+  .minibar.on{transform:none;}
+  .minibar-in{max-width:560px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:10px;}
+  .minibar img{width:28px;height:28px;border-radius:7px;flex:none;}
+  .mb-gold{font-family:var(--display);font-size:22px;line-height:1;color:var(--gold-hi);font-variant-numeric:tabular-nums;}
+  .mb-rates{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mb-main{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .mb-clock{margin-left:auto;text-align:right;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .mb-clock b{display:block;font-family:var(--display);font-weight:400;font-size:15px;color:var(--ink);}
+  body.mini #toast{top:calc(12px + env(safe-area-inset-top,0px) + var(--mini-h,46px));}
+  body.mini .tabs{top:calc(env(safe-area-inset-top,0px) + var(--mini-h,46px));}
+  @media (prefers-reduced-motion: reduce){ .minibar{transition:none;} }
+
+  /* road event card */
+  .event{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(520px,calc(100% - 32px));z-index:6;
+    background:var(--panel);border:1px solid var(--gold-deep);border-radius:12px;padding:14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.55);}
+  .ev-title{font-family:var(--display);font-size:22px;line-height:1.15;margin-top:2px;}
+  .ev-text{margin:4px 0 10px;color:var(--muted);font-size:15px;}
+  .ev-opts{display:flex;flex-direction:column;gap:8px;}
+  .ev-opts .act{flex-direction:row;justify-content:space-between;gap:10px;min-width:0;width:100%;text-align:left;}
+  .ev-opts .act span{font-size:15px;}
+  .ev-opts .act small{text-transform:none;letter-spacing:0;font-size:12px;text-align:right;}
+  .act.quiet{background:transparent;color:var(--ink);border-color:var(--line);}
+  .ev-timer{height:4px;border-radius:2px;background:var(--panel-2);overflow:hidden;margin-top:12px;}
+  #evFill{height:100%;background:var(--gold);}
+  .ev-default{font-size:12px;color:var(--muted);margin-top:6px;}
+
+  /* relic book */
+  .relics{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+  .relic{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:3px;}
+  .relic b{font-family:var(--display);font-weight:400;font-size:16px;line-height:1.15;}
+  .relic span{font-size:12px;color:var(--muted);}
+  .relic .pips{letter-spacing:2px;color:var(--gold);font-size:11px;}
+  .relic.found{border-color:var(--gold-deep);}
+  .relic:not(.found) b{color:var(--muted);}
+
+  #toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:max-content;max-width:min(480px,calc(100% - 32px));
     background:var(--panel-2);border:1px solid var(--gold-deep);color:var(--ink);padding:10px 16px;border-radius:8px;font-size:15px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.4);}
   @media (max-width:420px){ .gear{grid-template-columns:1fr;} .top{grid-template-columns:1fr;gap:8px;} }
   @media (prefers-reduced-motion: reduce){ .chron{transition:none;} }
@@ -118,8 +170,16 @@
 </head>
 <body>
 
+<div class="minibar" id="minibar" aria-hidden="true">
+  <div class="minibar-in">
+    <img src="icons/icon-180.png" alt="">
+    <div class="mb-main"><span class="mb-gold" id="mbGold">0</span><span class="mb-rates" id="mbRates"></span></div>
+    <div class="mb-clock" id="mbClock"></div>
+  </div>
+</div>
+
 <div class="wrap">
-  <header class="top">
+  <header class="top" id="topHeader">
     <div>
       <div class="brand">Emberkeep</div>
       <div id="gold" class="gold">0</div>
@@ -130,13 +190,21 @@
       <span class="label">Your hero</span>
       <span class="exp-line" id="expLine">Resting at the keep</span>
       <div class="exp-bar"><div id="expFill"></div></div>
+      <div class="hp-row"><span class="label">Health</span><span id="hpTxt" class="num"></span></div>
+      <div class="hp-bar"><div id="hpFill"></div></div>
       <div id="buffs" class="buffs"></div>
     </div>
   </header>
 
   <div class="stock" id="stock"></div>
 
-  <div id="realm" role="button" aria-label="Your keep. Tap to collect gold."></div>
+  <div class="realm-wrap">
+    <div id="realm" role="button" aria-label="Your keep. Tap to collect gold."></div>
+    <div class="view-toggle" id="viewToggle">
+      <button id="vKeep" data-view="keep" aria-pressed="true">Keep</button>
+      <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
+    </div>
+  </div>
   <p id="chron" class="chron"></p>
 
   <nav class="tabs" role="tablist">
@@ -168,6 +236,8 @@
   <section id="p-explore" class="panel" hidden>
     <div class="panel-head"><span class="label">Expeditions</span><span class="label" id="expNote"></span></div>
     <div id="lList" class="list"></div>
+    <div class="panel-head sub"><span class="label">Relics</span><span class="label num" id="relicCount"></span></div>
+    <div class="relics" id="relicGrid"></div>
   </section>
 
   <section id="p-forge" class="panel" hidden>
@@ -204,6 +274,14 @@
   </section>
 </div>
 <div id="toast" hidden></div>
+<div class="event" id="eventCard" hidden role="dialog" aria-labelledby="evTitle">
+  <div class="label" id="evWhere"></div>
+  <div class="ev-title" id="evTitle"></div>
+  <p class="ev-text" id="evText"></p>
+  <div class="ev-opts" id="evOpts"></div>
+  <div class="ev-timer"><div id="evFill"></div></div>
+  <div class="ev-default" id="evDefault"></div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
 <script>
@@ -263,15 +341,84 @@ const GEAR={
     {name:'Iron Pick',cost:{gold:2.5e5,wood:10,iron:30}},
   ]},
 };
+const RES_HEX={wood:'#c89a6a',stone:'#c3c3cc',copper:'#e39a66',tin:'#dfe4ea',iron:'#a9b3c1',gold:'#f6cf6a'};
 const WEAPON_TAP=[1,2,4,8,16], PICK_ORE=[1,1.25,1.5,2,2.5], PICK_CRY=[1,1.5,2.25,3.5,5];
 
 const LOCS=[
-  {id:'wood',name:'Whisperwood',dur:20,danger:0,dir:-1,desc:'Old oaks at the western edge of the realm.',loot:{wood:[4,7],stone:[0,2]}},
-  {id:'quarry',name:'Greystone Quarry',dur:45,danger:0,dir:-1,desc:'Abandoned cuttings above the river.',loot:{stone:[5,8],copper:[1,3]}},
-  {id:'fen',name:'Copperfen Hills',dur:90,danger:1,dir:1,desc:'Green-streaked rock and sucking bog.',loot:{copper:[5,9],tin:[2,5],stone:[2,4]}},
-  {id:'deep',name:'Ironroot Deep',dur:180,danger:2,dir:1,desc:'Goblin tunnels thick with ore. Crystals glint in the dark.',loot:{iron:[5,9],tin:[1,3]},cry:[1,2]},
-  {id:'caldera',name:'Shattered Caldera',dur:360,danger:3,dir:1,desc:'A dead volcano veined with raw elemental crystal.',loot:{iron:[8,14],copper:[4,8]},cry:[3,5]},
+  {id:'wood',name:'Whisperwood',dur:20,danger:0,dir:-1,dmg:6,relic:0.06,foes:['boar','wolf'],desc:'Old oaks at the western edge of the realm.',loot:{wood:[4,7],stone:[0,2]}},
+  {id:'quarry',name:'Greystone Quarry',dur:45,danger:0,dir:-1,dmg:8,relic:0.08,foes:['wolf','bandit'],desc:'Abandoned cuttings above the river.',loot:{stone:[5,8],copper:[1,3]}},
+  {id:'fen',name:'Copperfen Hills',dur:90,danger:1,dir:1,dmg:12,relic:0.10,foes:['lurker','goblin'],desc:'Green-streaked rock and sucking bog.',loot:{copper:[5,9],tin:[2,5],stone:[2,4]}},
+  {id:'deep',name:'Ironroot Deep',dur:180,danger:2,dir:1,dmg:16,relic:0.12,foes:['goblin','bat'],desc:'Goblin tunnels thick with ore. Crystals glint in the dark.',loot:{iron:[5,9],tin:[1,3]},cry:[1,2]},
+  {id:'caldera',name:'Shattered Caldera',dur:360,danger:3,dir:1,dmg:22,relic:0.15,foes:['imp','salamander'],desc:'A dead volcano veined with raw elemental crystal.',loot:{iron:[8,14],copper:[4,8]},cry:[3,5]},
 ];
+const LOC=Object.fromEntries(LOCS.map(l=>[l.id,l]));
+const FOE_NAMES={boar:'Wild Boar',wolf:'Grey Wolf',bandit:'Bandit',lurker:'Bog Lurker',goblin:'Goblin',bat:'Cave Bat',imp:'Fire Imp',salamander:'Salamander'};
+
+// Relics: found on expeditions, kept forever, duplicates raise the level (max 5)
+const RELIC_MAX=5;
+const RELICS=[
+  {id:'wolftooth',name:'Wolf-Tooth Amulet',region:'wood',fx:{wood:0.15}},
+  {id:'acorn',name:'Acorn of the Elder Oak',region:'wood',fx:{gold:0.04}},
+  {id:'horn',name:'Hunter\u2019s Horn',region:'wood',fx:{speed:0.04}},
+  {id:'plumb',name:'Mason\u2019s Plumb-Bob',region:'quarry',fx:{stone:0.15}},
+  {id:'fossil',name:'Fossil Idol',region:'quarry',fx:{tap:0.10}},
+  {id:'crown',name:'Cracked Crown',region:'quarry',fx:{gold:0.05}},
+  {id:'torc',name:'Bog-Iron Torc',region:'fen',fx:{copper:0.15}},
+  {id:'lens',name:'Tinker\u2019s Lens',region:'fen',fx:{tin:0.15}},
+  {id:'wisp',name:'Will-o\u2019-Wisp Jar',region:'fen',fx:{mine:0.10}},
+  {id:'signet',name:'Goblin King\u2019s Signet',region:'deep',fx:{iron:0.15}},
+  {id:'heart',name:'Deepstone Heart',region:'deep',fx:{cry:0.20}},
+  {id:'lamp',name:'Old Miner\u2019s Lamp',region:'deep',fx:{hp:15}},
+  {id:'scale',name:'Salamander Scale',region:'caldera',fx:{cry:0.20}},
+  {id:'feather',name:'Phoenix Feather',region:'caldera',fx:{gold:0.08}},
+  {id:'mirror',name:'Obsidian Mirror',region:'caldera',fx:{relic:0.25}},
+];
+const FX_TEXT={gold:'all gold',tap:'tap gold',wood:'wood',stone:'stone',copper:'copper',tin:'tin',iron:'iron',speed:'faster expeditions',mine:'crystal mine speed',cry:'crystals from expeditions',relic:'relic find chance',hp:'max health'};
+const fxLine=(fx,lvl)=>Object.entries(fx).map(([k,v])=>k==='hp'?`+${v*lvl} ${FX_TEXT[k]}`:`+${Math.round(v*lvl*100)}% ${FX_TEXT[k]}`).join(', ');
+
+// Road events: a choice card mid-trip. If nobody chooses, the default (always free and safe) is taken.
+const EVENT_WINDOW=20000;
+const EVENTS=[
+  {id:'toll',title:'Goblin Toll Bridge',text:'Three goblins squat on a rickety bridge and demand a toll.',def:2,opts:[
+    {label:'Pay the toll',sub:()=>`${fmt(tollCost())} gold`,can:()=>S.gold>=tollCost(),run:()=>{ S.gold-=tollCost(); return 'You pay. The goblins bow mockingly and let you pass.'; }},
+    {label:'Fight them',sub:()=>`${Math.round(fightChance()*100)}% to win · risk of wounds`,run:l=>{
+      if(Math.random()<fightChance()){ const g=tollCost()*3, k=primary(l), n=Math.max(2,Math.ceil(tripTotal(k)*0.3)); earn(g); addRes(k,n); tally('gold',g); tally(k,n);
+        return `Victory! Their stash holds ${fmt(g)} gold and ${n} ${NAMES[k]}.`; }
+      const d=hurt(maxHP()*0.2); if(S.exp) extendTrip(10); return `The goblins drive you off. You lose ${d} health and take the long way round.`; }},
+    {label:'Wait them out',sub:()=>'+15s',run:()=>{ extendTrip(15); return 'You wait in the reeds until the goblins wander off.'; }},
+  ]},
+  {id:'vein',regions:['quarry','fen','deep','caldera'],title:'A Glinting Vein',text:'Ore glitters in a rock face just off the path.',def:1,opts:[
+    {label:'Mine it',sub:()=>'+20s · extra ore',run:l=>{ const k=primary(l), n=Math.max(3,Math.ceil(tripTotal(k)*0.4)); extendTrip(20,splitBeats('res',k,n,3)); return 'You set down your pack and swing the pick.'; }},
+    {label:'Press on',sub:()=>'No delay',run:()=>'You mark the spot and press on.'},
+  ]},
+  {id:'oak',regions:['wood'],title:'A Fallen Giant',text:'A storm-felled oak blocks the trail. Good timber, if you have the time.',def:1,opts:[
+    {label:'Chop it up',sub:()=>'+15s · extra wood',run:()=>{ const n=Math.max(3,Math.ceil(tripTotal('wood')*0.5)); extendTrip(15,splitBeats('res','wood',n,3)); return 'You roll up your sleeves.'; }},
+    {label:'Climb over',sub:()=>'No delay',run:()=>'You clamber over the trunk.'},
+  ]},
+  {id:'camp',title:'Abandoned Camp',text:'A cold fire pit and scattered packs. Someone left in a hurry.',def:1,opts:[
+    {label:'Search the packs',sub:()=>'A relic, a purse… or an ambush',run:l=>{ const r=Math.random();
+      if(r<0.3){ const rel=findRelic(l.id); if(rel) return `Wrapped in oilcloth: the ${rel.name}!`; }
+      if(r<0.65){ const g=Math.max(40,tapValue()*20+gps(false)*15); earn(g); tally('gold',g); return `A forgotten purse with ${fmt(g)} gold.`; }
+      const d=hurt(maxHP()*0.15); return `Bandits! You fight your way clear, losing ${d} health.`; }},
+    {label:'Leave it',sub:()=>'Safe',run:()=>'You leave the camp to its ghosts.'},
+  ]},
+  {id:'traveller',title:'Wounded Traveller',text:'A merchant lies by the road, clutching a wounded leg.',def:2,opts:[
+    {label:'Tend the wound',sub:()=>'1 Verdant crystal',can:()=>S.cry.verdant>=1,run:l=>{ S.cry.verdant--; const g=Math.max(100,tapValue()*40+gps(false)*30); earn(g); tally('gold',g);
+      const rel=Math.random()<0.4?findRelic(l.id):null; return `The merchant pays you ${fmt(g)} gold${rel?` and presses the ${rel.name} into your hand`:''}.`; }},
+    {label:'Share your rations',sub:()=>'+10s',run:()=>{ extendTrip(10); const g=Math.max(30,tapValue()*10+gps(false)*8); earn(g); tally('gold',g); return `Grateful, the merchant gives you ${fmt(g)} gold.`; }},
+    {label:'Walk on',sub:()=>'Safe',run:()=>'You leave the merchant to the next traveller.'},
+  ]},
+  {id:'seep',regions:['fen','deep','caldera'],title:'Crystal Seep',text:'Raw elemental crystal bleeds through a crack in the stone.',def:1,opts:[
+    {label:'Harvest it',sub:()=>'+25s · 2–4 crystals',run:()=>{ const n=rnd(2,4), b=[]; for(let i=0;i<n;i++) b.push({k:'cry',r:CRYS[rnd(0,3)],n:1}); extendTrip(25,b); return 'You work the crystals free, one by one.'; }},
+    {label:'Leave it',sub:()=>'No delay',run:()=>'You leave the seep undisturbed.'},
+  ]},
+  {id:'shrine',title:'Wayside Shrine',text:'A mossy shrine to an old god. Offerings lie at its base.',def:2,opts:[
+    {label:'Leave an offering',sub:()=>`${fmt(offerCost())} gold · +50% loot for the rest of the trip`,can:()=>S.gold>=offerCost()&&!S.exp?.blessed,run:()=>{ S.gold-=offerCost(); S.exp.blessed=true; return 'Warmth spreads through you. The old god is pleased.'; }},
+    {label:'Kneel and rest',sub:()=>'+10s · heal 30% health',run:()=>{ extendTrip(10); const h=heal(maxHP()*0.3); return `You rest in the shrine\u2019s shade and recover ${h} health.`; }},
+    {label:'Pass by',sub:()=>'Safe',run:()=>'You nod to the shrine and pass by.'},
+  ]},
+];
+const EVDEF=Object.fromEntries(EVENTS.map(e=>[e.id,e]));
 
 const MINE=[
   {name:'Open the Crystal Mine',done:'Crystal Mine',cost:{gold:250,wood:20,stone:15},els:['ember','frost'],every:30},
@@ -283,6 +430,7 @@ const MINE=[
 const SPELLS=[
   {id:'midas',name:'Midas Touch',learn:{gold:300,ember:3},cast:{ember:1},dur:20,text:'Taps earn ×10 gold for 20 seconds.'},
   {id:'familiar',name:'Summon Familiar',learn:{gold:2500,storm:3},cast:{storm:1},dur:20,text:'A wisp taps the keep 8 times a second for 20 seconds.'},
+  {id:'mend',name:'Mending Light',learn:{gold:1500,verdant:3},cast:{verdant:1},dur:0,text:'Heals your hero for half their health, even on the road.'},
   {id:'road',name:'Quickened Road',learn:{gold:4000,frost:3,storm:2},cast:{frost:1,storm:1},dur:0,text:'Your hero returns from their expedition at once, haul in hand.'},
   {id:'harvest',name:'Bountiful Harvest',learn:{gold:8000,verdant:3},cast:{verdant:1,frost:1},dur:30,text:'Every building produces ×3 for 30 seconds.'},
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
@@ -292,9 +440,9 @@ const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,last:Date.now()});
-let S, upSet, qty=1, scene=null, game=null;
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear)}); }
+  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},last:Date.now()});
+let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -314,12 +462,12 @@ function canPay(c){ return Object.entries(c).every(([k,v])=>res(k)>=v); }
 function pay(c){ for(const [k,v] of Object.entries(c)){ if(k==='gold') S.gold-=v; else addRes(k,-v); } }
 
 function bMult(b){ let m=1; for(let i=0;i<5;i++) if(has(b.id+i)) m*=2; return m; }
-function bRate(b){ return b.rate*bMult(b)*renownMult(); }
+function bRate(b){ return b.rate*bMult(b)*goldMult(); }
 function gps(withSpells=true){ let g=0; for(const b of BUILDINGS) g+=owned(b.id)*bRate(b); if(withSpells&&active('harvest')) g*=3; return g; }
 function tapValue(){
   let flat=1,mult=1,pct=0;
   for(const t of TAPS) if(has(t.id)){ if(t.flat)flat+=t.flat; if(t.mult)mult*=t.mult; if(t.pct)pct+=t.pct; }
-  let v=flat*mult*WEAPON_TAP[S.gear.weapon]*renownMult()+gps()*pct;
+  let v=flat*mult*WEAPON_TAP[S.gear.weapon]*goldMult()*(1+relicBonus('tap'))+gps()*pct;
   if(active('midas')) v*=10;
   return v;
 }
@@ -353,25 +501,114 @@ function forge(slot){
   pay(t.cost); S.gear[slot]++; chronicle(`The smith hands over a ${t.name}.`); refresh();
 }
 
-// Expeditions
-function expDuration(l){ return l.dur*(1-0.08*S.gear.armor); }
-function lootRange(l,k,[a,b]){ const m = k==='wood' ? 1+0.25*S.gear.weapon : PICK_ORE[S.gear.pick]; return [Math.round(a*m),Math.round(b*m)]; }
-function depart(id){
-  const l=LOCS.find(x=>x.id===id); if(!l||S.exp||S.gear.armor<l.danger) return;
-  const t=now(); S.exp={id,start:t,end:t+expDuration(l)*1000}; refresh();
+// Hero health
+const HP_REGEN_FULL=240, DEPART_MIN=0.25;
+const maxHP=()=>100+25*S.gear.armor+relicBonus('hp');
+function heal(n){ const before=S.hp; S.hp=Math.min(maxHP(),S.hp+n); return Math.round(S.hp-before); }
+function hurt(n){ n=Math.max(1,Math.round(n)); S.hp=Math.max(0,S.hp-n); journey&&journey.hurtFx(n); if(S.hp<=0&&S.exp) finishExp(true); return n; }
+const canTravel=()=>S.hp>=maxHP()*DEPART_MIN;
+
+// Relics
+const relicLvl=id=>S.relics[id]||0;
+function relicBonus(type){ let b=0; for(const r of RELICS){ const l=relicLvl(r.id); if(l&&r.fx[type]) b+=r.fx[type]*l; } return b; }
+const goldMult=()=>renownMult()*(1+relicBonus('gold'));
+function findRelic(region){
+  const pool=RELICS.filter(r=>r.region===region&&relicLvl(r.id)<RELIC_MAX); if(!pool.length) return null;
+  const r=pool[rnd(0,pool.length-1)]; S.relics[r.id]=relicLvl(r.id)+1;
+  chronicle(`Relic found: ${r.name}${relicLvl(r.id)>1?`, now level ${relicLvl(r.id)}`:''}.`); return r;
 }
-function returnHome(){
-  const l=LOCS.find(x=>x.id===S.exp.id); S.exp=null;
-  const got=[];
-  for(const [k,r] of Object.entries(l.loot)){ const [a,b]=lootRange(l,k,r); const n=rnd(a,b); if(n>0){ S.mat[k]+=n; got.push(`${n} ${NAMES[k]}`);} }
-  if(l.cry){ const n=rnd(...l.cry), tally={}; for(let i=0;i<n;i++){ const c=CRYS[rnd(0,3)]; S.cry[c]++; tally[c]=(tally[c]||0)+1; }
-    for(const [c,v] of Object.entries(tally)) got.push(`${v} ${NAMES[c]} crystal${v>1?'s':''}`); }
-  toast(`Back from ${l.name}: ${got.join(', ')||'nothing this time'}.`);
+
+// Expeditions: each trip is a timeline of beats (loot, foes, chests) and road events, all timestamped,
+// so it plays out the same whether you watch it, look away, or close the game.
+const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=rnd(0,i); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+function yieldMult(k){ return (k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick])*(1+relicBonus(k)); }
+function lootRange(l,k,[a,b]){ const m=yieldMult(k); return [Math.round(a*m),Math.round(b*m)]; }
+function expDuration(l){ return l.dur*(1-0.08*S.gear.armor)*(1-relicBonus('speed')); }
+function foeDamage(l){ return l.dmg*Math.max(0.35,1-0.12*S.gear.armor-0.06*S.gear.weapon); }
+const primary=l=>Object.keys(l.loot)[0];
+const tripTotal=k=>S.exp?S.exp.beats.filter(b=>b.r===k&&b.k!=='chest').reduce((a,b)=>a+b.n,0):0;
+const tollCost=()=>Math.max(20,Math.round(gps(false)*15+tapValue()*10));
+const offerCost=()=>Math.max(30,Math.round(gps(false)*20+tapValue()*12));
+const fightChance=()=>{ const l=S.exp?LOC[S.exp.id]:LOCS[0]; return Math.min(0.95,Math.max(0.1,0.5+0.15*(S.gear.weapon-l.danger))); };
+function splitBeats(k,r,n,parts){ const out=[]; parts=Math.max(1,Math.min(parts,n)); for(let i=0;i<parts;i++) out.push({k,r,n:Math.floor(n/parts)+(i<n%parts?1:0)}); return out; }
+function stamp(e,b,t){ b.t=Math.round(t); b.id=++e.seq; b.v=rnd(0,9); b.done=false; b.tap=false; if(b.k==='foe') b.foe=LOC[e.id].foes[rnd(0,LOC[e.id].foes.length-1)]; return b; }
+function makeExp(id,start,end){
+  const l=LOC[id], dur=end-start, e={id,start,end,beats:[],events:[],haul:{},blessed:false,seq:0};
+  const totals=[]; for(const [k,r] of Object.entries(l.loot)){ const [a,b]=lootRange(l,k,r); const n=rnd(a,b); if(n>0) totals.push([k,n]); }
+  const B=Math.max(3,Math.min(48,Math.round(dur/5000))), sum=totals.reduce((a,[,n])=>a+n,0)||1, list=[];
+  for(const [k,n] of totals){ const c=Math.max(1,Math.min(n,Math.round(B*n/sum)));
+    splitBeats('res',k,n,c).forEach(b=>{ if(Math.random()<0.2) b.k='foe'; list.push(b); }); }
+  if(l.cry){ let c=rnd(...l.cry)*(1+relicBonus('cry')); c=Math.floor(c)+(Math.random()<c%1?1:0); for(let i=0;i<c;i++) list.push({k:'cry',r:CRYS[rnd(0,3)],n:1}); }
+  if(Math.random()<0.15) list.push({k:'chest',r:'gold',n:0});
+  shuffle(list).forEach((b,i)=>{ e.beats.push(stamp(e,b,start+dur*(0.08+0.84*(i+0.5)/list.length))); });
+  const secs=dur/1000, n=secs<40?0:secs<120?1:secs<300?2:3;
+  const pool=shuffle(EVENTS.filter(ev=>!ev.regions||ev.regions.includes(id)));
+  for(let i=0;i<n&&i<pool.length;i++){ const t=Math.round(start+dur*(i+1)/(n+1)); e.events.push({id:pool[i].id,t,deadline:t+EVENT_WINDOW,done:false}); }
+  return e;
+}
+function extendTrip(sec,extra){
+  const e=S.exp; if(!e) return; const t=now(), ms=sec*1000;
+  e.beats.forEach(b=>{ if(!b.done&&b.t>t) b.t+=ms; });
+  e.events.forEach(ev=>{ if(!ev.done&&ev.t>t){ ev.t+=ms; ev.deadline+=ms; } });
+  e.end=Math.max(e.end,t)+ms;
+  (extra||[]).forEach((b,i,arr)=>e.beats.push(stamp(e,b,t+ms*(i+1)/(arr.length+1))));
+}
+function tally(k,n){ if(S.exp) S.exp.haul[k]=(S.exp.haul[k]||0)+n; }
+function canDepart(l){ return !S.exp&&S.gear.armor>=l.danger&&canTravel(); }
+function depart(id){
+  const l=LOC[id]; if(!l||!canDepart(l)) return;
+  const t=now(); S.exp=makeExp(id,t,t+expDuration(l)*1000); setView('journey'); refresh();
+}
+function grantBeat(b,l,safe){
+  b.done=true; const mult=S.exp.blessed?1.5:1;
+  if(b.k==='chest'){ const g=Math.max(50,tapValue()*25+gps(false)*20)*mult*(b.tap?1.5:1); earn(g); tally('gold',g); journey&&journey.grantFx(b,`+${fmt(g)} gold`,'#f6cf6a'); return; }
+  const n=Math.round(b.n*mult)+(b.bonus||0);
+  if(n>0){ addRes(b.r,n); tally(b.r,n); }
+  journey&&journey.grantFx(b,n>0?`+${n} ${NAMES[b.r]}`:'',CRYS.includes(b.r)?'#'+HEX[b.r].toString(16).padStart(6,'0'):RES_HEX[b.r]);
+  if(b.k==='foe'&&!safe) hurt(foeDamage(l)*(b.tap?0.5:1));
+}
+// Tapping an approaching beat in the journey view: extra loot, half damage from foes
+function helpBeat(id){
+  const e=S.exp; if(!e) return null; const b=e.beats.find(x=>x.id===id); if(!b||b.done||b.tap) return null;
+  b.tap=true;
+  if(b.k==='cry') b.bonus=Math.random()<0.35?1:0;
+  else if(b.k!=='chest') b.bonus=Math.max(1,Math.ceil(b.n*0.5));
+  return b;
+}
+function resolveEvent(ev,i,auto){
+  if(ev.done||!S.exp) return; const def=EVDEF[ev.id]; let o=def.opts[i];
+  if(!o||(o.can&&!o.can())){ i=def.def; o=def.opts[i]; }
+  ev.done=true; ev.choice=i; const l=LOC[S.exp.id];
+  const msg=o.run(l); if(msg) toast((auto?`${def.title}: `:'')+msg);
+  eventKey=''; refresh();
+}
+function expTick(t,catchUp){
+  const e=S.exp; if(!e) return; const l=LOC[e.id];
+  for(const ev of e.events) if(!ev.done&&t>=ev.deadline){ resolveEvent(ev,EVDEF[ev.id].def,true); if(!S.exp) return; }
+  for(const b of e.beats){ if(!b.done&&b.t<=t){ grantBeat(b,l,false); if(!S.exp) return; } }
+  if(t>=e.end&&e.events.every(ev=>ev.done)) finishExp(false);
+}
+function finishExp(defeated){
+  const e=S.exp; if(!e) return; const l=LOC[e.id]; S.exp=null;
+  const rel=!defeated&&Math.random()<l.relic*(1+relicBonus('relic'))?findRelic(l.id):null;
+  const got=Object.entries(e.haul).filter(([,n])=>n>0).map(([k,n])=>k==='gold'?`${fmt(n)} gold`:`${fmt(n)} ${NAMES[k]}${CRYS.includes(k)?(n>1?' crystals':' crystal'):''}`).join(', ');
+  toast(defeated?`Your hero was beaten back in ${l.name} and limped home with ${got||'nothing'}.`
+                 :`Back from ${l.name}: ${got||'nothing this time'}.${rel?` Found a relic: ${rel.name}!`:''}`);
+  if(defeated) chronicle(`Your hero was beaten back in ${l.name}. They need rest.`);
   scene&&scene.burst(360,250,12);
+  eventKey=''; if(view==='journey') setTimeout(()=>{ if(!S.exp) setView('keep'); },2500);
+  refresh();
+}
+function quickenRoad(){
+  const e=S.exp; if(!e) return; const l=LOC[e.id];
+  for(const ev of e.events) if(!ev.done) resolveEvent(ev,EVDEF[ev.id].def,true);
+  if(!S.exp) return;
+  for(const b of e.beats) if(!b.done) grantBeat(b,l,true);
+  finishExp(false);
 }
 
 // Crystal mine
-function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))); }
+function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))*(1+relicBonus('mine'))); }
 function digMine(){ const d=MINE[S.mine]; if(!d||!canPay(d.cost)) return; pay(d.cost); S.mine++; chronicle(S.mine===1?'The crystal mine is open. Ember and Frost glitter in the rock.':`Your miners break into ${d.done}.`); refresh(); }
 function mineCrystals(dt){
   if(!S.mine) return;
@@ -383,12 +620,13 @@ function mineCrystals(dt){
 
 // Spells
 function learn(id){ const s=SPELLS.find(x=>x.id===id); if(!s||knows(id)||!canPay(s.learn)) return; pay(s.learn); S.known.push(id); chronicle(`You have learned ${s.name}.`); refresh(); }
-function castable(s){ return knows(s.id) && canPay(s.cast) && !(s.dur&&active(s.id)) && !(s.id==='road'&&!S.exp); }
+function castable(s){ return knows(s.id) && canPay(s.cast) && !(s.dur&&active(s.id)) && !(s.id==='road'&&!S.exp) && !(s.id==='mend'&&S.hp>=maxHP()); }
 function cast(id){
   const s=SPELLS.find(x=>x.id===id); if(!s||!castable(s)) return;
   pay(s.cast);
   if(s.dur) S.spells[id]=now()+s.dur*1000;
-  else if(id==='road') returnHome();
+  else if(id==='road') quickenRoad();
+  else if(id==='mend'){ const h=heal(maxHP()*0.5); toast(`Mending Light restores ${h} health.`); journey&&journey.healFx(); }
   else if(id==='tithe'){ const g=Math.max(gps()*300,tapValue()*60); earn(g); toast(`The dragon brings you ${fmt(g)} gold.`); scene&&scene.burst(360,200,40); }
   refresh();
 }
@@ -397,11 +635,11 @@ function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto) S.taps++; scene&&
 function pendingRenown(){ return Math.floor(Math.sqrt(S.total/1e6)); }
 function ascend(){
   const p=pendingRenown(); if(p<1) return;
-  const keep={renown:S.renown+p,life:S.life,taps:S.taps,known:S.known.slice(),gear:{...S.gear}};
-  S=Object.assign(fresh(),keep); upSet=new Set();
+  const keep={renown:S.renown+p,life:S.life,taps:S.taps,known:S.known.slice(),gear:{...S.gear},relics:{...S.relics}};
+  S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set();
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
-function wipe(){ S=fresh(); upSet=new Set(); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); }
+function wipe(){ S=fresh(); S.hp=maxHP(); upSet=new Set(); setView('keep'); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); }
 
 function tick(){
   const t=now(); let dt=(t-S.last)/1000; S.last=t;
@@ -412,7 +650,9 @@ function tick(){
     const before=CRYS.reduce((a,c)=>a+S.cry[c],0); mineCrystals(dt); const cr=CRYS.reduce((a,c)=>a+S.cry[c],0)-before;
     if(g>=1||cr) toast(`While you were away: ${fmt(g)} gold${cr?` and ${cr} crystal${cr>1?'s':''}`:''}.`);
   } else { earn(gps()*dt); mineCrystals(dt); }
-  if(S.exp&&t>=S.exp.end) returnHome();
+  const wasAway=!!S.exp;
+  expTick(t);
+  if(!S.exp&&!wasAway) heal(maxHP()/HP_REGEN_FULL*dt);
 }
 
 /* ================= FORMAT ================= */
@@ -448,6 +688,7 @@ function buildRows(){
       <div>
         <div class="r-head"><span class="r-name">${l.name}</span><span class="r-tag" id="lt-${l.id}"></span></div>
         <div class="r-desc">${l.desc}</div>
+        <div class="r-meta" id="lf-${l.id}"></div>
         <div id="ll-${l.id}"></div>
       </div>
       <button class="act" id="lb-${l.id}" data-go="${l.id}"><small id="lq-${l.id}">Depart</small><span id="lp-${l.id}"></span></button>
@@ -497,6 +738,31 @@ function renderUpgrades(){
 }
 function badge(id,n){ const b=$(id); b.hidden=!n; b.textContent=n; }
 
+let eventKey='';
+function pendingEvent(){ return S.exp?S.exp.events.find(ev=>!ev.done&&ev.t<=now()):null; }
+function renderEvent(){
+  const ev=pendingEvent(), card=$('eventCard');
+  if(!ev){ card.hidden=true; eventKey=''; return; }
+  const def=EVDEF[ev.id];
+  if(eventKey!==ev.id+ev.t){
+    eventKey=ev.id+ev.t; card.hidden=false;
+    $('evWhere').textContent=`On the road · ${LOC[S.exp.id].name}`;
+    $('evTitle').textContent=def.title; $('evText').textContent=def.text;
+    $('evOpts').innerHTML=def.opts.map((o,i)=>`<button class="act${i===def.def?' quiet':''}" data-ev="${i}" id="evo-${i}"><span>${o.label}</span><small id="evs-${i}"></small></button>`).join('');
+  }
+  def.opts.forEach((o,i)=>{ $('evs-'+i).textContent=o.sub(); $('evo-'+i).disabled=!!(o.can&&!o.can()); });
+  const left=Math.max(0,ev.deadline-now());
+  $('evFill').style.width=(100*left/EVENT_WINDOW)+'%';
+  $('evDefault').textContent=`If you don\u2019t choose within ${Math.ceil(left/1000)}s: ${def.opts[def.def].label.toLowerCase()}.`;
+}
+function setView(v){
+  if(v==='journey'&&!S.exp) v='keep';
+  view=v;
+  $('vKeep').setAttribute('aria-pressed',v==='keep'); $('vJourney').setAttribute('aria-pressed',v==='journey');
+  $('realm').setAttribute('aria-label',v==='keep'?'Your keep. Tap to collect gold.':'Your hero on the road. Tap what lies ahead to help.');
+  if(scene){ scene.scene.setVisible(v==='keep'); scene.input.enabled=v==='keep'; }
+  if(journey) journey.setShown(v==='journey');
+}
 function refresh(){
   $('gold').textContent=fmt(S.gold);
   $('gps').textContent=fmt(gps());
@@ -507,9 +773,20 @@ function refresh(){
   setHTML($('stock'), MATS.map(k=>chip(k,S.mat[k])).join('') + '<span class="sep"></span>' + CRYS.map(k=>chip(k,S.cry[k])).join(''));
 
   // hero status
-  if(S.exp){ const l=LOCS.find(x=>x.id===S.exp.id), left=(S.exp.end-now())/1000, p=1-(S.exp.end-now())/(S.exp.end-S.exp.start);
+  const mhp=maxHP();
+  if(S.exp){ const l=LOC[S.exp.id], left=(S.exp.end-now())/1000, p=1-(S.exp.end-now())/(S.exp.end-S.exp.start);
     $('expLine').textContent=`${l.name} · back in ${fmtTime(Math.max(0,left))}`; $('expFill').style.width=Math.min(100,p*100)+'%'; }
-  else { $('expLine').textContent='Resting at the keep'; $('expFill').style.width='0%'; }
+  else { $('expLine').textContent=S.hp<mhp?`Resting · healed in ${fmtTime((mhp-S.hp)/(mhp/HP_REGEN_FULL))}`:'Rested and ready'; $('expFill').style.width='0%'; }
+  $('hpTxt').textContent=`${Math.ceil(S.hp)} / ${mhp}`;
+  $('hpFill').style.width=(100*S.hp/mhp)+'%'; $('hpFill').classList.toggle('low',S.hp<mhp*DEPART_MIN);
+
+  // compact bar + clock
+  { const d=dayInfo(), txt=`${d.day?'☀':'☾'} ${d.day?'Dusk':'Dawn'} in ${fmtTime(d.left)}`;
+    $('mbGold').textContent=fmt(S.gold); $('mbRates').textContent=`${fmt(gps())}/sec · ${fmt(tapValue())}/tap`;
+    setHTML($('mbClock'),`<b>${d.day?'☀ Day':'☾ Night'}</b>${d.day?'dusk':'dawn'} in ${fmtTime(d.left)}`); }
+  $('vJourney').disabled=!S.exp;
+
+  renderEvent();
   setHTML($('buffs'), SPELLS.filter(s=>s.dur&&active(s.id)).map(s=>`<span class="buff">${s.name} ${Math.ceil((S.spells[s.id]-now())/1000)}s</span>`).join(''));
 
   // buildings
@@ -539,18 +816,25 @@ function refresh(){
   renderUpgrades();
 
   // expeditions
-  $('expNote').textContent=S.gear.armor?`Trips ${S.gear.armor*8}% faster`:'';
+  $('expNote').textContent=S.gear.armor?`Trips ${Math.round((1-expDuration({dur:1}))*100)}% faster`:'';
+  const tooHurt=!canTravel();
   LOCS.forEach(l=>{
     const locked=S.gear.armor<l.danger, busy=!!S.exp, here=S.exp&&S.exp.id===l.id;
     $('l-'+l.id).classList.toggle('locked',locked);
     $('lt-'+l.id).textContent=l.danger?`Danger ${l.danger}`:'Safe';
+    $('lf-'+l.id).textContent=`Foes: ${l.foes.map(f=>FOE_NAMES[f]).join(', ')} · about ${Math.round(foeDamage(l))} damage a hit`;
     const loot=Object.entries(l.loot).map(([k,r])=>{ const [a,b]=lootRange(l,k,r); return `<span class="res" style="--c:var(--${k})"><i></i>${a}–${b} ${NAMES[k]}</span>`; }).join('')
       + (l.cry?`<span class="res cry" style="--c:var(--storm)"><i></i>${l.cry[0]}–${l.cry[1]} random crystals</span>`:'');
     setHTML($('ll-'+l.id), locked?`<div class="r-meta" style="color:var(--bad)">Needs ${GEAR.armor.tiers[l.danger].name} or better</div>`:`<div class="cost">${loot}</div>`);
-    $('lb-'+l.id).disabled=locked||busy;
-    $('lq-'+l.id).textContent=here?'Exploring':'Depart';
-    $('lp-'+l.id).textContent=here?fmtTime(Math.max(0,(S.exp.end-now())/1000)):fmtTime(expDuration(l));
+    const btn=$('lb-'+l.id);
+    if(here){ btn.disabled=view==='journey'; btn.dataset.watch='1'; $('lq-'+l.id).textContent=view==='journey'?'Exploring':'Watch'; $('lp-'+l.id).textContent=fmtTime(Math.max(0,(S.exp.end-now())/1000)); }
+    else { delete btn.dataset.watch; btn.disabled=locked||busy||tooHurt; $('lq-'+l.id).textContent=(!locked&&!busy&&tooHurt)?'Too wounded':'Depart'; $('lp-'+l.id).textContent=fmtTime(expDuration(l)); }
   });
+  const found=RELICS.filter(r=>relicLvl(r.id)).length;
+  $('relicCount').textContent=`${found} / ${RELICS.length} found`;
+  setHTML($('relicGrid'), RELICS.map(r=>{ const lv=relicLvl(r.id);
+    return lv?`<div class="relic found"><b>${r.name}</b><span>${LOC[r.region].name}</span><span style="color:var(--ink)">${fxLine(r.fx,lv)}</span><span class="pips">${'●'.repeat(lv)}${'○'.repeat(RELIC_MAX-lv)}</span></div>`
+             :`<div class="relic"><b>Undiscovered</b><span>${LOC[r.region].name}</span></div>`; }).join(''));
 
   // forge
   setHTML($('gearNow'), Object.entries(GEAR).map(([k,g])=>`<div class="slot"><span class="label">${g.label}</span><b>${g.tiers[S.gear[k]].name}</b><span>${g.effect(S.gear[k])}</span></div>`).join(''));
@@ -630,10 +914,18 @@ function wireUI(){
   document.querySelector('.wrap').addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b||b.disabled) return;
     const d=b.dataset;
-    if(d.buy) buyBuilding(d.buy); else if(d.up) buyUpgrade(d.up); else if(d.go) depart(d.go);
+    if(d.view) setView(d.view);
+    else if(d.ev!==undefined){ const ev=pendingEvent(); if(ev) resolveEvent(ev,+d.ev,false); }
+    else if(d.watch){ setView('journey'); $('realm').scrollIntoView({behavior:'smooth',block:'center'}); refresh(); }
+    else if(d.buy) buyBuilding(d.buy); else if(d.up) buyUpgrade(d.up); else if(d.go) depart(d.go);
     else if(d.forge) forge(d.forge); else if(d.dig) digMine();
     else if(d.spell) knows(d.spell)?cast(d.spell):learn(d.spell);
   });
+  document.body.addEventListener('click',e=>{ const b=e.target.closest('#eventCard button[data-ev]'); if(!b||b.disabled) return; const ev=pendingEvent(); if(ev) resolveEvent(ev,+b.dataset.ev,false); });
+  // compact bar appears once the full header scrolls out of view
+  const mb=$('minibar');
+  new IntersectionObserver(([en])=>{ const on=!en.isIntersecting; mb.classList.toggle('on',on); document.body.classList.toggle('mini',on);
+    document.documentElement.style.setProperty('--mini-h',(mb.querySelector('.minibar-in').offsetHeight)+'px'); },{threshold:0}).observe($('topHeader'));
   confirmButton($('ascendBtn'),$('ascendTxt'),'Found a new dynasty','Tap again to abdicate',ascend);
   confirmButton($('wipeBtn'),$('wipeTxt'),'Start from nothing','Tap again to erase everything',wipe);
   document.addEventListener('visibilitychange',()=>{ if(document.hidden) save(true); else { tick(); refresh(); } });
@@ -715,6 +1007,7 @@ class Realm extends Phaser.Scene{
     this.sparks=this.add.particles(0,0,'spark',{speed:{min:30,max:90},lifespan:600,scale:{start:0.4,end:0},alpha:{start:0.9,end:0},blendMode:'ADD',emitting:false});
     this.floaters=0; this.famAcc=0; this.sig=''; this.lit=-1; this.lightKey='';
     this.input.on('pointerdown',p=>tap(p.worldX,p.worldY,false));
+    this.scene.setVisible(view==='keep'); this.input.enabled=view==='keep';
   }
   L(night,day){ return mixColor(night,day,this.light); }
   drawSky(){
@@ -885,10 +1178,257 @@ class Realm extends Phaser.Scene{
   }
 }
 
+
+/* ================= JOURNEY (side-scrolling expedition view) ================= */
+const SPEED=70, HERO_X=170, GROUND_Y=306, HIT_X=HERO_X+52, HS=1.6, NS=1.45;
+const ARMOR_COL=[0x6a563f,0x7b5b3a,0xb8703f,0xa8843e,0x9aa3b0];
+const WEAPON_COL=[0xe0b48a,0x7a5634,0xd4895a,0xc9a04a,0xc9ced6];
+const PICK_COL=[0xe0b48a,0x9a9aa0,0xd4895a,0xc9a04a,0xc9ced6];
+const VEIN_COL={copper:0xe0915a,tin:0xe6ebf0,iron:0xa0584a,stone:0xb0b0b8};
+function skyCols(light,warm){
+  return [mixColor(mixColor(0x0a0c19,0x3d7cc4,light),0x33345f,warm*0.7), mixColor(mixColor(0x2c2640,0xa9d3ee,light),0xe58a5e,warm*0.8)];
+}
+class Journey extends Phaser.Scene{
+  constructor(){ super({key:'journey',active:true}); }
+  create(){
+    journey=this;
+    this.cameras.main.setZoom(Z).centerOn(W/2,H/2);
+    this.skyG=this.add.graphics();
+    this.stars=this.add.container(0,0);
+    for(let i=0;i<50;i++) this.stars.add(this.add.circle(Math.random()*W,Math.random()*190,0.5+Math.random(),0xeadfc4,0.3+Math.random()*0.6));
+    this.sun=this.add.circle(0,0,20,0xfff4d6); this.sunGlow=this.add.circle(0,0,40,0xfff1c2,0.15);
+    this.moon=this.add.circle(0,0,18,0xf1e6c8); this.moonGlow=this.add.circle(0,0,34,0xf1e6c8,0.08);
+    this.far=this.add.container(0,0); this.farG=this.add.graphics(); this.far.add(this.farG);
+    this.farGlow=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD); this.far.add(this.farGlow);
+    this.mid=this.add.container(0,0); this.midG=this.add.graphics(); this.mid.add(this.midG);
+    this.midGlow=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD); this.mid.add(this.midGlow);
+    this.groundG=this.add.graphics();
+    this.near=this.add.container(0,0); this.nearG=this.add.graphics(); this.near.add(this.nearG);
+    this.nearGlow=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD); this.near.add(this.nearGlow);
+    this.nodes=this.add.container(0,0);
+    this.makeHero();
+    this.parts=this.add.particles(0,0,'spark',{speed:{min:40,max:140},angle:{min:200,max:340},gravityY:320,lifespan:700,scale:{start:0.45,end:0},emitting:false});
+    this.title=this.add.text(12,10,'',{fontFamily:DISPLAY_FONT,fontSize:'20px',color:'#ece2c8',stroke:'#0b0d19',strokeThickness:4,resolution:Z});
+    this.hint=this.add.text(12,34,'Tap what lies ahead to help',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'13px',color:'#cfc6ad',stroke:'#0b0d19',strokeThickness:3,resolution:Z});
+    this.objs=new Map(); this.key=''; this.light=0; this.warm=0; this.shown=false; this.toolKind='';
+    this.input.on('pointerdown',p=>this.onTap(p.worldX,p.worldY));
+    this.setShown(view==='journey');
+  }
+  setShown(v){ this.shown=v; this.scene.setVisible(v); this.input.enabled=v; if(v) this.key=''; }
+  L(n,d){ return mixColor(n,d,this.light); }
+
+  /* ---------- hero ---------- */
+  makeHero(){
+    const h=this.hero=this.add.container(HERO_X,GROUND_Y).setScale(HS);
+    this.glow=this.add.circle(8,-10,22,0xf6cf6a,0.18).setBlendMode(Phaser.BlendModes.ADD);
+    this.cape=this.add.graphics(); this.legL=this.add.graphics(); this.legR=this.add.graphics();
+    this.body=this.add.graphics(); this.arm=this.add.container(3,-25); this.tool=this.add.graphics(); this.arm.add(this.tool);
+    this.hpBar=this.add.graphics(); this.bang=this.add.text(0,-66,'!',{fontFamily:DISPLAY_FONT,fontSize:'30px',color:'#f6cf6a',stroke:'#0b0d19',strokeThickness:5,resolution:Z}).setOrigin(0.5).setVisible(false);
+    h.add([this.glow,this.cape,this.legR,this.body,this.legL,this.arm,this.hpBar,this.bang]);
+  }
+  drawHero(){
+    const dim=c=>this.L(mixColor(c,0x0e1120,0.5),c), a=S.gear.armor;
+    const armor=dim(ARMOR_COL[a]), armorS=dim(mixColor(ARMOR_COL[a],0x000000,0.25)), skin=dim(0xe0b48a);
+    this.cape.clear(); this.cape.fillStyle(dim(0x7a2e2a)); this.cape.fillTriangle(-2,-28,-14,-4,2,-6);
+    for(const [g,c] of [[this.legL,armorS],[this.legR,dim(0x3a2e26)]]){ g.clear(); g.fillStyle(c); g.fillRect(-2.5,0,5,14); g.fillStyle(dim(0x2a211c)); g.fillRect(-3,11,7,3); }
+    this.legL.setPosition(1,-14); this.legR.setPosition(-2,-14);
+    const b=this.body; b.clear();
+    b.fillStyle(armor); b.fillRoundedRect(-7,-29,14,17,3); b.fillStyle(armorS); b.fillRect(-7,-16,14,3);
+    b.fillStyle(skin); b.fillCircle(0,-34,5.5);
+    if(a>=2){ b.fillStyle(armor); b.fillRect(-6,-40,12,5); b.fillStyle(armorS); b.fillRect(-1,-37,2,5); }
+    else { b.fillStyle(dim(0x4a3222)); b.fillRect(-6,-40,11,4); }
+    if(a>=1){ b.fillStyle(dim([0,0x8a6a42,0xb8703f,0xa8843e,0x9aa3b0][a])); b.fillCircle(-8,-20,6); b.fillStyle(armorS); b.fillCircle(-8,-20,2); }
+    this.toolKind='';
+  }
+  drawTool(kind){
+    if(kind===this.toolKind) return; this.toolKind=kind;
+    const g=this.tool, dim=c=>this.L(mixColor(c,0x0e1120,0.5),c); g.clear();
+    g.fillStyle(dim(0xe0b48a)); g.fillRect(-1.5,0,3,9); g.fillCircle(0,10,2.2);
+    if(kind==='pick'){ const t=S.gear.pick; if(!t) return;
+      g.fillStyle(dim(0x6a4a2c)); g.fillRect(-1,-14,2.4,26); g.fillStyle(dim(PICK_COL[t])); g.fillTriangle(-10,-12,0,-17,1,-11); g.fillTriangle(10,-12,0,-17,-1,-11); }
+    else { const t=S.gear.weapon; if(!t) return;
+      if(t===1){ g.fillStyle(dim(0x6a4a2c)); g.fillRect(-1.2,-2,2.4,14); g.fillStyle(dim(0x7a5634)); g.fillRoundedRect(-3.5,-18,7,18,3); }
+      else { const len=[0,0,18,21,26][t]; g.fillStyle(dim(0x3a2e26)); g.fillRect(-1,4,2,8); g.fillStyle(dim(0x8a6a2a)); g.fillRect(-5,3,10,2);
+        g.fillStyle(dim(WEAPON_COL[t])); g.fillTriangle(-2,3,2,3,0,3-len-3); g.fillRect(-2,3-len,4,len); } }
+  }
+  /* ---------- world ---------- */
+  drawWorld(l){
+    const f=this.farG, m=this.midG, g=this.groundG, n=this.nearG, fg=this.farGlow, mg=this.midGlow, ng=this.nearGlow;
+    [f,m,g,n,fg,mg,ng].forEach(x=>x.clear()); this.skyG.clear();
+    const cave=l.id==='deep', L=(a,b)=>this.L(a,b);
+    const twice=(fn)=>{ fn(0); fn(W); };
+    const wave=(y0,a1,f1,a2,f2)=>x=>y0+a1*Math.sin(2*Math.PI*x/W*f1)+a2*Math.sin(2*Math.PI*x/W*f2+1);
+    const band=(gr,col,yf)=>{ gr.fillStyle(col); const pts=[{x:0,y:H}]; for(let x=0;x<=2*W;x+=10) pts.push({x,y:yf(x)}); pts.push({x:2*W,y:H}); gr.fillPoints(pts,true); };
+    // sky
+    let [top,bot]=skyCols(this.light,this.warm);
+    if(l.id==='caldera'){ top=mixColor(top,0x3a1418,0.45); bot=mixColor(bot,0xb0482a,0.45); }
+    if(l.id==='fen'){ bot=mixColor(bot,0x9ab8a8,0.25*this.light); }
+    if(cave){ top=0x0b0a10; bot=0x16131c; }
+    this.skyG.fillGradientStyle(top,top,bot,bot,1); this.skyG.fillRect(0,0,W,H);
+    [this.stars,this.sun,this.sunGlow,this.moon,this.moonGlow].forEach(o=>o.setVisible(!cave));
+    // ground strip (static)
+    const gc={wood:[0x131627,0x4b6e3f],quarry:[0x1b1c2b,0xa39582],fen:[0x141d1f,0x55693c],deep:[0x1f1c27,0x1f1c27],caldera:[0x1a1416,0x5a4440]}[l.id];
+    const pc={wood:[0x1b1d2c,0x9c8660],quarry:[0x23232f,0xc2b49c],fen:[0x1a2320,0x7a7048],deep:[0x2a2633,0x2a2633],caldera:[0x241a1c,0x7a5a4c]}[l.id];
+    g.fillStyle(L(...gc)); g.fillRect(0,GROUND_Y-8,W,H);
+    g.fillStyle(L(...pc)); g.fillRect(0,GROUND_Y-2,W,14);
+    if(l.id==='wood'){
+      band(f,L(0x161a2c,0x7d9db6),wave(205,14,2,8,5));
+      band(f,L(0x141827,0x6a8a78),wave(232,10,3,6,7));
+      twice(o=>{ for(let i=0;i<19;i++){ const x=o+i*38+(i*13)%17, h=58+(i*29)%34; i%3===1?this.oakAt(m,x,GROUND_Y-8,h*0.28):this.pineAt(m,x,GROUND_Y-8,h); } });
+      twice(o=>{ for(let i=0;i<14;i++){ const x=o+i*52+(i*7)%23; this.tuft(n,x,GROUND_Y+26+(i%3)*8,L(0x1a1e33,0x3c5c35)); if(i%4===0) this.stone(n,x+20,GROUND_Y+18,4); } });
+    } else if(l.id==='quarry'){
+      twice(o=>{ f.fillStyle(L(0x171a2a,0xa3a6b0)); for(let i=0;i<4;i++){ const x=o+i*180+20, w2=110+(i*37)%50, hgt=70+(i*23)%40; f.fillRect(x,240-hgt,w2,hgt+60); f.fillTriangle(x-20,300,x,240-hgt,x,300); f.fillTriangle(x+w2,240-hgt,x+w2+24,300,x+w2,300); } });
+      twice(o=>{ for(let i=0;i<6;i++){ const x=o+i*120+(i*31)%40, w2=70+(i*19)%40, hgt=40+(i*17)%30;
+        m.fillStyle(L(0x23253a,0x9b9486)); m.fillRect(x,GROUND_Y-8-hgt,w2,hgt); m.fillStyle(L(0x1c1e2f,0x847d70)); m.fillRect(x+w2*0.65,GROUND_Y-8-hgt,w2*0.35,hgt);
+        m.lineStyle(1,L(0x1a1c2c,0x7d766a)); for(let y=GROUND_Y-8-hgt+9;y<GROUND_Y-8;y+=9) m.lineBetween(x,y,x+w2,y); } });
+      twice(o=>{ for(let i=0;i<10;i++){ const x=o+i*72+(i*11)%29; this.stone(n,x,GROUND_Y+24+(i%3)*9,3+(i%3)*2); } });
+    } else if(l.id==='fen'){
+      band(f,L(0x141a26,0x8eaba2),wave(215,10,2,6,4));
+      twice(o=>{ for(let i=0;i<8;i++){ const x=o+i*90+(i*23)%31;
+        m.fillStyle(L(0x10202a,0x6a9aa4)); m.fillEllipse(x+30,GROUND_Y-4,70,8);
+        m.lineStyle(2,L(0x18261f,0x6b8a48)); for(let r=0;r<6;r++) m.lineBetween(x+r*4,GROUND_Y-8,x+r*4+((r%2)?3:-2),GROUND_Y-30-(r*7)%14);
+        if(i%3===0){ m.lineStyle(3,L(0x1a1a1e,0x5a5046)); m.lineBetween(x+60,GROUND_Y-8,x+60,GROUND_Y-70); m.lineBetween(x+60,GROUND_Y-50,x+76,GROUND_Y-64); m.lineBetween(x+60,GROUND_Y-40,x+46,GROUND_Y-52); } } });
+      twice(o=>{ for(let i=0;i<12;i++){ const x=o+i*60+(i*9)%21; this.tuft(n,x,GROUND_Y+26+(i%3)*8,L(0x18261f,0x5d7d45)); } });
+    } else if(cave){
+      twice(o=>{ f.fillStyle(0x15131d); f.fillRect(o,0,W,70); for(let i=0;i<24;i++){ const x=o+i*30+(i*7)%13, len=20+(i*17)%40; f.fillTriangle(x,60,x+10,60,x+5,60+len); }
+        f.fillStyle(0x131119); for(let i=0;i<6;i++){ const x=o+i*120+30; f.fillRect(x,120,40+(i*13)%30,GROUND_Y-120); } });
+      twice(o=>{ for(let i=0;i<3;i++){ const x=o+i*240+80; m.fillStyle(0x3a2a1c); m.fillRect(x-2,GROUND_Y-70,4,22); mg.fillStyle(0xf0a040,0.22); mg.fillCircle(x,GROUND_Y-74,26); mg.fillStyle(0xffc070,0.9); mg.fillCircle(x,GROUND_Y-74,4); }
+        for(let i=0;i<8;i++){ const x=o+i*90+(i*23)%40, h2=18+(i*13)%26; m.fillStyle(0x221f2c); m.fillTriangle(x-9,GROUND_Y-8,x,GROUND_Y-8-h2,x+9,GROUND_Y-8); }
+        for(let i=0;i<14;i++){ mg.fillStyle([0xe0915a,0xa9b3c1,0xc7a8f0][i%3],0.7); mg.fillCircle(o+i*51+(i*7)%19,90+(i*37)%120,1.6); } });
+      twice(o=>{ for(let i=0;i<9;i++) this.stone(n,o+i*80+(i*11)%29,GROUND_Y+22+(i%3)*9,3+(i%2)*2); });
+    } else { // caldera
+      twice(o=>{ f.fillStyle(L(0x1c1216,0x5a3a38)); f.fillPoints([{x:o+150,y:H},{x:o+300,y:120},{x:o+360,y:118},{x:o+520,y:H}],true);
+        fg.fillStyle(0xe8744a,0.35); fg.fillEllipse(o+330,120,80,26); fg.fillStyle(0xffb070,0.7); fg.fillEllipse(o+330,120,40,8); });
+      band(f,L(0x160f12,0x4a3432),wave(250,8,3,6,6));
+      twice(o=>{ for(let i=0;i<9;i++){ const x=o+i*80+(i*19)%30, h2=24+(i*23)%36; m.fillStyle(L(0x1e1618,0x4a3a38)); m.fillTriangle(x-16,GROUND_Y-8,x-4,GROUND_Y-8-h2,x+14,GROUND_Y-8); m.fillStyle(L(0x171113,0x3a2c2a)); m.fillTriangle(x-4,GROUND_Y-8-h2,x+14,GROUND_Y-8,x+2,GROUND_Y-8); } });
+      twice(o=>{ for(let i=0;i<7;i++){ const x=o+i*104+(i*29)%41, y=GROUND_Y+20+(i%3)*10; ng.lineStyle(2,0xe8744a,0.85); ng.beginPath(); ng.moveTo(x,y); ng.lineTo(x+14,y+3); ng.lineTo(x+22,y-2); ng.lineTo(x+36,y+2); ng.strokePath(); } });
+    }
+  }
+  pineAt(g,x,y,h){ g.fillStyle(this.L(0x1a1716,0x5a4030)); g.fillRect(x-2,y-6,4,8);
+    for(let t=0;t<3;t++){ const ty=y-5-t*h*0.26, tw=16-t*4, th=h*0.46; g.fillStyle(this.L(0x172a2a,0x3d6d43)); g.fillTriangle(x-tw,ty,x,ty-th,x+tw,ty); g.fillStyle(this.L(0x122222,0x2b5431)); g.fillTriangle(x,ty-th,x+tw,ty,x+1,ty); } }
+  oakAt(g,x,y,r){ g.fillStyle(this.L(0x1a1716,0x5a4030)); g.fillRect(x-2.5,y-r,5,r);
+    g.fillStyle(this.L(0x172a26,0x4b7a3c)); g.fillCircle(x-r*0.5,y-r*1.3,r*0.8); g.fillCircle(x+r*0.45,y-r*1.35,r*0.85); g.fillCircle(x,y-r*1.9,r*0.85);
+    g.fillStyle(this.L(0x13221f,0x3a6331)); g.fillCircle(x+r*0.6,y-r*1.1,r*0.55); }
+  tuft(g,x,y,c){ g.fillStyle(c); g.fillTriangle(x-5,y,x-2,y-7,x,y); g.fillTriangle(x-1,y,x+2,y-9,x+4,y); g.fillTriangle(x+3,y,x+6,y-6,x+8,y); }
+  stone(g,x,y,r){ g.fillStyle(this.L(0x191c2c,0x6e6c76)); g.fillEllipse(x+1,y+1,r*2.4,r*1.6); g.fillStyle(this.L(0x22263a,0x8e8c94)); g.fillEllipse(x-1,y-1,r*2,r*1.3); }
+
+  /* ---------- beats ---------- */
+  makeNode(b,l){
+    const c=this.add.container(0,GROUND_Y-6).setScale(NS), g=this.add.graphics(); c.add(g); c.setData('g',g); c.setData('b',b);
+    this.nodes.add(c); this.drawNode(c,b,l,b.done); if(b.done) c.setData('done',true);
+    if(b.tap) this.mark(c);
+    return c;
+  }
+  drawNode(c,b,l,broken){
+    const g=c.getData('g'), L=(a,d)=>this.L(a,d); g.clear(); c.setAngle(0); c.setAlpha(1);
+    if(b.k==='chest'){
+      g.fillStyle(L(0x3a2616,0x7a4e2a)); g.fillRect(-12,-16,24,16); g.fillStyle(L(0x8a6420,0xe3ad45)); g.fillRect(-12,-9,24,2); g.fillRect(-2,-12,4,6);
+      if(broken){ g.fillStyle(L(0x4a3220,0x8a5a32)); g.fillRect(-12,-26,24,6); g.fillStyle(0xf6cf6a,0.9); g.fillCircle(-4,-18,3); g.fillCircle(3,-19,3); }
+      else { g.fillStyle(L(0x4a3220,0x8a5a32)); g.fillRoundedRect(-13,-22,26,8,3); }
+      return; }
+    if(b.k==='cry'){ const col=HEX[b.r];
+      if(broken){ g.fillStyle(col,0.5); g.fillTriangle(-4,0,0,-6,4,0); return; }
+      g.fillStyle(col,0.18); g.fillCircle(0,-14,18);
+      g.fillStyle(col); g.fillTriangle(-9,0,-5,-22,-1,0); g.fillTriangle(-3,0,2,-30,7,0); g.fillTriangle(4,0,9,-16,12,0);
+      g.fillStyle(0xffffff,0.35); g.fillTriangle(2,-30,4,-12,7,0); return; }
+    if(b.k==='foe'){ this.drawFoe(g,b.foe,broken); if(broken){ c.setAlpha(0.45); } return; }
+    // resource nodes
+    if(b.r==='wood'){
+      if(broken){ g.fillStyle(L(0x2a2016,0x6a4a2c)); g.fillRect(-4,-6,8,6); g.fillStyle(L(0x3a2c1e,0x8a6a44)); g.fillRoundedRect(4,-6,30,6,3); return; }
+      b.v%2?this.oakAt(g,0,0,20):this.pineAt(g,0,0,64); return; }
+    const vein=VEIN_COL[b.r];
+    if(broken){ for(let i=0;i<4;i++){ g.fillStyle(L(0x2a2d40,0x8e8c94)); g.fillCircle(-10+i*7,-2-(i%2)*2,3); }
+      if(b.r!=='stone'){ g.fillStyle(vein); g.fillCircle(-4,-4,1.8); g.fillCircle(6,-3,1.8); } return; }
+    g.fillStyle(L(0x22263a,0x8e8c94)); g.fillEllipse(0,-11,34,24); g.fillStyle(L(0x191c2c,0x6e6c76)); g.fillEllipse(6,-8,22,16);
+    g.fillStyle(L(0x2a2f46,0xa9a7b0)); g.fillEllipse(-6,-15,14,8);
+    if(b.r!=='stone'){ g.lineStyle(2.2,this.L(mixColor(vein,0x101320,0.4),vein)); g.beginPath(); g.moveTo(-12,-6); g.lineTo(-4,-14); g.lineTo(3,-10); g.lineTo(11,-17); g.strokePath();
+      g.fillStyle(vein); g.fillCircle(-4,-14,2); g.fillCircle(11,-17,2); }
+  }
+  drawFoe(g,f,down){
+    const L=(a,d)=>this.L(a,d), eye=0xf6cf6a;
+    if(f==='boar'){ g.fillStyle(L(0x2e2018,0x6a4a34)); g.fillEllipse(4,-11,30,18); g.fillEllipse(-12,-10,14,12); g.fillStyle(L(0x3a2a20,0x7a5a40)); g.fillRect(-4,-3,4,4); g.fillRect(10,-3,4,4);
+      g.fillStyle(0xeee4d0); g.fillTriangle(-18,-8,-22,-12,-17,-11); g.fillStyle(eye); g.fillCircle(-13,-13,1.3); }
+    else if(f==='wolf'){ g.fillStyle(L(0x2a2c36,0x7e8088)); g.fillEllipse(4,-14,30,13); g.fillTriangle(-14,-16,-4,-22,-4,-10); g.fillTriangle(-9,-24,-6,-18,-11,-18); g.fillTriangle(18,-16,30,-24,20,-12);
+      g.fillRect(-2,-8,3,8); g.fillRect(12,-8,3,8); g.fillStyle(eye); g.fillCircle(-9,-17,1.3); }
+    else if(f==='bandit'||f==='goblin'||f==='imp'){ const small=f!=='bandit', s=small?0.75:1;
+      const body={bandit:L(0x3a1e22,0x7a3a36),goblin:L(0x1e2a1a,0x5a8a44),imp:L(0x3a1414,0xc0482e)}[f], skin={bandit:L(0x5a4432,0xc49a74),goblin:L(0x2a3a22,0x7aa85a),imp:L(0x4a1a18,0xe05a3a)}[f];
+      g.fillStyle(body); g.fillRect(-5*s,-26*s,10*s,14*s); g.fillRect(-4*s,-12*s,3*s,12*s); g.fillRect(1*s,-12*s,3*s,12*s);
+      g.fillStyle(skin); g.fillCircle(0,-31*s,5*s);
+      if(f==='bandit'){ g.fillStyle(body); g.fillTriangle(-6,-33,6,-33,0,-41); g.fillStyle(L(0x8a8a90,0xc9ced6)); g.fillRect(-12,-24,8,2); }
+      if(f==='goblin'){ g.fillTriangle(-5*s,-33*s,-11*s,-36*s,-4*s,-29*s); g.fillStyle(L(0x3a2a1a,0x6a4a2c)); g.fillRoundedRect(-11*s,-30*s,4*s,14*s,2); }
+      if(f==='imp'){ g.fillStyle(L(0x1a0a0a,0x2a1a1a)); g.fillTriangle(-4*s,-34*s,-6*s,-40*s,-2*s,-35*s); g.fillTriangle(4*s,-34*s,6*s,-40*s,2*s,-35*s); }
+      g.fillStyle(eye); g.fillCircle(-2*s,-31*s,1.2); }
+    else if(f==='lurker'){ g.fillStyle(L(0x14241c,0x4a7a52)); g.fillEllipse(0,-10,34,22); g.fillCircle(-8,-18,7); g.fillCircle(8,-19,8);
+      g.fillStyle(eye); g.fillCircle(-8,-19,2); g.fillCircle(7,-20,2); }
+    else if(f==='bat'){ const y=down?-4:-60; g.fillStyle(L(0x1a1622,0x3a3040)); g.fillEllipse(0,y,10,8); g.fillTriangle(-3,y,-20,y-8,-14,y+4); g.fillTriangle(3,y,20,y-8,14,y+4); g.fillStyle(0xe05a3a); g.fillCircle(-2,y-1,1); g.fillCircle(2,y-1,1); }
+    else if(f==='salamander'){ g.fillStyle(L(0x3a1a10,0xd06a2a)); g.fillEllipse(2,-6,34,10); g.fillCircle(-16,-8,5); g.fillTriangle(18,-6,34,-2,18,-2);
+      g.fillStyle(L(0x5a2a10,0xf0a040)); for(let i=0;i<4;i++) g.fillCircle(-6+i*7,-9,1.6); g.fillStyle(eye); g.fillCircle(-17,-9,1.2); }
+  }
+  mark(c){ if(c.getData('mark')) return; const m=this.add.text(0,-52,'✦',{fontSize:'16px',color:'#f6cf6a',resolution:Z}).setOrigin(0.5); c.add(m); c.setData('mark',m); }
+  nodeTop(b){ return GROUND_Y-NS*(b.k==='foe'&&b.foe==='bat'?72:b.k==='res'&&b.r==='wood'?92:48); }
+  onTap(x,y){
+    const e=S.exp; if(!e) return; const t=now();
+    let best=null, bd=1e9;
+    for(const b of e.beats){ if(b.done||b.tap) continue; const bx=HIT_X+(b.t-t)/1000*SPEED; if(bx<HIT_X-10||bx>W) continue;
+      const dx=Math.abs(bx-x); if(dx<40&&y>this.nodeTop(b)-14&&y<GROUND_Y+20&&dx<bd){ best=b; bd=dx; } }
+    if(!best){ this.parts.setParticleTint(0xcfc6ad); this.parts.explode(3,x,y); return; }
+    helpBeat(best.id);
+    const o=this.objs.get(best.id); if(o) this.mark(o);
+    this.parts.setParticleTint(0xf6cf6a); this.parts.explode(10,x,y);
+    this.floatText(x,y-10,best.k==='foe'?'Ready!':'Well spotted!','#f6cf6a',16);
+  }
+  floatText(x,y,str,color,size){ const t=this.add.text(x,y,str,{fontFamily:DISPLAY_FONT,fontSize:(size||22)+'px',color,stroke:'#0b0d19',strokeThickness:4,resolution:Z}).setOrigin(0.5);
+    this.tweens.add({targets:t,y:y-44,alpha:0,duration:1100,ease:'Cubic.easeOut',onComplete:()=>t.destroy()}); }
+  grantFx(b,text,color){
+    if(!this.shown) return; const o=this.objs.get(b.id); const x=o?o.x:HIT_X;
+    if(o){ o.setData('done',true); const l=LOC[S.exp?.id]||LOCS[0]; this.drawNode(o,b,l,true); const m=o.getData('mark'); if(m) m.destroy(); o.setData('mark',null);
+      if(b.k==='foe') this.tweens.add({targets:o,angle:80,y:GROUND_Y-2,duration:260}); }
+    const tint=b.k==='cry'?HEX[b.r]:parseInt((color||'#f6cf6a').slice(1),16);
+    this.parts.setParticleTint(tint); this.parts.explode(b.k==='chest'?16:8,x,GROUND_Y-24);
+    if(text) this.floatText(x,GROUND_Y-80,text,color||'#f6cf6a',22);
+  }
+  hurtFx(n){ if(!this.shown) return; this.floatText(HERO_X-6,GROUND_Y-86,`-${n}`,'#ff7a66',22); this.cameras.main.shake(120,0.004);
+    this.body.setAlpha(0.4); this.time.delayedCall(90,()=>this.body.setAlpha(1)); }
+  healFx(){ if(!this.shown) return; this.parts.setParticleTint(0x9ff0a0); this.parts.explode(16,HERO_X,GROUND_Y-24); this.floatText(HERO_X,GROUND_Y-90,'Healed','#9ff0a0',20); }
+
+  update(time){
+    if(!this.shown) return;
+    const e=S.exp; if(!e) return;
+    const l=LOC[e.id], d=dayInfo(), t=now(), secs=time/1000;
+    const key=e.id+'|'+Math.round(d.light*32)+'|'+Math.round(d.warm*16)+'|'+S.gear.weapon+S.gear.armor+S.gear.pick;
+    if(key!==this.key){ this.key=key; this.light=l.id==='deep'?0.35:d.light; this.warm=l.id==='deep'?0:d.warm; this.drawWorld(l); this.drawHero();
+      this.objs.forEach(o=>o.destroy()); this.objs.clear(); this.title.setText(l.name); }
+    if(l.id!=='deep'){ this.stars.setAlpha((1-d.light)*(1-d.warm*0.7)); const x=-30+d.u*780, y=250-200*Math.sin(Math.PI*d.u);
+      [this.sun,this.sunGlow].forEach(o=>o.setVisible(d.day).setPosition(x,y)); [this.moon,this.moonGlow].forEach(o=>o.setVisible(!d.day).setPosition(x,y)); }
+    const dist=Math.max(0,(t-e.start)/1000*SPEED);
+    this.far.x=-((dist*0.15)%W); this.mid.x=-((dist*0.45)%W); this.near.x=-(dist%W);
+    // walk cycle
+    const w=Math.sin(secs*9); this.legL.rotation=w*0.5; this.legR.rotation=-w*0.5; this.hero.y=GROUND_Y-Math.abs(w)*2;
+    this.glow.setVisible(this.light<0.5).setAlpha(0.18*(1-this.light*2));
+    // beats on screen
+    const seen=new Set();
+    for(const b of e.beats){ const x=HIT_X+(b.t-t)/1000*SPEED; if(x>W+60||x<-80) continue; seen.add(b.id);
+      let o=this.objs.get(b.id); if(!o){ o=this.makeNode(b,l); this.objs.set(b.id,o); }
+      o.x=x; if(b.k==='foe'&&!b.done) o.y=GROUND_Y-6-Math.abs(Math.sin(secs*6+b.id))*4; }
+    for(const [id,o] of this.objs) if(!seen.has(id)){ o.destroy(); this.objs.delete(id); }
+    // tool + swing for the nearest beat
+    const next=e.beats.filter(b=>b.t>t-400).sort((a,b)=>a.t-b.t)[0];
+    this.drawTool(next&&(next.k==='cry'||(next.k==='res'&&next.r!=='wood'))?'pick':'weapon');
+    const dt=next?(next.t-t)/1000:9;
+    this.arm.rotation = dt<0.45&&dt>-0.35 ? (dt>0? -1.9*(1-dt/0.45) : -1.9+2.9*Math.min(1,-dt/0.15)) : 0.25+Math.sin(secs*9)*0.2;
+    // health bar over the hero, and a "!" when a road event is waiting
+    const mhp=maxHP(); this.hpBar.clear(); this.hpBar.fillStyle(0x1a1016,0.8); this.hpBar.fillRect(-14,-52,28,4); this.hpBar.fillStyle(S.hp<mhp*DEPART_MIN?0xe0453a:0xd0584a); this.hpBar.fillRect(-14,-52,28*S.hp/mhp,4);
+    const ev=pendingEvent(); this.bang.setVisible(!!ev).setY(-66-Math.abs(Math.sin(secs*4))*4);
+    this.hint.setVisible(e.beats.some(b=>!b.done&&!b.tap&&b.t>t));
+  }
+}
+
 /* ================= BOOT ================= */
 function start(data){
   S=(data&&data.S)?Object.assign(fresh(),data.S):(load()||fresh());
   upSet=new Set(S.up);
+  if(S.hp==null) S.hp=maxHP();
+  if(S.exp&&!S.exp.beats) S.exp=makeExp(S.exp.id,S.exp.start,S.exp.end);
   buildRows(); wireUI();
   const lastB=S.chron.length&&BUILDINGS.find(b=>b.id===S.chron[S.chron.length-1]);
   chronicle(lastB?lastB.chron:'Your keep stands alone on the hill. Tap it to collect the tithe, and send your hero into Whisperwood.');
@@ -896,7 +1436,7 @@ function start(data){
   setInterval(()=>{ tick(); refresh(); },100);
   setInterval(save,3000);
   const boot=()=>{ if(game) return; game=new Phaser.Game({type:Phaser.AUTO,parent:'realm',width:W*Z,height:H*Z,backgroundColor:'#0b0d1a',
-    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},banner:false,scene:Realm}); };
+    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},banner:false,scene:[Realm,Journey]}); };
   const fontReady=document.fonts?document.fonts.load(`34px ${DISPLAY_FONT}`):Promise.resolve();
   Promise.race([fontReady,new Promise(r=>setTimeout(r,1500))]).then(boot,boot);
 }

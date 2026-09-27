@@ -10,7 +10,7 @@ Gold comes from **tapping the keep** and from **holdings** that produce it every
 tap = (1 + flatBonus) × tapMult × weaponMult × renownMult  +  goldPerSec × tapPct
 ```
 
-The result is ×10 while **Midas Touch** is active. `weaponMult` comes from the [Forge](forge.md): ×1, 2, 4, 8, 16 by weapon tier.
+`renownMult` here means all-gold multipliers: Renown × (1 + relic "all gold" bonuses). The Fossil Idol relic adds a further tap-only multiplier. The result is ×10 while **Midas Touch** is active. `weaponMult` comes from the [Forge](forge.md): ×1, 2, 4, 8, 16 by weapon tier.
 
 ### Holdings
 
@@ -63,4 +63,4 @@ These unlock in order, each one once the previous is bought and the reign has ea
 - Renown earned on ascending: `floor(sqrt(reignGold / 1,000,000))`, so the first point needs 1M gold in one reign.
 - Each point of Renown adds **+5%** to all gold (taps and holdings).
 - **Ascending resets:** gold, holdings, upgrades, materials, crystals, the Crystal Mine, any running expedition and active spells.
-- **Ascending keeps:** Renown, hero equipment, learned spells, lifetime stats.
+- **Ascending keeps:** Renown, hero equipment, learned spells, relics, lifetime stats. The hero's health is restored to full.
