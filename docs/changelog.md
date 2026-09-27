@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Swipe to dismiss.** Bottom sheets (Spellbook, Satchel, Log entries) follow your finger when dragged down from the top, and dismiss past about 100px or on a quick flick. Anything shorter snaps back.
 - **Spellbook tidy-up.** Stoke the Forge and Split the Rock left the spellbook, and stay on the anvil card and the mine row. **Hasten** moved to a new **journey bar** under the scene, shown while watching the Journey view, with the return countdown and a Hasten button. The spellbook now holds Mend and your learned spells.
 - **Active spell chips.** Active spells now sit in one fixed-height row of chips (icon, name, seconds) that scrolls sideways instead of wrapping. It shows "No spells active" when empty, so the screen no longer shifts when a spell starts or ends.
 - **Adventurer's Log.** A permanent collection across every life: 67 collectibles (relics, resources, regions, bestiary, road events, gear, spells, mine galleries, folk of the keep), blacked out until found. Tapping one shows the life and time it was first found. There are also 80 achievements in five medal tiers, including 5/50/250/1,000/5,000 of every holding. The Ascend tab is now **Legacy**, and shows your life number. See [Adventurer's Log](log.md).

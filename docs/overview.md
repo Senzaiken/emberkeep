@@ -28,6 +28,8 @@ From top to bottom:
 
 Every resource has its own icon (coin, log, rock, ingots for copper/tin/iron, cut crystals in their element colour), used everywhere costs and loot appear. New resource types get an icon, a row in the satchel sheet, and appear in the strip automatically.
 
+Bottom sheets (Spellbook, Satchel, Log entries) close with **Close**, a tap on the dimmed area, or a **swipe down** from the top of the sheet.
+
 ## Stack
 
 | Layer | Choice | Notes |

@@ -122,7 +122,7 @@
   .sheet{width:min(560px,100%);max-height:78vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-bottom:0;border-radius:16px 16px 0 0;
     padding:8px 20px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -12px 40px rgba(0,0,0,.5);animation:sheetUp .2s ease-out;}
   @keyframes sheetUp{from{transform:translateY(40px);opacity:.4;}}
-  .sheet-grip{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 10px;}
+  .sheet-grip{width:44px;height:5px;border-radius:3px;background:var(--muted);opacity:.5;margin:2px auto 12px;}
   .sheet-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;}
   .sheet-title{font-family:var(--display);font-size:24px;}
   .sheet .row:first-of-type{border-top:1px solid var(--line);}
@@ -627,7 +627,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927204910';
+const BUILD='20260927215237';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1152,6 +1152,23 @@ function openLogEntry(id){
   $('logSheet').hidden=false;
 }
 
+/* ---------- Bottom sheets: drag down to dismiss ---------- */
+function enableSheetDrag(back){
+  const sh=back.querySelector('.sheet'); let y0=null, dy=0, t0=0, drag=false;
+  const reset=()=>{ sh.style.transform=''; sh.style.transition=''; back.style.background=''; };
+  sh.addEventListener('touchstart',e=>{ if(sh.scrollTop>0){ y0=null; return; } y0=e.touches[0].clientY; t0=Date.now(); dy=0; drag=false; sh.style.transition='none'; },{passive:true});
+  sh.addEventListener('touchmove',e=>{
+    if(y0==null) return; dy=e.touches[0].clientY-y0;
+    if(dy>0&&sh.scrollTop<=0){ drag=true; e.preventDefault(); sh.style.transform=`translateY(${dy}px)`; back.style.background=`rgba(6,7,14,${(.55*Math.max(0,1-dy/450)).toFixed(3)})`; }
+    else if(drag){ sh.style.transform=''; }
+  },{passive:false});
+  const end=()=>{ if(y0==null) return; y0=null; sh.style.transition='transform .2s ease';
+    const v=dy/Math.max(1,Date.now()-t0);
+    if(drag&&(dy>100||v>0.6)){ sh.style.transform='translateY(110%)'; setTimeout(()=>{ back.hidden=true; reset(); },200); }
+    else { sh.style.transform=''; back.style.background=''; setTimeout(reset,220); } };
+  sh.addEventListener('touchend',end); sh.addEventListener('touchcancel',end);
+}
+
 /* ---------- Dialog overlay ---------- */
 let dlg=null;
 const dialogOpen=()=>!!dlg;
@@ -1566,6 +1583,7 @@ function wireUI(){
   $('buildTxt').textContent=`Build ${BUILD}`;
   $('updateBtn').addEventListener('click',()=>reloadFresh(newBuild));
   $('dlgNext').addEventListener('click',dialogNext);
+  document.querySelectorAll('.sheet-back').forEach(enableSheetDrag);
   $('jbHaste').addEventListener('click',hasten);
   $('logBody').addEventListener('click',e=>{ const b=e.target.closest('[data-log]'); if(b) openLogEntry(b.dataset.log); });
   $('leClose').addEventListener('click',()=>$('logSheet').hidden=true);
