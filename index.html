@@ -148,6 +148,10 @@
 
   /* pinned top bar: gold on the left, day/night on the right */
   .topbar{flex:none;position:relative;z-index:4;background:var(--night);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);}
+  /* Home-screen app on iOS 26 lays a Liquid Glass blur band along the top edge that no setting removes;
+     give it 25px of empty bar to sit on so the gold and clock stay clear. Safari is unaffected. */
+  @media (display-mode: standalone){ .topbar{padding-top:calc(env(safe-area-inset-top,0px) + 25px);} }
+  html.standalone .topbar{padding-top:calc(env(safe-area-inset-top,0px) + 25px);}
   .tb-in{max-width:560px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:10px;}
   .tb-logo{width:34px;height:34px;border-radius:8px;flex:none;}
   .tb-gold{display:flex;flex-direction:column;min-width:0;}
@@ -398,6 +402,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+<script>if(navigator.standalone) document.documentElement.classList.add('standalone');</script>
 <script>
 (() => {
 /* ================= DATA ================= */
@@ -549,7 +554,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927192023';
+const BUILD='20260927192324';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],

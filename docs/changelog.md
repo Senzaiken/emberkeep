@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Extra top space in the home-screen app.** iOS 26 draws a blur band along the top of installed web apps that can't be turned off, so the top bar gets 25px of extra padding there (home-screen app only, not Safari).
 - **Home-screen app status bar set to `default`.** iOS 26 blurs any app content drawn under the status bar. With `default`, the app starts below a solid bar tinted by `theme-color` (#101320). Existing home-screen icons need to be removed and re-added for this to apply.
 - **No more blur at the top on iPhone.** The page no longer scrolls as a whole: the top bar is fixed and paints behind the clock, and only the area below it scrolls, so iOS doesn't blur the top edge.
 - **Satchel grows as you discover things.** Only resources you've held appear in the strip and the Satchel sheet. The Materials and Crystals sections appear once their first item is found.
