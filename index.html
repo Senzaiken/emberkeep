@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Emberkeep">
+<meta name="theme-color" content="#101320">
+<title>Emberkeep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+  :root{
+    color-scheme: dark;
+    --night:#101320; --panel:#171b2a; --panel-2:#20253a; --line:#2d3348;
+    --ink:#ece2c8; --muted:#9a9584; --gold:#e3ad45; --gold-hi:#f6cf6a; --gold-deep:#8e6420;
+    --ember:#e8744a; --frost:#8fd0f0; --verdant:#7cc97a; --storm:#c7a8f0;
+    --wood:#a8805a; --stone:#a3a3ad; --copper:#d4895a; --tin:#c9cfd6; --iron:#7f8a98;
+    --bad:#d9674a;
+    --display:"IM Fell English SC", "Iowan Old Style", Georgia, serif;
+    --body:"Alegreya Sans", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+  }
+  [hidden]{display:none!important;}
+  html,body{background:var(--night);margin:0;}
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+  img{max-width:100%;}
+  body{color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+  .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:10px 40px;display:flex;flex-direction:column;gap:12px;}
+  .label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+  .num{font-variant-numeric:tabular-nums;}
+
+  .top{display:grid;grid-template-columns:1fr minmax(130px,40%);gap:16px;align-items:end;}
+  .brand{font-family:var(--display);font-size:15px;color:var(--gold);letter-spacing:.06em;margin-bottom:2px;}
+  .gold{font-family:var(--display);font-size:clamp(34px,10vw,46px);line-height:1;color:var(--gold-hi);font-variant-numeric:tabular-nums;}
+  .rates{font-size:14px;color:var(--muted);margin-top:4px;}
+  .rates b{color:var(--ink);font-weight:500;}
+  .status{display:flex;flex-direction:column;gap:6px;align-items:flex-start;}
+  .exp-line{font-size:14px;color:var(--ink);}
+  .exp-bar{width:100%;height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden;}
+  #expFill{height:100%;width:0;background:var(--gold);}
+  .buffs{display:flex;flex-wrap:wrap;gap:6px;}
+  .buff{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--gold-deep);color:var(--gold-hi);}
+
+  .stock{display:flex;flex-wrap:wrap;gap:6px 14px;padding-block:8px;border-block:1px solid var(--line);}
+  .res{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .res i{width:9px;height:9px;border-radius:2px;background:var(--c);flex:none;}
+  .res.cry i{transform:rotate(45deg);border-radius:1px;box-shadow:0 0 6px var(--c);}
+  .res em{font-style:normal;color:var(--muted);font-size:12px;}
+  .stock .sep{width:1px;align-self:stretch;background:var(--line);}
+
+  #realm{width:100%;aspect-ratio:2/1;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0b0d1a;
+    user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;}
+  #realm canvas{display:block;}
+  .chron{margin:0;font-family:var(--display);font-size:16px;color:var(--muted);min-height:1.4em;text-align:center;transition:opacity .4s;text-wrap:balance;}
+
+  .tabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--night);}
+  .tabs button{font:inherit;font-size:14px;color:var(--muted);background:transparent;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 4px;cursor:pointer;}
+  .tabs button:nth-child(3n){border-right:0;}
+  .tabs button:nth-child(n+4){border-bottom:0;}
+  .tabs button[aria-selected="true"]{background:var(--panel-2);color:var(--ink);}
+  .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--gold);color:var(--night);font-size:11px;font-weight:700;line-height:18px;}
+
+  .panel{display:flex;flex-direction:column;}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-block:4px 8px;}
+  .panel-head.sub{padding-top:24px;}
+  .qty{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+  .qty button{font:inherit;font-size:13px;background:transparent;color:var(--muted);border:0;padding:5px 12px;cursor:pointer;}
+  .qty button[aria-pressed="true"]{background:var(--panel-2);color:var(--ink);}
+
+  .row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding-block:12px;border-bottom:1px solid var(--line);}
+  .list > .row:first-child{border-top:1px solid var(--line);}
+  .r-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .r-name{font-family:var(--display);font-size:19px;line-height:1.15;}
+  .r-count{font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums;}
+  .r-tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+  .r-desc{font-size:14px;color:var(--muted);}
+  .r-meta{font-size:13px;color:var(--ink);opacity:.85;font-variant-numeric:tabular-nums;margin-top:3px;}
+  .cost{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;}
+  .cost .res{font-size:13px;}
+  .cost .res.short{color:var(--bad);}
+  .row.mystery .r-name{color:var(--muted);}
+  .row.locked .r-name{color:var(--muted);}
+
+  .act{font:inherit;min-width:100px;padding:8px 12px;border-radius:7px;border:1px solid var(--gold-deep);background:var(--gold);color:#1a1408;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.15;}
+  .act small{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;}
+  .act span{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;}
+  .act:disabled{background:var(--panel-2);border-color:var(--line);color:var(--muted);cursor:default;}
+  .act.arcane{background:var(--storm);border-color:#8a6fb8;}
+  .act.arcane:disabled{background:var(--panel-2);border-color:var(--line);}
+  .act.danger{background:transparent;color:var(--bad);border-color:var(--bad);}
+  .act:focus-visible,.tabs button:focus-visible,.qty button:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px;}
+  .act:not(:disabled):active{transform:translateY(1px);}
+
+  .gear{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+  .slot{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:2px;}
+  .slot b{font-family:var(--display);font-weight:400;font-size:16px;line-height:1.15;}
+  .slot span{font-size:12px;color:var(--muted);}
+
+  .empty{color:var(--muted);font-size:15px;padding-block:16px;border-top:1px solid var(--line);}
+  .asc p{margin:0 0 12px;color:var(--muted);max-width:60ch;}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;padding-block:12px;border-block:1px solid var(--line);margin-bottom:16px;}
+  .stats div span{display:block;font-family:var(--display);font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:0;text-transform:none;}
+  .asc-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+  .asc-actions .act{min-width:180px;}
+  .reset{margin-top:28px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;}
+
+  #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:max-content;max-width:min(480px,calc(100% - 32px));
+    background:var(--panel-2);border:1px solid var(--gold-deep);color:var(--ink);padding:10px 16px;border-radius:8px;font-size:15px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  @media (max-width:420px){ .gear{grid-template-columns:1fr;} .top{grid-template-columns:1fr;gap:8px;} }
+  @media (prefers-reduced-motion: reduce){ .chron{transition:none;} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand">Emberkeep</div>
+      <div id="gold" class="gold">0</div>
+      <div class="rates"><b id="gps" class="num">0</b> gold/sec · <b id="tapv" class="num">1</b> per tap</div>
+    </div>
+    <div class="status">
+      <span class="label">Your hero</span>
+      <span class="exp-line" id="expLine">Resting at the keep</span>
+      <div class="exp-bar"><div id="expFill"></div></div>
+      <div id="buffs" class="buffs"></div>
+    </div>
+  </header>
+
+  <div class="stock" id="stock"></div>
+
+  <div id="realm" role="button" aria-label="Your keep. Tap to collect gold."></div>
+  <p id="chron" class="chron"></p>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-build" data-tab="build" aria-selected="true">Build</button>
+    <button role="tab" id="tab-up" data-tab="up" aria-selected="false">Upgrades<span id="upBadge" class="badge" hidden>0</span></button>
+    <button role="tab" id="tab-explore" data-tab="explore" aria-selected="false">Explore</button>
+    <button role="tab" id="tab-forge" data-tab="forge" aria-selected="false">Forge<span id="forgeBadge" class="badge" hidden>0</span></button>
+    <button role="tab" id="tab-magic" data-tab="magic" aria-selected="false">Magic<span id="magicBadge" class="badge" hidden>0</span></button>
+    <button role="tab" id="tab-asc" data-tab="asc" aria-selected="false">Ascend</button>
+  </nav>
+
+  <section id="p-build" class="panel">
+    <div class="panel-head">
+      <span class="label">Holdings</span>
+      <div class="qty" id="qty">
+        <button id="q1" data-q="1" aria-pressed="true">×1</button>
+        <button id="q10" data-q="10" aria-pressed="false">×10</button>
+        <button id="qmax" data-q="max" aria-pressed="false">Max</button>
+      </div>
+    </div>
+    <div id="bList" class="list"></div>
+  </section>
+
+  <section id="p-up" class="panel" hidden>
+    <div class="panel-head"><span class="label">Techniques &amp; charters</span></div>
+    <div id="uList" class="list"></div>
+  </section>
+
+  <section id="p-explore" class="panel" hidden>
+    <div class="panel-head"><span class="label">Expeditions</span><span class="label" id="expNote"></span></div>
+    <div id="lList" class="list"></div>
+  </section>
+
+  <section id="p-forge" class="panel" hidden>
+    <div class="panel-head"><span class="label">Equipped</span></div>
+    <div class="gear" id="gearNow"></div>
+    <div class="panel-head sub"><span class="label">Anvil</span></div>
+    <div id="fList" class="list"></div>
+  </section>
+
+  <section id="p-magic" class="panel" hidden>
+    <div class="panel-head"><span class="label">Crystal mine</span><span class="label num" id="mineRate"></span></div>
+    <div id="mList" class="list"></div>
+    <div class="panel-head sub"><span class="label">Grimoire</span></div>
+    <div id="sList" class="list"></div>
+  </section>
+
+  <section id="p-asc" class="panel asc" hidden>
+    <div class="panel-head"><span class="label">Dynasty</span></div>
+    <p>Abdicate and found a new dynasty. Gold, buildings, upgrades, materials, crystals and the crystal mine are lost. Your hero keeps their equipment and every spell they have learned. You earn Renown from the gold this reign gathered, and each point adds 5% to all gold, forever.</p>
+    <div class="stats">
+      <div class="label">Renown<span id="renown">0</span></div>
+      <div class="label">Bonus<span id="renownBonus">+0%</span></div>
+      <div class="label">Gold this reign<span id="reignGold">0</span></div>
+      <div class="label">Renown on ascension<span id="pending">0</span></div>
+    </div>
+    <div class="asc-actions">
+      <button class="act" id="ascendBtn"><small>Ascend</small><span id="ascendTxt">Found a new dynasty</span></button>
+      <span class="r-desc" id="ascendHint"></span>
+    </div>
+    <div class="reset">
+      <span class="r-desc">Lifetime gold <b class="num" id="lifeGold">0</b> · <b class="num" id="taps">0</b> taps</span>
+      <button class="act danger" id="wipeBtn"><small>Erase save</small><span id="wipeTxt">Start from nothing</span></button>
+    </div>
+  </section>
+</div>
+<div id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+<script>
+(() => {
+/* ================= DATA ================= */
+const MATS=['wood','stone','copper','tin','iron'];
+const CRYS=['ember','frost','verdant','storm'];
+const NAMES={gold:'gold',wood:'Wood',stone:'Stone',copper:'Copper',tin:'Tin',iron:'Iron',ember:'Ember',frost:'Frost',verdant:'Verdant',storm:'Storm'};
+const HEX={ember:0xe8744a,frost:0x8fd0f0,verdant:0x7cc97a,storm:0xc7a8f0};
+
+const BUILDINGS=[
+  ['farm','Peasant Farm',15,0.1,'Turnips, barley and a modest tithe.',['Iron Ploughshares','Three-Field Rotation','Oxen Teams','Royal Granaries','Blessed Soil'],'A farm is raised beyond the castle walls.'],
+  ['mill','Watermill',100,1,'Grinds the realm’s grain, for a fee.',['Oak Millstones','Sluice Gates','Second Wheel','Miller’s Charter','River Spirit’s Favour'],'A waterwheel turns beside the keep.'],
+  ['tavern','Tavern',1100,8,'Ale, stew and gossip, all sold dear.',['Stronger Ale','Minstrels','Travellers’ Rooms','Royal Warrant','The Undrying Cask'],'Smoke rises from the tavern chimney.'],
+  ['silver','Silver Mine',12000,47,'Bright veins beneath the eastern hills.',['Pit Ponies','Pumping Engines','Dwarven Surveyors','Deep Lodes','Heart of the Mountain'],'Miners break ground in the eastern hills.'],
+  ['market','Market Square',130000,260,'Stalls, spice and endless haggling.',['Weights & Measures','Fair Days','Foreign Traders','Royal Mint','Endless Bazaar'],'Merchants pitch their tents by the gate.'],
+  ['guild','Merchant Guild',1.4e6,1400,'Charters, caravans and ledgers.',['Letters of Credit','Caravan Routes','Salt Monopoly','Counting House','The Golden Compact'],'Guild banners fly from the towers.'],
+  ['tower','Wizard Tower',2e7,7800,'Transmutes lead. Each tower also speeds the crystal mine by 10%.',['Apprentices','Scrying Pools','Arcane Library','Archmage’s Seat','Star-Forged Spire'],'A wizard’s spire rises over the realm.'],
+  ['dragon','Dragon’s Lair',3.3e8,44000,'A tamed wyrm broods on a growing hoard.',['Gilded Scales','Wyrm Eggs','Hoard Tithes','Elder Wyrm','Dragonlord’s Pact'],'A dragon has made its lair in your realm.'],
+].map(([id,name,base,rate,desc,ups,chron])=>({id,name,base,rate,desc,ups,chron}));
+const BI=Object.fromEntries(BUILDINGS.map((b,i)=>[b.id,i]));
+const TIER_REQ=[1,10,25,50,100], TIER_COST=[10,50,500,5e4,5e6];
+const TAPS=[
+  {id:'t0',name:'Leather Coin Purse',cost:50,flat:1,text:'+1 gold per tap'},
+  {id:'t1',name:'Tax Collector’s Ledger',cost:600,mult:2,text:'Tap gold ×2'},
+  {id:'t2',name:'Alchemist’s Palm',cost:8000,pct:.01,text:'Each tap also earns 1% of gold/sec'},
+  {id:'t3',name:'Gilded Gauntlet',cost:1.5e5,mult:2,text:'Tap gold ×2'},
+  {id:'t4',name:'Philosopher’s Stone',cost:5e6,pct:.02,text:'Each tap earns another 2% of gold/sec'},
+  {id:'t5',name:'Crown of Avarice',cost:2e8,mult:3,text:'Tap gold ×3'},
+];
+const UPGRADES=[];
+TAPS.forEach((t,i)=>UPGRADES.push({...t,kind:'t',prev:i?TAPS[i-1].id:null}));
+BUILDINGS.forEach(b=>b.ups.forEach((n,i)=>UPGRADES.push({id:b.id+i,name:n,cost:b.base*TIER_COST[i],kind:'b',b:b.id,req:TIER_REQ[i],text:`${b.name}s produce ×2`})));
+UPGRADES.sort((a,b)=>a.cost-b.cost);
+
+// Hero equipment: tier 0 is what you start with
+const GEAR={
+  weapon:{label:'Weapon',effect:t=>`Taps ×${WEAPON_TAP[t]} · wood ×${1+0.25*t}`,tiers:[
+    {name:'Bare Fists'},
+    {name:'Oak Cudgel',cost:{gold:50,wood:12}},
+    {name:'Copper Blade',cost:{gold:1000,wood:10,copper:20}},
+    {name:'Bronze Sword',cost:{gold:20000,wood:10,copper:25,tin:15}},
+    {name:'Iron Longsword',cost:{gold:4e5,wood:20,iron:40}},
+  ]},
+  armor:{label:'Armor',effect:t=>`Reaches danger ${t} · trips ${Math.round(t*8)}% faster`,tiers:[
+    {name:'Travelling Cloak'},
+    {name:'Oaken Buckler',cost:{gold:40,wood:15}},
+    {name:'Copper Scale',cost:{gold:800,copper:30,wood:5}},
+    {name:'Bronze Mail',cost:{gold:15000,copper:30,tin:20}},
+    {name:'Iron Plate',cost:{gold:3e5,iron:60,stone:20}},
+  ]},
+  pick:{label:'Pickaxe',effect:t=>`Ore ×${PICK_ORE[t]} · crystals ×${PICK_CRY[t]}`,tiers:[
+    {name:'Bare Hands'},
+    {name:'Stone Pick',cost:{gold:30,wood:10,stone:10}},
+    {name:'Copper Pick',cost:{gold:600,wood:10,copper:20}},
+    {name:'Bronze Pick',cost:{gold:12000,wood:10,copper:20,tin:10}},
+    {name:'Iron Pick',cost:{gold:2.5e5,wood:10,iron:30}},
+  ]},
+};
+const WEAPON_TAP=[1,2,4,8,16], PICK_ORE=[1,1.25,1.5,2,2.5], PICK_CRY=[1,1.5,2.25,3.5,5];
+
+const LOCS=[
+  {id:'wood',name:'Whisperwood',dur:20,danger:0,dir:-1,desc:'Old oaks at the western edge of the realm.',loot:{wood:[4,7],stone:[0,2]}},
+  {id:'quarry',name:'Greystone Quarry',dur:45,danger:0,dir:-1,desc:'Abandoned cuttings above the river.',loot:{stone:[5,8],copper:[1,3]}},
+  {id:'fen',name:'Copperfen Hills',dur:90,danger:1,dir:1,desc:'Green-streaked rock and sucking bog.',loot:{copper:[5,9],tin:[2,5],stone:[2,4]}},
+  {id:'deep',name:'Ironroot Deep',dur:180,danger:2,dir:1,desc:'Goblin tunnels thick with ore. Crystals glint in the dark.',loot:{iron:[5,9],tin:[1,3]},cry:[1,2]},
+  {id:'caldera',name:'Shattered Caldera',dur:360,danger:3,dir:1,desc:'A dead volcano veined with raw elemental crystal.',loot:{iron:[8,14],copper:[4,8]},cry:[3,5]},
+];
+
+const MINE=[
+  {name:'Open the Crystal Mine',done:'Crystal Mine',cost:{gold:250,wood:20,stone:15},els:['ember','frost'],every:30},
+  {name:'Dig the Verdant Gallery',done:'Verdant Gallery',cost:{gold:5000,stone:40,copper:15},els:['ember','frost','verdant'],every:22},
+  {name:'Breach the Storm Vault',done:'Storm Vault',cost:{gold:1e5,stone:60,iron:30},els:['ember','frost','verdant','storm'],every:15},
+  {name:'Reach the Heartvein',done:'The Heartvein',cost:{gold:2e6,iron:80,tin:40},els:['ember','frost','verdant','storm'],every:9},
+];
+
+const SPELLS=[
+  {id:'midas',name:'Midas Touch',learn:{gold:300,ember:3},cast:{ember:1},dur:20,text:'Taps earn ×10 gold for 20 seconds.'},
+  {id:'familiar',name:'Summon Familiar',learn:{gold:2500,storm:3},cast:{storm:1},dur:20,text:'A wisp taps the keep 8 times a second for 20 seconds.'},
+  {id:'road',name:'Quickened Road',learn:{gold:4000,frost:3,storm:2},cast:{frost:1,storm:1},dur:0,text:'Your hero returns from their expedition at once, haul in hand.'},
+  {id:'harvest',name:'Bountiful Harvest',learn:{gold:8000,verdant:3},cast:{verdant:1,frost:1},dur:30,text:'Every building produces ×3 for 30 seconds.'},
+  {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
+];
+const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
+
+/* ================= STATE ================= */
+const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
+  mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
+  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,last:Date.now()});
+let S, upSet, qty=1, scene=null, game=null;
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear)}); }
+function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
+
+
+/* ================= ECONOMY ================= */
+const now=()=>Date.now();
+const has=id=>upSet.has(id);
+const owned=id=>S.owned[id]||0;
+const active=id=>(S.spells[id]||0)>now();
+const knows=id=>S.known.includes(id);
+const renownMult=()=>1+0.05*S.renown;
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+
+function res(k){ return k==='gold'?S.gold : k in S.mat?S.mat[k] : S.cry[k]; }
+function addRes(k,n){ if(k==='gold') earn(n); else if(k in S.mat) S.mat[k]+=n; else S.cry[k]+=n; }
+function canPay(c){ return Object.entries(c).every(([k,v])=>res(k)>=v); }
+function pay(c){ for(const [k,v] of Object.entries(c)){ if(k==='gold') S.gold-=v; else addRes(k,-v); } }
+
+function bMult(b){ let m=1; for(let i=0;i<5;i++) if(has(b.id+i)) m*=2; return m; }
+function bRate(b){ return b.rate*bMult(b)*renownMult(); }
+function gps(withSpells=true){ let g=0; for(const b of BUILDINGS) g+=owned(b.id)*bRate(b); if(withSpells&&active('harvest')) g*=3; return g; }
+function tapValue(){
+  let flat=1,mult=1,pct=0;
+  for(const t of TAPS) if(has(t.id)){ if(t.flat)flat+=t.flat; if(t.mult)mult*=t.mult; if(t.pct)pct+=t.pct; }
+  let v=flat*mult*WEAPON_TAP[S.gear.weapon]*renownMult()+gps()*pct;
+  if(active('midas')) v*=10;
+  return v;
+}
+function earn(g){ S.gold+=g; S.total+=g; S.life+=g; }
+function unitCost(b){ return b.base*Math.pow(1.15,owned(b.id)); }
+function costFor(b,n){ return unitCost(b)*(Math.pow(1.15,n)-1)/0.15; }
+function maxAfford(b){ return Math.max(0,Math.floor(Math.log(S.gold*0.15/unitCost(b)+1)/Math.log(1.15))); }
+function buyCount(b){ if(qty==='max'){ const n=maxAfford(b); return n||1; } return qty; }
+
+function buyBuilding(id){
+  const b=BUILDINGS[BI[id]], n=buyCount(b), c=costFor(b,n);
+  if(S.gold<c) return;
+  S.gold-=c; const first=!owned(id); S.owned[id]=owned(id)+n;
+  if(first&&!S.chron.includes(id)){ S.chron.push(id); chronicle(b.chron); }
+  refresh();
+}
+function upAvailable(u){
+  if(has(u.id)) return false;
+  if(u.kind==='b') return owned(u.b)>=u.req;
+  return (!u.prev||has(u.prev)) && S.total>=u.cost*0.3;
+}
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id); if(!u||!upAvailable(u)||S.gold<u.cost) return;
+  S.gold-=u.cost; S.up.push(id); upSet.add(id); refresh();
+}
+
+// Forge
+function nextGear(slot){ return GEAR[slot].tiers[S.gear[slot]+1]; }
+function forge(slot){
+  const t=nextGear(slot); if(!t||!canPay(t.cost)) return;
+  pay(t.cost); S.gear[slot]++; chronicle(`The smith hands over a ${t.name}.`); refresh();
+}
+
+// Expeditions
+function expDuration(l){ return l.dur*(1-0.08*S.gear.armor); }
+function lootRange(l,k,[a,b]){ const m = k==='wood' ? 1+0.25*S.gear.weapon : PICK_ORE[S.gear.pick]; return [Math.round(a*m),Math.round(b*m)]; }
+function depart(id){
+  const l=LOCS.find(x=>x.id===id); if(!l||S.exp||S.gear.armor<l.danger) return;
+  const t=now(); S.exp={id,start:t,end:t+expDuration(l)*1000}; refresh();
+}
+function returnHome(){
+  const l=LOCS.find(x=>x.id===S.exp.id); S.exp=null;
+  const got=[];
+  for(const [k,r] of Object.entries(l.loot)){ const [a,b]=lootRange(l,k,r); const n=rnd(a,b); if(n>0){ S.mat[k]+=n; got.push(`${n} ${NAMES[k]}`);} }
+  if(l.cry){ const n=rnd(...l.cry), tally={}; for(let i=0;i<n;i++){ const c=CRYS[rnd(0,3)]; S.cry[c]++; tally[c]=(tally[c]||0)+1; }
+    for(const [c,v] of Object.entries(tally)) got.push(`${v} ${NAMES[c]} crystal${v>1?'s':''}`); }
+  toast(`Back from ${l.name}: ${got.join(', ')||'nothing this time'}.`);
+  scene&&scene.burst(360,250,12);
+}
+
+// Crystal mine
+function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))); }
+function digMine(){ const d=MINE[S.mine]; if(!d||!canPay(d.cost)) return; pay(d.cost); S.mine++; chronicle(S.mine===1?'The crystal mine is open. Ember and Frost glitter in the rock.':`Your miners break into ${d.done}.`); refresh(); }
+function mineCrystals(dt){
+  if(!S.mine) return;
+  S.mineAcc+=dt; const iv=mineInterval(); let n=Math.floor(S.mineAcc/iv); if(!n) return;
+  S.mineAcc-=n*iv; const els=MINE[S.mine-1].els;
+  if(n>40){ const each=Math.floor(n/els.length); els.forEach(e=>S.cry[e]+=each); n-=each*els.length; }
+  for(let i=0;i<n;i++){ const e=els[rnd(0,els.length-1)]; S.cry[e]++; scene&&scene.crystalPing(e); }
+}
+
+// Spells
+function learn(id){ const s=SPELLS.find(x=>x.id===id); if(!s||knows(id)||!canPay(s.learn)) return; pay(s.learn); S.known.push(id); chronicle(`You have learned ${s.name}.`); refresh(); }
+function castable(s){ return knows(s.id) && canPay(s.cast) && !(s.dur&&active(s.id)) && !(s.id==='road'&&!S.exp); }
+function cast(id){
+  const s=SPELLS.find(x=>x.id===id); if(!s||!castable(s)) return;
+  pay(s.cast);
+  if(s.dur) S.spells[id]=now()+s.dur*1000;
+  else if(id==='road') returnHome();
+  else if(id==='tithe'){ const g=Math.max(gps()*300,tapValue()*60); earn(g); toast(`The dragon brings you ${fmt(g)} gold.`); scene&&scene.burst(360,200,40); }
+  refresh();
+}
+
+function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto) S.taps++; scene&&scene.fx(x,y,v,auto); }
+function pendingRenown(){ return Math.floor(Math.sqrt(S.total/1e6)); }
+function ascend(){
+  const p=pendingRenown(); if(p<1) return;
+  const keep={renown:S.renown+p,life:S.life,taps:S.taps,known:S.known.slice(),gear:{...S.gear}};
+  S=Object.assign(fresh(),keep); upSet=new Set();
+  chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
+}
+function wipe(){ S=fresh(); upSet=new Set(); save(true); chronicle('Your keep stands alone in the moonlight. Tap it to collect the tithe.'); refresh(); }
+
+function tick(){
+  const t=now(); let dt=(t-S.last)/1000; S.last=t;
+  if(dt<=0) return;
+  if(dt>10){
+    dt=Math.min(dt,OFFLINE_CAP);
+    const g=gps(false)*dt; earn(g);
+    const before=CRYS.reduce((a,c)=>a+S.cry[c],0); mineCrystals(dt); const cr=CRYS.reduce((a,c)=>a+S.cry[c],0)-before;
+    if(g>=1||cr) toast(`While you were away: ${fmt(g)} gold${cr?` and ${cr} crystal${cr>1?'s':''}`:''}.`);
+  } else { earn(gps()*dt); mineCrystals(dt); }
+  if(S.exp&&t>=S.exp.end) returnHome();
+}
+
+/* ================= FORMAT ================= */
+const UNITS=['K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
+function fmt(n){
+  if(!isFinite(n)) return '∞';
+  if(n<1000) return (n<10&&n%1)?n.toFixed(1):Math.floor(n).toLocaleString('en-US');
+  let i=-1; while(n>=1000&&i<UNITS.length-1){ n/=1000; i++; }
+  if(n>=1000) return n.toExponential(2);
+  return (n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n))+UNITS[i];
+}
+const fmtTime=s=>{ s=Math.ceil(s); return s>=60?`${Math.floor(s/60)}m ${String(s%60).padStart(2,'0')}s`:`${s}s`; };
+const chip=(k,v,short)=>`<span class="res ${CRYS.includes(k)?'cry':''} ${short?'short':''}" style="--c:var(--${k==='gold'?'gold':k})"><i></i>${fmt(v)} ${k==='gold'?'gold':NAMES[k]}</span>`;
+const costHTML=c=>`<div class="cost">${Object.entries(c).map(([k,v])=>chip(k,v,res(k)<v)).join('')}</div>`;
+const setHTML=(el,h)=>{ if(el._h!==h){ el._h=h; el.innerHTML=h; } };
+
+/* ================= UI ================= */
+const $=id=>document.getElementById(id);
+const bList=$('bList'), uList=$('uList'), sList=$('sList'), lList=$('lList'), fList=$('fList'), mList=$('mList');
+
+function buildRows(){
+  bList.innerHTML=BUILDINGS.map(b=>`
+    <div class="row" id="b-${b.id}" hidden>
+      <div>
+        <div class="r-head"><span class="r-name" id="bn-${b.id}">${b.name}</span><span class="r-count" id="bc-${b.id}"></span></div>
+        <div class="r-desc" id="bd-${b.id}">${b.desc}</div>
+        <div class="r-meta" id="bm-${b.id}"></div>
+      </div>
+      <button class="act" id="bb-${b.id}" data-buy="${b.id}"><small id="bq-${b.id}">Build</small><span id="bp-${b.id}"></span></button>
+    </div>`).join('');
+  lList.innerHTML=LOCS.map(l=>`
+    <div class="row" id="l-${l.id}">
+      <div>
+        <div class="r-head"><span class="r-name">${l.name}</span><span class="r-tag" id="lt-${l.id}"></span></div>
+        <div class="r-desc">${l.desc}</div>
+        <div id="ll-${l.id}"></div>
+      </div>
+      <button class="act" id="lb-${l.id}" data-go="${l.id}"><small id="lq-${l.id}">Depart</small><span id="lp-${l.id}"></span></button>
+    </div>`).join('');
+  fList.innerHTML=Object.entries(GEAR).map(([k,g])=>`
+    <div class="row" id="f-${k}">
+      <div>
+        <div class="r-head"><span class="r-name" id="fn-${k}"></span><span class="r-tag">${g.label}</span></div>
+        <div class="r-desc" id="fe-${k}"></div>
+        <div id="fc-${k}"></div>
+      </div>
+      <button class="act" id="fb-${k}" data-forge="${k}"><small>Forge</small><span>Craft</span></button>
+    </div>`).join('');
+  mList.innerHTML=`
+    <div class="row">
+      <div>
+        <div class="r-head"><span class="r-name" id="mn"></span></div>
+        <div class="r-desc" id="md"></div>
+        <div id="mc"></div>
+      </div>
+      <button class="act" id="mb" data-dig="1"><small>Dig</small><span>Excavate</span></button>
+    </div>`;
+  sList.innerHTML=SPELLS.map(s=>`
+    <div class="row" id="s-${s.id}">
+      <div>
+        <div class="r-head"><span class="r-name">${s.name}</span><span class="r-tag" id="st-${s.id}"></span></div>
+        <div class="r-desc">${s.text}</div>
+        <div id="sc-${s.id}"></div>
+      </div>
+      <button class="act" id="sb-${s.id}" data-spell="${s.id}"><small id="sq-${s.id}">Learn</small><span id="sp-${s.id}">Study</span></button>
+    </div>`).join('');
+}
+
+let upSig='';
+function renderUpgrades(){
+  const av=UPGRADES.filter(upAvailable), sig=av.map(u=>u.id).join();
+  if(sig!==upSig){
+    upSig=sig;
+    uList.innerHTML=av.length?av.map(u=>`
+      <div class="row">
+        <div><div class="r-head"><span class="r-name">${u.name}</span></div><div class="r-desc">${u.text}</div></div>
+        <button class="act" id="ub-${u.id}" data-up="${u.id}"><small>Purchase</small><span>${fmt(u.cost)}</span></button>
+      </div>`).join(''):`<div class="empty">No techniques to learn yet. Owning 1, 10, 25, 50 and 100 of a holding unlocks its techniques.</div>`;
+  }
+  let n=0; for(const u of av){ const ok=S.gold>=u.cost; if(ok)n++; const el=$('ub-'+u.id); if(el) el.disabled=!ok; }
+  badge('upBadge',n);
+}
+function badge(id,n){ const b=$(id); b.hidden=!n; b.textContent=n; }
+
+function refresh(){
+  $('gold').textContent=fmt(S.gold);
+  $('gps').textContent=fmt(gps());
+  $('tapv').textContent=fmt(tapValue());
+
+  // stockpile
+  setHTML($('stock'), MATS.map(k=>chip(k,S.mat[k])).join('') + '<span class="sep"></span>' + CRYS.map(k=>chip(k,S.cry[k])).join(''));
+
+  // hero status
+  if(S.exp){ const l=LOCS.find(x=>x.id===S.exp.id), left=(S.exp.end-now())/1000, p=1-(S.exp.end-now())/(S.exp.end-S.exp.start);
+    $('expLine').textContent=`${l.name} · back in ${fmtTime(Math.max(0,left))}`; $('expFill').style.width=Math.min(100,p*100)+'%'; }
+  else { $('expLine').textContent='Resting at the keep'; $('expFill').style.width='0%'; }
+  setHTML($('buffs'), SPELLS.filter(s=>s.dur&&active(s.id)).map(s=>`<span class="buff">${s.name} ${Math.ceil((S.spells[s.id]-now())/1000)}s</span>`).join(''));
+
+  // buildings
+  let shownMystery=false;
+  BUILDINGS.forEach((b,i)=>{
+    const row=$('b-'+b.id);
+    const known=i===0||owned(b.id)>0||owned(BUILDINGS[i-1].id)>0||S.total>=b.base*0.5;
+    if(!known){
+      if(shownMystery){ row.hidden=true; return; }
+      shownMystery=true; row.hidden=false; row.classList.add('mystery');
+      $('bn-'+b.id).textContent='Unknown holding';
+      $('bd-'+b.id).textContent=`Revealed once your reign has gathered ${fmt(b.base*0.5)} gold.`;
+      $('bm-'+b.id).textContent=''; $('bc-'+b.id).textContent='';
+      $('bb-'+b.id).disabled=true; $('bq-'+b.id).textContent='Build'; $('bp-'+b.id).textContent='???';
+      return;
+    }
+    row.hidden=false;
+    if(row.classList.contains('mystery')){ row.classList.remove('mystery'); $('bn-'+b.id).textContent=b.name; $('bd-'+b.id).textContent=b.desc; }
+    const n=buyCount(b), c=costFor(b,n), o=owned(b.id), r=bRate(b)*(active('harvest')?3:1);
+    $('bc-'+b.id).textContent=o||'';
+    $('bm-'+b.id).textContent=`+${fmt(r)}/sec each`+(o?` · ${fmt(r*o)}/sec total`:'');
+    $('bq-'+b.id).textContent=n===1?'Build':`Build ${n}`;
+    $('bp-'+b.id).textContent=fmt(c);
+    $('bb-'+b.id).disabled=S.gold<c;
+  });
+
+  renderUpgrades();
+
+  // expeditions
+  $('expNote').textContent=S.gear.armor?`Trips ${S.gear.armor*8}% faster`:'';
+  LOCS.forEach(l=>{
+    const locked=S.gear.armor<l.danger, busy=!!S.exp, here=S.exp&&S.exp.id===l.id;
+    $('l-'+l.id).classList.toggle('locked',locked);
+    $('lt-'+l.id).textContent=l.danger?`Danger ${l.danger}`:'Safe';
+    const loot=Object.entries(l.loot).map(([k,r])=>{ const [a,b]=lootRange(l,k,r); return `<span class="res" style="--c:var(--${k})"><i></i>${a}–${b} ${NAMES[k]}</span>`; }).join('')
+      + (l.cry?`<span class="res cry" style="--c:var(--storm)"><i></i>${l.cry[0]}–${l.cry[1]} random crystals</span>`:'');
+    setHTML($('ll-'+l.id), locked?`<div class="r-meta" style="color:var(--bad)">Needs ${GEAR.armor.tiers[l.danger].name} or better</div>`:`<div class="cost">${loot}</div>`);
+    $('lb-'+l.id).disabled=locked||busy;
+    $('lq-'+l.id).textContent=here?'Exploring':'Depart';
+    $('lp-'+l.id).textContent=here?fmtTime(Math.max(0,(S.exp.end-now())/1000)):fmtTime(expDuration(l));
+  });
+
+  // forge
+  setHTML($('gearNow'), Object.entries(GEAR).map(([k,g])=>`<div class="slot"><span class="label">${g.label}</span><b>${g.tiers[S.gear[k]].name}</b><span>${g.effect(S.gear[k])}</span></div>`).join(''));
+  let forgeable=0;
+  Object.entries(GEAR).forEach(([k,g])=>{
+    const t=nextGear(k);
+    if(!t){ $('fn-'+k).textContent=`${g.tiers[S.gear[k]].name}`; $('fe-'+k).textContent='The finest your smith can make.'; setHTML($('fc-'+k),''); $('fb-'+k).disabled=true; return; }
+    $('fn-'+k).textContent=t.name;
+    $('fe-'+k).textContent=g.effect(S.gear[k]+1);
+    setHTML($('fc-'+k), costHTML(t.cost));
+    const ok=canPay(t.cost); if(ok) forgeable++;
+    $('fb-'+k).disabled=!ok;
+  });
+  badge('forgeBadge',forgeable);
+
+  // crystal mine
+  const d=MINE[S.mine];
+  $('mineRate').textContent=S.mine?`1 crystal every ${mineInterval().toFixed(1)}s`:'';
+  if(d){
+    $('mn').textContent=d.name;
+    const newEl=d.els.filter(e=>!(S.mine&&MINE[S.mine-1].els.includes(e)));
+    $('md').textContent=S.mine? (newEl.length?`Unearths ${newEl.map(e=>NAMES[e]).join(' and ')} crystals, and digs faster.`:'The deepest vein. Crystals come far faster.') : 'Yields Ember and Frost crystals over time, even while you are away.';
+    setHTML($('mc'), costHTML(d.cost)); $('mb').disabled=!canPay(d.cost); $('mb').hidden=false;
+  } else { $('mn').textContent=MINE[S.mine-1].done; $('md').textContent='Every gallery is open.'; setHTML($('mc'),''); $('mb').hidden=true; }
+
+  // grimoire
+  let magicReady=0;
+  SPELLS.forEach(s=>{
+    const k=knows(s.id), btn=$('sb-'+s.id), on=s.dur&&active(s.id);
+    btn.classList.toggle('arcane',k);
+    $('st-'+s.id).textContent=k?'Known':'Unlearned';
+    if(!k){
+      setHTML($('sc-'+s.id), `<div class="r-meta">To learn</div>`+costHTML(s.learn));
+      $('sq-'+s.id).textContent='Learn'; $('sp-'+s.id).textContent='Study';
+      btn.disabled=!canPay(s.learn); if(!btn.disabled) magicReady++;
+    } else {
+      setHTML($('sc-'+s.id), `<div class="r-meta">Reagents per cast</div>`+costHTML(s.cast));
+      $('sq-'+s.id).textContent=on?'Active':'Cast';
+      $('sp-'+s.id).textContent=on?`${Math.ceil((S.spells[s.id]-now())/1000)}s left`:(s.id==='road'&&!S.exp?'No trip':'Invoke');
+      btn.disabled=!castable(s);
+    }
+  });
+  if(d&&canPay(d.cost)) magicReady++;
+  badge('magicBadge',magicReady);
+
+  // ascend
+  const p=pendingRenown();
+  $('renown').textContent=S.renown; $('renownBonus').textContent=`+${S.renown*5}%`;
+  $('reignGold').textContent=fmt(S.total); $('pending').textContent=p;
+  $('lifeGold').textContent=fmt(S.life); $('taps').textContent=S.taps.toLocaleString('en-US');
+  $('ascendBtn').disabled=p<1;
+  $('ascendHint').textContent=p<1?`Gather ${fmt(1e6)} gold in one reign to earn your first Renown.`:`+${p} Renown, +${p*5}% gold`;
+}
+
+let chronTimer;
+function chronicle(msg){ const el=$('chron'); el.style.opacity=0; clearTimeout(chronTimer); chronTimer=setTimeout(()=>{ el.textContent=msg; el.style.opacity=1; },200); }
+let toastTimer;
+function toast(msg){ const el=$('toast'); el.textContent=msg; el.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.hidden=true,4500); }
+function confirmButton(btn,txtEl,label,confirmLabel,action){
+  let armed=false,t;
+  btn.addEventListener('click',()=>{
+    if(!armed){ armed=true; txtEl.textContent=confirmLabel; t=setTimeout(()=>{armed=false;txtEl.textContent=label;},4000); return; }
+    clearTimeout(t); armed=false; txtEl.textContent=label; action();
+  });
+}
+function wireUI(){
+  document.querySelector('.tabs').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-tab]'); if(!b) return;
+    document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+    ['build','up','explore','forge','magic','asc'].forEach(k=>$('p-'+k).hidden=k!==b.dataset.tab);
+  });
+  $('qty').addEventListener('click',e=>{
+    const b=e.target.closest('button[data-q]'); if(!b) return;
+    qty=b.dataset.q==='max'?'max':+b.dataset.q;
+    $('qty').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); refresh();
+  });
+  document.querySelector('.wrap').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b||b.disabled) return;
+    const d=b.dataset;
+    if(d.buy) buyBuilding(d.buy); else if(d.up) buyUpgrade(d.up); else if(d.go) depart(d.go);
+    else if(d.forge) forge(d.forge); else if(d.dig) digMine();
+    else if(d.spell) knows(d.spell)?cast(d.spell):learn(d.spell);
+  });
+  confirmButton($('ascendBtn'),$('ascendTxt'),'Found a new dynasty','Tap again to abdicate',ascend);
+  confirmButton($('wipeBtn'),$('wipeTxt'),'Start from nothing','Tap again to erase everything',wipe);
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden) save(true); else { tick(); refresh(); } });
+  window.addEventListener('pagehide',()=>save(true));
+}
+
+/* ================= PHASER REALM ================= */
+const W=720,H=360,Z=2;
+const WINDOWS=[[-86,-128],[74,-128],[-14,-150],[6,-150],[-86,-98],[74,-98],[-54,-90],[46,-90],[-36,-90],[28,-90],[-86,-68],[74,-68],[-54,-60],[46,-60]];
+const DISPLAY_FONT='"IM Fell English SC", Georgia, serif';
+const CRYSTAL_SPOTS=[[528,282,'ember'],[540,276,'frost'],[552,284,'verdant'],[562,279,'storm'],[546,288,'ember'],[534,290,'frost']];
+
+class Realm extends Phaser.Scene{
+  constructor(){ super('realm'); }
+  create(){
+    scene=this;
+    this.cameras.main.setZoom(Z).centerOn(W/2,H/2);
+    this.input.addPointer(2);
+    const g=this.make.graphics({add:false});
+    g.fillStyle(0xf6cf6a); g.fillCircle(10,10,10); g.fillStyle(0xb8832a); g.fillCircle(10,10,5); g.generateTexture('coin',20,20); g.clear();
+    g.fillStyle(0xffffff); g.fillCircle(8,8,8); g.generateTexture('spark',16,16); g.clear();
+    g.fillStyle(0x7c8092); g.fillCircle(12,12,12); g.generateTexture('smoke',24,24); g.clear();
+    g.fillStyle(0x07080f);
+    g.fillEllipse(64,34,56,16); g.fillCircle(32,30,8); g.fillTriangle(24,28,14,24,24,34);
+    g.fillTriangle(90,32,126,46,90,38); g.fillTriangle(52,30,28,0,72,30); g.fillTriangle(62,30,92,2,80,34);
+    g.generateTexture('dragon',128,56); g.destroy();
+
+    const sky=this.add.graphics(); sky.fillGradientStyle(0x0a0c19,0x0a0c19,0x2c2640,0x2c2640,1); sky.fillRect(0,0,W,H);
+    for(let i=0;i<70;i++){ const s=this.add.circle(Math.random()*W,Math.random()*210,0.5+Math.random()*1.2,0xeadfc4,0.3+Math.random()*0.7);
+      this.tweens.add({targets:s,alpha:0.1,duration:1200+Math.random()*2400,yoyo:true,repeat:-1,delay:Math.random()*2000}); }
+    this.add.circle(612,70,64,0xf1e6c8,0.05); this.add.circle(612,70,42,0xf1e6c8,0.08);
+    this.add.circle(612,70,26,0xf1e6c8); this.add.circle(604,64,5,0xdcd0ad); this.add.circle(620,78,4,0xdcd0ad); this.add.circle(618,60,3,0xdcd0ad);
+    this.dragon=this.add.image(0,0,'dragon').setScale(0.5).setVisible(false);
+
+    const hills=this.add.graphics(); hills.fillStyle(0x1a1d31);
+    const pts=[{x:0,y:H}]; for(let x=0;x<=W;x+=12) pts.push({x,y:238+18*Math.sin(x/70)+10*Math.sin(x/23+1)}); pts.push({x:W,y:H});
+    hills.fillPoints(pts,true);
+    // Whisperwood is always there, at the western edge
+    const woods=this.add.graphics();
+    for(let i=0;i<11;i++){ const x=14+i*14+(i%3)*4, y=266+(i%2)*10+5*Math.sin(x/40), h=30+(i*7)%16;
+      woods.fillStyle(i%2?0x172a2a:0x1c3130); woods.fillTriangle(x-10,y,x,y-h,x+10,y); }
+
+    this.back=this.add.graphics();
+    this.crystals=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    this.smoke=this.add.particles(0,0,'smoke',{x:228,y:246,speedY:{min:-28,max:-16},speedX:{min:-3,max:9},lifespan:2800,scale:{start:0.25,end:0.9},alpha:{start:0.3,end:0},frequency:280,emitting:false});
+    this.orbGlow=this.add.circle(690,86,16,0xc7a8f0,0.25).setVisible(false);
+    this.orb=this.add.circle(690,86,6,0xf0e6ff).setVisible(false);
+    this.wheel=this.add.graphics().setPosition(186,282).setVisible(false);
+    this.wheel.lineStyle(2,0x5a4630); this.wheel.strokeCircle(0,0,12);
+    for(let a=0;a<6;a++){ const r=a*Math.PI/3; this.wheel.lineBetween(-12*Math.cos(r),-12*Math.sin(r),12*Math.cos(r),12*Math.sin(r)); }
+
+    const ground=this.add.graphics(); ground.fillStyle(0x131627);
+    const gp=[{x:0,y:H}]; for(let x=0;x<=W;x+=12) gp.push({x,y:290+5*Math.sin(x/40)}); gp.push({x:W,y:H});
+    ground.fillPoints(gp,true);
+
+    this.glow=this.add.ellipse(360,210,340,230,0xf6cf6a,0).setBlendMode(Phaser.BlendModes.ADD);
+    this.castle=this.add.container(360,294);
+    this.castleG=this.add.graphics(); this.winG=this.add.graphics();
+    this.castle.add([this.castleG,this.winG]);
+    this.front=this.add.graphics();
+    this.harvestGlow=this.add.rectangle(130,330,240,50,0xe3c46a,0).setBlendMode(Phaser.BlendModes.ADD);
+    this.lantern=this.add.circle(0,0,3,0xf6cf6a).setVisible(false);
+    this.lanternGlow=this.add.circle(0,0,9,0xf6cf6a,0.25).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
+
+    this.wispGlow=this.add.circle(0,0,12,0xc7a8f0,0.3).setVisible(false);
+    this.wisp=this.add.circle(0,0,4,0xf6f0ff).setVisible(false);
+    this.coins=this.add.particles(0,0,'coin',{speed:{min:120,max:260},angle:{min:210,max:330},gravityY:520,lifespan:900,scale:{start:0.55,end:0.2},alpha:{start:1,end:0},emitting:false});
+    this.sparks=this.add.particles(0,0,'spark',{speed:{min:30,max:90},lifespan:600,scale:{start:0.4,end:0},alpha:{start:0.9,end:0},blendMode:'ADD',emitting:false});
+    this.floaters=0; this.famAcc=0; this.sig=''; this.lit=-1;
+    this.input.on('pointerdown',p=>tap(p.worldX,p.worldY,false));
+  }
+  drawScenery(){
+    const o=id=>owned(id), b=this.back, f=this.front, c=this.castleG;
+    b.clear(); f.clear(); c.clear();
+    // Watermill
+    this.wheel.setVisible(o('mill')>0);
+    if(o('mill')){ b.fillStyle(0x2a2536); b.fillRect(160,268,26,24); b.fillStyle(0x1d1a27); b.fillTriangle(156,268,173,254,190,268); }
+    // Tavern with chimney
+    if(o('tavern')){ b.fillStyle(0x2a2536); b.fillRect(198,262,40,28); b.fillStyle(0x1d1a27); b.fillTriangle(194,262,218,244,242,262);
+      b.fillStyle(0x3a3346); b.fillRect(224,240,8,16); b.fillStyle(0xf0b44a); b.fillRect(204,272,7,7); b.fillRect(224,272,7,7); }
+    if(o('tavern')&&!this.smoke.emitting) this.smoke.start(); if(!o('tavern')&&this.smoke.emitting) this.smoke.stop();
+    // Silver mine
+    if(o('silver')){ b.fillStyle(0x07080f); b.fillRect(604,272,30,20); b.fillCircle(619,272,15);
+      b.lineStyle(3,0x4d3b27); b.lineBetween(602,292,602,262); b.lineBetween(636,292,636,262); b.lineBetween(598,262,640,262);
+      b.fillStyle(0xf0b44a); b.fillCircle(644,270,3); b.fillStyle(0x9aa3b5); b.fillRect(646,286,14,6); }
+    // Crystal mine: glowing shards on the eastern slope
+    this.crystals.clear();
+    if(S.mine){ const els=MINE[S.mine-1].els;
+      b.fillStyle(0x07080f); b.fillCircle(546,292,14);
+      CRYSTAL_SPOTS.forEach(([x,y,e],i)=>{ if(!els.includes(e)) return; const h=8+(i%3)*3;
+        this.crystals.fillStyle(HEX[e],0.9); this.crystals.fillTriangle(x-3,y,x,y-h,x+3,y);
+        this.crystals.fillStyle(HEX[e],0.18); this.crystals.fillCircle(x,y-h/2,h); }); }
+    // Wizard tower
+    const tw=o('tower')>0;
+    if(tw){ b.fillStyle(0x22263b); b.fillRect(678,128,24,166); b.fillStyle(0x1a1d2f); b.fillTriangle(672,128,690,92,708,128);
+      b.fillStyle(0xc7a8f0); b.fillRect(686,160,8,12); b.fillRect(686,210,8,12); }
+    this.orb.setVisible(tw); this.orbGlow.setVisible(tw);
+    // Castle
+    c.fillStyle(0x252a3f);
+    c.fillRect(-70,-110,140,110);
+    for(let x=-70;x<70;x+=20) c.fillRect(x,-122,12,12);
+    c.fillRect(-104,-150,40,150); c.fillRect(64,-150,40,150);
+    for(const tx of [-104,64]) for(let x=tx;x<tx+40;x+=14) c.fillRect(x,-160,9,10);
+    c.fillRect(-30,-168,60,58);
+    c.fillStyle(0x1b1f31); c.fillTriangle(-36,-168,0,-212,36,-168);
+    c.fillStyle(0x2d334b); c.fillRect(-70,-110,140,3); c.fillRect(-104,-150,40,3); c.fillRect(64,-150,40,3);
+    c.fillStyle(0x0b0d19); c.fillRect(-16,-38,32,38); c.fillCircle(0,-38,16);
+    c.lineStyle(2,0x4a4f66); c.lineBetween(0,-212,0,-232);
+    c.fillStyle(0xd06a45); c.fillTriangle(0,-232,20,-227,0,-222);
+    if(o('guild')){ for(const x of [-92,-76,76,92]){ c.fillStyle(0x8a2f2a); c.fillRect(x-5,-146,10,34); c.fillTriangle(x-5,-112,x,-104,x+5,-112); c.fillStyle(0xe3ad45); c.fillRect(x-2,-136,4,4);} }
+    // Farm fields
+    if(o('farm')){ const rows=Math.min(7,2+Math.floor(o('farm')/5));
+      for(let i=0;i<rows;i++){ f.fillStyle(i%2?0x2a2818:0x353120); const y=306+i*7; f.fillPoints([{x:24+i*6,y},{x:236-i*4,y},{x:232-i*4,y:y+5},{x:20+i*6,y:y+5}],true); } }
+    // Market tents
+    if(o('market')){ const n=Math.min(5,1+Math.floor(o('market')/10)), cols=[0x7a3a2e,0x2f5d62,0x8a6a2a,0x5b3a5e,0x7a3a2e];
+      for(let i=0;i<n;i++){ const x=484+i*24, y=320+(i%2)*8; f.fillStyle(cols[i]); f.fillTriangle(x-12,y,x,y-18,x+12,y); f.fillStyle(0x0b0d19); f.fillRect(x-2,y-6,4,6); } }
+    this.dragon.setVisible(o('dragon')>0);
+  }
+  drawWindows(n){ const w=this.winG; w.clear(); WINDOWS.forEach(([x,y],i)=>{ w.fillStyle(i<n?0xf0b44a:0x131626); w.fillRect(x,y,8,12); }); }
+  fx(x,y,v,auto){
+    if(this.floaters<36){
+      this.floaters++;
+      const t=this.add.text(x+(auto?0:Phaser.Math.Between(-10,10)),y-6,'+'+fmt(v),{fontFamily:DISPLAY_FONT,fontSize:auto?'22px':'34px',color:auto?'#e4d4ff':'#f6cf6a',stroke:'#0b0d19',strokeThickness:5,resolution:Z}).setOrigin(0.5);
+      this.tweens.add({targets:t,y:y-70,alpha:0,duration:auto?700:950,ease:'Cubic.easeOut',onComplete:()=>{t.destroy();this.floaters--;}});
+    }
+    this.coins.explode(auto?2:6,x,y);
+    if(!auto){ this.tweens.killTweensOf(this.castle); this.castle.setScale(1); this.tweens.add({targets:this.castle,scaleX:1.02,scaleY:0.985,duration:60,yoyo:true}); }
+  }
+  burst(x,y,n){ this.coins.explode(n,x,y); this.sparks.explode(Math.ceil(n/2),x,y); }
+  crystalPing(e){ this.sparks.setParticleTint(HEX[e]); this.sparks.explode(6,546,280); }
+  update(time,delta){
+    const t=time/1000;
+    const sig=BUILDINGS.map(b=>Math.min(owned(b.id),100)).join()+'|'+S.mine;
+    if(sig!==this.sig){ this.sig=sig; this.drawScenery(); }
+    const total=BUILDINGS.reduce((a,b)=>a+owned(b.id),0), lit=Math.min(WINDOWS.length,1+Math.floor(total/4));
+    if(lit!==this.lit){ this.lit=lit; this.drawWindows(lit); }
+    this.glow.setAlpha(active('midas')?0.13+0.05*Math.sin(t*5):0);
+    this.harvestGlow.setAlpha(active('harvest')?0.16+0.06*Math.sin(t*3):0);
+    if(this.wheel.visible) this.wheel.rotation=t*0.8;
+    if(S.mine) this.crystals.setAlpha(0.75+0.25*Math.sin(t*2));
+    if(this.orb.visible){ const p=0.5+0.5*Math.sin(t*2.4); this.orbGlow.setScale(1+0.4*p).setAlpha(0.18+0.2*p); }
+    if(this.dragon.visible){ const a=t*0.22; this.dragon.setPosition(360+310*Math.sin(a),78+22*Math.sin(t*0.9)); this.dragon.setFlipX(Math.cos(a)>0); }
+    // Hero's lantern walks out to the expedition and back
+    if(S.exp){ const l=LOCS.find(x=>x.id===S.exp.id), p=Math.min(1,Math.max(0,(now()-S.exp.start)/(S.exp.end-S.exp.start)));
+      const out=p<0.5?p*2:(1-p)*2, x=360+l.dir*out*330, y=300+5*Math.sin(x/40)+Math.abs(Math.sin(t*6))*-2;
+      this.lantern.setVisible(true).setPosition(x,y); this.lanternGlow.setVisible(true).setPosition(x,y).setAlpha(0.2+0.08*Math.sin(t*9)); }
+    else { this.lantern.setVisible(false); this.lanternGlow.setVisible(false); }
+    if(active('familiar')){
+      const x=360+170*Math.cos(t*2.2), y=196+54*Math.sin(t*2.2);
+      this.wisp.setVisible(true).setPosition(x,y); this.wispGlow.setVisible(true).setPosition(x,y).setScale(1+0.3*Math.sin(t*12));
+      this.famAcc+=delta; while(this.famAcc>=125){ this.famAcc-=125; tap(x,y,true); }
+    } else { this.wisp.setVisible(false); this.wispGlow.setVisible(false); this.famAcc=0; }
+  }
+}
+
+/* ================= BOOT ================= */
+function start(data){
+  S=(data&&data.S)?Object.assign(fresh(),data.S):(load()||fresh());
+  upSet=new Set(S.up);
+  buildRows(); wireUI();
+  const lastB=S.chron.length&&BUILDINGS.find(b=>b.id===S.chron[S.chron.length-1]);
+  chronicle(lastB?lastB.chron:'Your keep stands alone in the moonlight. Tap it to collect the tithe, and send your hero into Whisperwood.');
+  tick(); refresh();
+  setInterval(()=>{ tick(); refresh(); },100);
+  setInterval(save,3000);
+  const boot=()=>{ if(game) return; game=new Phaser.Game({type:Phaser.AUTO,parent:'realm',width:W*Z,height:H*Z,backgroundColor:'#0b0d1a',
+    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},banner:false,scene:Realm}); };
+  const fontReady=document.fonts?document.fonts.load(`34px ${DISPLAY_FONT}`):Promise.resolve();
+  Promise.race([fontReady,new Promise(r=>setTimeout(r,1500))]).then(boot,boot);
+}
+start({});
+})();
+</script>
+
+</body>
+</html>
