@@ -30,6 +30,19 @@ secondsPerCrystal = baseTime / (pickaxeCrystalMult × (1 + 0.1 × apprenticeHall
 
 Each crystal is a random element from those the current depth yields. The mine resets on ascension.
 
+### Digging takes time
+
+Each gallery is a construction job. Pay the cost, and the miners dig for a while. The current level keeps producing in the meantime.
+
+| Gallery | Dig time |
+|---|---:|
+| Crystal Mine (opening) | 30s |
+| Verdant Gallery | 2m |
+| Storm Vault | 5m |
+| The Heartvein | 12m |
+
+**Split the rock** (1 Frost crystal) halves the time left, and you can use it repeatedly. It's on the mine row and in the spellbook. A ⛏ countdown floats over the mine site in the keep view.
+
 ## Arthrex
 
 The court sorcerer explains crystals after your first expedition and gives you 10 of each. He then sets errands that pay in crystals. See [Story and Arthrex](story.md).
@@ -52,7 +65,7 @@ A timed spell can't be recast while it's active. Quickened Road can only be cast
 
 The **book button** to the right of the hero's health bar opens the spellbook, a bottom sheet with everything you can cast right now:
 
-- **Mend** (1 Verdant: heal 50%) and **Hasten** (1 Storm: halve the rest of the trip, once per trip). These are always there and don't need learning. See [Hero](hero.md#crystal-quick-actions).
+- **Mend** (1 Verdant: heal 50%), **Hasten** (1 Storm: halve the rest of the trip, once per trip), **Stoke the Forge** (1 Ember: halve Brom's time left) and **Split the Rock** (1 Frost: halve the mine dig time). These are always there and don't need learning. Each crystal element now has an everyday use. See [Hero](hero.md#crystal-quick-actions).
 - Every spell you've **learned**, with its reagent cost and a Cast button.
 
 Each entry shows why it can't be cast right now, if it can't (for example "Only while your hero is away", or the time left on an active spell). Your crystal counts are shown at the top. A violet dot on the book means something useful is ready: Mend when the hero is below half health, or Hasten during a trip. **Open grimoire** jumps to the Magic tab, where new spells are learned.

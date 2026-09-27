@@ -6,6 +6,19 @@ The hero has three equipment slots. Each slot upgrades one tier at a time using 
 
 Material progression: **wood and stone → copper → bronze (copper + tin) → iron**.
 
+## Forging takes time
+
+Brom works on **one piece at a time**. You pay when you start, and the piece is equipped automatically when it's done, including while the game is closed.
+
+| Tier | Forging time |
+|---:|---:|
+| 1 | 15s |
+| 2 | 1m |
+| 3 | 3m |
+| 4 | 8m |
+
+**Stoke the forge** (1 Ember crystal) halves the time left, and you can use it repeatedly. It's on the anvil card at the top of the Forge tab and in the spellbook. A ⚒ countdown shows near the keep while he works. Anything in progress is kept through ascension, like the gear itself.
+
 ## Weapon
 
 Multiplies tap gold and boosts wood from expeditions.

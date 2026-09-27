@@ -42,6 +42,8 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `quest`, `questNext`, `questSpan` | Arthrex's current errand (or `null`), when the next one is offered, and the length of that wait (for the progress bar) |
 | `stats` | Lifetime counters for errands: `trips{region}`, `foes`, `tapGold`, `relics` |
 | `mine`, `mineAcc` | Crystal Mine depth and progress toward the next crystal |
+| `forging` | Brom's current job `{slot, start, end}` or `null` |
+| `digging` | The gallery being dug `{level, start, end}` or `null` |
 | `taps`, `chron`, `last` | Tap count, chronicle flags, last tick timestamp |
 
 If the save shape changes in a way old saves can't load, bump the key (for example `-v3`) and note it in the [Changelog](changelog.md).

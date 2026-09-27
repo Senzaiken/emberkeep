@@ -21,8 +21,9 @@ Right after the opening card, a spotlight tutorial starts. The whole screen goes
 | 7 | The Journey view | **Got it** (tap ahead to help) |
 | – | *(waits)* | The hero returns → **Arthrex** meets you and gives 10 of each crystal → **Brom** introduces the forge and gives 15 Wood, 10 Stone and 50 gold |
 | 8 | The Forge tab | The Forge tab is open |
-| 9 | Oak Cudgel | You forge it |
-| 10 | Your equipped gear | **Got it**. It explains armor and the pickaxe, then "The realm is yours". |
+| 9 | Oak Cudgel | You start forging it |
+| 10 | Brom's anvil | The cudgel is finished. It explains that crystals speed things up: stoke with an Ember, or just wait. |
+| 11 | Your equipped gear | **Got it**. It explains armor and the pickaxe, then "The realm is yours". |
 
 If the hero returns before steps 6–7 are finished, the tutorial skips straight to the story hand-over. Every card has **Skip tutorial**, but skipping also skips Brom's introduction and gift. The tutorial resumes at the same step if the game is closed partway through, and it hides while a story dialog is open. Existing saves with progress, or saves that finished the earlier short tutorial, never see it. **Start from nothing** shows it again.
 

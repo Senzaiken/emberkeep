@@ -226,6 +226,7 @@
   .qbar div{height:100%;background:var(--storm);}
   .spire .row-btns{display:flex;gap:8px;flex-wrap:wrap;}
   .spire .act{min-width:0;flex:1;}
+  .act svg{width:16px;height:16px;vertical-align:-3px;margin-right:2px;}
   .act.ghost{background:transparent;color:var(--ink);border-color:var(--line);}
   /* relic book */
   .relics{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
@@ -314,7 +315,9 @@
   </section>
 
   <section id="p-forge" class="panel" hidden>
-    <div class="panel-head"><span class="label">Equipped</span></div>
+    <div class="panel-head"><span class="label">Brom\u2019s anvil</span><span class="label num" id="forgeNote"></span></div>
+    <div class="spire" id="forgeBox"></div>
+    <div class="panel-head sub"><span class="label">Equipped</span></div>
     <div class="gear" id="gearNow"></div>
     <div class="panel-head sub"><span class="label">Anvil</span></div>
     <div id="fList" class="list"></div>
@@ -554,12 +557,12 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927193002';
+const BUILD='20260927195733';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},tut:null,tutV:2,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},tut:null,tutV:2,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
 function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
@@ -615,9 +618,24 @@ function buyUpgrade(id){
 
 // Forge
 function nextGear(slot){ return GEAR[slot].tiers[S.gear[slot]+1]; }
+// Forging takes time: one piece at a time, paid up front, finishes on its own (even while away).
+const FORGE_TIME=[0,15,60,180,480], STOKE_COST={ember:1};
 function forge(slot){
-  const t=nextGear(slot); if(!t||!canPay(t.cost)) return;
-  pay(t.cost); S.gear[slot]++; chronicle(`The smith hands over a ${t.name}.`); refresh();
+  const t=nextGear(slot); if(!t||S.forging||!canPay(t.cost)) return;
+  pay(t.cost); const secs=FORGE_TIME[S.gear[slot]+1], n=now();
+  S.forging={slot,start:n,end:n+secs*1000};
+  chronicle(`Brom fires up the forge for your ${t.name}.`); refresh();
+}
+function forgeDone(){
+  const f=S.forging; if(!f) return; const t=nextGear(f.slot); S.forging=null; S.gear[f.slot]++;
+  if(t){ toast(`Brom has finished your ${t.name}.`); chronicle(`Brom hands over a ${t.name}.`); }
+  scene&&scene.burst(360,250,10);
+}
+const canStoke=()=>!!S.forging&&canPay(STOKE_COST);
+function stoke(){
+  if(!canStoke()) return; pay(STOKE_COST); const f=S.forging, n=now();
+  f.end=n+(f.end-n)/2; if(f.end-n<1500) forgeDone(); else toast('The Ember crystal roars in the coals. Brom works twice as fast.');
+  refresh();
 }
 
 // Hero health
@@ -745,7 +763,17 @@ function quickenRoad(){
 
 // Crystal mine
 function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))*(1+relicBonus('mine'))); }
-function digMine(){ const d=MINE[S.mine]; if(!d||!canPay(d.cost)) return; pay(d.cost); S.mine++; chronicle(S.mine===1?'The crystal mine is open. Ember and Frost glitter in the rock.':`Your miners break into ${d.done}.`); refresh(); }
+// Digging a gallery takes time (the current level keeps producing meanwhile). Frost splits rock to speed it up.
+const DIG_TIME=[30,120,300,720], SPLIT_COST={frost:1};
+function digMine(){ const d=MINE[S.mine]; if(!d||S.digging||!canPay(d.cost)) return; pay(d.cost); const n=now();
+  S.digging={level:S.mine,start:n,end:n+DIG_TIME[S.mine]*1000};
+  chronicle(S.mine===0?'Miners clear the rubble from the old crystal mine.':`Miners start on the ${d.done}.`); refresh(); }
+function digDone(){ const g=S.digging; if(!g) return; S.digging=null; S.mine=g.level+1; const d=MINE[g.level];
+  const msg=S.mine===1?'The crystal mine is open. Ember and Frost glitter in the rock.':`Your miners break into the ${d.done}.`;
+  chronicle(msg); toast(msg); scene&&scene.crystalPing(d.els[d.els.length-1]); }
+const canSplit=()=>!!S.digging&&canPay(SPLIT_COST);
+function splitRock(){ if(!canSplit()) return; pay(SPLIT_COST); const g=S.digging, n=now();
+  g.end=n+(g.end-n)/2; if(g.end-n<1500) digDone(); else toast('Frost creeps into the rock and splits it. The miners dig twice as fast.'); refresh(); }
 function mineCrystals(dt){
   if(!S.mine) return;
   S.mineAcc+=dt; const iv=mineInterval(); let n=Math.floor(S.mineAcc/iv); if(!n) return;
@@ -870,7 +898,8 @@ const TUT=[
   {target:()=>$('realm'),text:()=>'This is your hero on the road. Tap trees, rocks and beasts before your hero reaches them for extra loot, and half the damage from foes.',next:'Got it'},
   {wait:()=>S.story.met&&!S.exp&&!dialogOpen(),go:()=>meetBrom()},
   {target:()=>$('tab-forge'),text:()=>'Brom’s forge is in the keep’s yard. Open the Forge tab.',done:()=>!$('p-forge').hidden},
-  {target:()=>$('f-weapon'),before:()=>openTab('forge'),text:()=>'Forge an Oak Cudgel. A weapon multiplies every tap, and your hero hits harder on the road.',done:()=>S.gear.weapon>0},
+  {target:()=>$('f-weapon'),before:()=>openTab('forge'),text:()=>'Forge an Oak Cudgel. A weapon multiplies every tap, and your hero hits harder on the road.',done:()=>!!S.forging||S.gear.weapon>0},
+  {target:()=>$('forgeBox'),before:()=>openTab('forge'),text:()=>'Good work takes time. Crystals speed it up: stoke the forge with an Ember crystal to halve the time left. Or simply wait.',done:()=>S.gear.weapon>0},
   {target:()=>$('gearNow'),text:()=>'Your hero’s kit. Armor adds health and opens dangerous regions. A pickaxe digs more ore and more crystal. Bring Brom materials from your expeditions to upgrade each piece.',next:'Got it'},
 ];
 const tutActive=()=>S.tut!=null&&S.tut<TUT.length;
@@ -911,6 +940,10 @@ function tutRender(){
 const QUICK_ARTS=[
   {id:'mend',name:'Mend',text:'Heal 50% of your hero’s health, even on the road.',cost:()=>MEND_COST,can:()=>canMend(),run:()=>mend(),
    why:()=>S.hp>=maxHP()?'Already at full health':''},
+  {id:'stoke',name:'Stoke the Forge',text:'Halve the time left on whatever Brom is forging. Use it as often as you like.',cost:()=>STOKE_COST,can:()=>canStoke(),run:()=>stoke(),
+   why:()=>!S.forging?'Only while Brom is forging':''},
+  {id:'split',name:'Split the Rock',text:'Halve the time left on the gallery your miners are digging. Use it as often as you like.',cost:()=>SPLIT_COST,can:()=>canSplit(),run:()=>splitRock(),
+   why:()=>!S.digging?'Only while the miners are digging':''},
   {id:'hasten',name:'Hasten',text:'Halve the rest of the current expedition. Once per trip.',cost:()=>HASTE_COST,can:()=>canHasten(),run:()=>hasten(),
    why:()=>!S.exp?'Only while your hero is away':S.exp.hasted?'Already hastened this trip':''},
 ];
@@ -980,7 +1013,7 @@ function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto){ S.taps++; S.stat
 function pendingRenown(){ return Math.floor(Math.sqrt(S.total/1e6)); }
 function ascend(){
   const p=pendingRenown(); if(p<1) return;
-  const keep={renown:S.renown+p,life:S.life,taps:S.taps,known:S.known.slice(),gear:{...S.gear},relics:{...S.relics},story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats))};
+  const keep={renown:S.renown+p,life:S.life,taps:S.taps,known:S.known.slice(),gear:{...S.gear},forging:S.forging,relics:{...S.relics},story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats))};
   S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set();
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
@@ -996,6 +1029,8 @@ function tick(){
     if(g>=1||cr) toast(`While you were away: ${fmt(g)} gold${cr?` and ${cr} crystal${cr>1?'s':''}`:''}.`);
   } else { earn(gps()*dt); mineCrystals(dt); }
   questTick();
+  if(S.forging&&t>=S.forging.end) forgeDone();
+  if(S.digging&&t>=S.digging.end) digDone();
   const wasAway=!!S.exp;
   expTick(t);
   if(!S.exp&&!wasAway) heal(maxHP()/HP_REGEN_FULL*dt);
@@ -1068,6 +1103,8 @@ function buildRows(){
         <div class="r-head"><span class="r-name" id="mn"></span></div>
         <div class="r-desc" id="md"></div>
         <div id="mc"></div>
+        <div id="mdig" hidden><div class="r-meta num" id="mdLeft"></div><div class="qbar" style="margin:4px 0 8px"><div id="mdBar" style="width:0;background:var(--frost)"></div></div>
+          <button class="act" id="mdSplit" data-split="1" style="min-width:0"><small>Split the rock \u00B7 halves the time</small><span>${ICON('frost')} 1 Frost</span></button></div>
       </div>
       <button class="act" id="mb" data-dig="1"><small>Dig</small><span>Excavate</span></button>
     </div>`;
@@ -1122,6 +1159,21 @@ function setView(v){
   $('realm').setAttribute('aria-label',v==='keep'?'Your keep. Tap to collect gold.':'Your hero on the road. Tap what lies ahead to help.');
   if(scene){ scene.scene.setVisible(v==='keep'); scene.input.enabled=v==='keep'; }
   if(journey) journey.setShown(v==='journey');
+}
+let forgeKey='';
+function renderForge(){
+  const f=S.forging;
+  const head=(sub)=>`<div class="spire-head"><div class="portrait">${BROM_SVG}</div><div><div class="quest-title">Brom</div><div class="r-desc" id="fgSub">${sub}</div></div></div>`;
+  const key=f?'busy|'+f.slot:'idle';
+  if(key!==forgeKey){ forgeKey=key;
+    $('forgeBox').innerHTML=!f?head('The anvil is cold. Pick something below to forge.')
+      :head(`Hammering out your <b>${(nextGear(f.slot)||{}).name||''}</b>.`)
+        +`<div class="r-meta num" id="fgLeft"></div><div class="qbar"><div id="fgBar" style="width:0;background:var(--ember)"></div></div>`
+        +`<div class="row-btns"><button class="act" id="fgStoke" data-stoke="1"><small>Stoke the forge · halves the time</small><span>${ICON('ember')} 1 Ember</span></button></div>`; }
+  if(!f){ $('forgeNote').textContent=''; return; }
+  const left=Math.max(0,f.end-now()), pct=Math.min(100,100*(now()-f.start)/(f.end-f.start));
+  $('fgLeft').textContent=`Ready in ${fmtTime(left/1000)}`; $('fgBar').style.width=pct+'%'; $('fgStoke').disabled=!canStoke();
+  $('forgeNote').textContent=`Ready in ${clock(left)}`;
 }
 let spireKey='';
 function renderSpire(){
@@ -1242,10 +1294,14 @@ function refresh(){
     $('fn-'+k).textContent=t.name;
     $('fe-'+k).textContent=g.effect(S.gear[k]+1);
     setHTML($('fc-'+k), costHTML(t.cost));
-    const ok=canPay(t.cost); if(ok) forgeable++;
+    const ok=canPay(t.cost)&&!S.forging; if(ok) forgeable++;
     $('fb-'+k).disabled=!ok;
+    const busy=S.forging&&S.forging.slot===k;
+    $('fb-'+k).querySelector('small').textContent=busy?'Forging':S.forging?'Anvil busy':`Forge \u00B7 ${fmtTime(FORGE_TIME[S.gear[k]+1])}`;
+    $('fb-'+k).querySelector('span').textContent=busy?clock(S.forging.end-now()):'Craft';
   });
   badge('forgeBadge',forgeable);
+  renderForge();
 
   // crystal mine
   const d=MINE[S.mine];
@@ -1254,8 +1310,12 @@ function refresh(){
     $('mn').textContent=d.name;
     const newEl=d.els.filter(e=>!(S.mine&&MINE[S.mine-1].els.includes(e)));
     $('md').textContent=S.mine? (newEl.length?`Unearths ${newEl.map(e=>NAMES[e]).join(' and ')} crystals, and digs faster.`:'The deepest vein. Crystals come far faster.') : 'Yields Ember and Frost crystals over time, even while you are away.';
-    setHTML($('mc'), costHTML(d.cost)); $('mb').disabled=!canPay(d.cost); $('mb').hidden=false;
-  } else { $('mn').textContent=MINE[S.mine-1].done; $('md').textContent='Every gallery is open.'; setHTML($('mc'),''); $('mb').hidden=true; }
+    const g=S.digging; $('mdig').hidden=!g; $('mc').hidden=!!g; $('mb').hidden=!!g;
+    if(g){ const left=Math.max(0,g.end-now()); $('mdLeft').textContent=`Miners at work \u00B7 ready in ${fmtTime(left/1000)}`;
+      $('mdBar').style.width=Math.min(100,100*(now()-g.start)/(g.end-g.start))+'%'; $('mdSplit').disabled=!canSplit(); }
+    else { setHTML($('mc'), costHTML(d.cost)); $('mb').disabled=!canPay(d.cost);
+      $('mb').querySelector('small').textContent=`Dig \u00B7 ${fmtTime(DIG_TIME[S.mine])}`; }
+  } else { $('mn').textContent=MINE[S.mine-1].done; $('md').textContent='Every gallery is open.'; setHTML($('mc'),''); $('mb').hidden=true; $('mdig').hidden=true; }
 
   // Arthrex's spire
   renderSpire();
@@ -1277,7 +1337,7 @@ function refresh(){
       btn.disabled=!castable(s);
     }
   });
-  if(d&&canPay(d.cost)) magicReady++;
+  if(d&&!S.digging&&canPay(d.cost)) magicReady++;
   if(S.story.met&&S.quest&&(S.quest.state==='offered'||questDone(S.quest))) magicReady++;
   badge('magicBadge',magicReady);
 
@@ -1349,6 +1409,8 @@ function wireUI(){
     else if(d.watch){ setView('journey'); $('realm').scrollIntoView({behavior:'smooth',block:'center'}); refresh(); }
     else if(d.spire){ ({accept:acceptQuest,reroll:rerollQuest,abandon:abandonQuest,claim:claimQuest,
         lesson:()=>showDialog('arthrex',CRYSTAL_LESSON,'I understand',()=>{})})[d.spire](); }
+    else if(d.stoke) stoke();
+    else if(d.split) splitRock();
     else if(d.buy) buyBuilding(d.buy); else if(d.up) buyUpgrade(d.up); else if(d.go) depart(d.go);
     else if(d.forge) forge(d.forge); else if(d.dig) digMine();
     else if(d.spell) knows(d.spell)?cast(d.spell):learn(d.spell);
@@ -1420,6 +1482,8 @@ class Realm extends Phaser.Scene{
     this.smoke=this.add.particles(0,0,'smoke',{x:228,y:246,speedY:{min:-28,max:-16},speedX:{min:-3,max:9},lifespan:2800,scale:{start:0.25,end:0.9},alpha:{start:0.3,end:0},frequency:280,emitting:false});
     this.orbGlow=this.add.circle(690,86,16,0xc7a8f0,0.25).setVisible(false);
     this.halls=this.add.graphics().setPosition(690,110).setBlendMode(Phaser.BlendModes.ADD);
+    this.forgeTimer=this.add.text(226,236,'',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'17px',fontStyle:'bold',color:'#ffd9b8',stroke:'#0b0d19',strokeThickness:4,resolution:Z}).setOrigin(0.5).setVisible(false);
+    this.digTimer=this.add.text(546,248,'',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'17px',fontStyle:'bold',color:'#dff4ff',stroke:'#0b0d19',strokeThickness:4,resolution:Z}).setOrigin(0.5).setVisible(false);
     this.qTimer=this.add.text(660,244,'',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'17px',fontStyle:'bold',color:'#e4d4ff',stroke:'#0b0d19',strokeThickness:4,resolution:Z}).setOrigin(0.5).setVisible(false);
     this.qMark=this.add.text(666,246,'!',{fontFamily:DISPLAY_FONT,fontSize:'26px',color:'#e4d4ff',stroke:'#0b0d19',strokeThickness:5,resolution:Z}).setOrigin(0.5).setVisible(false);
     this.orb=this.add.circle(690,86,6,0xf0e6ff).setVisible(false);
@@ -1613,6 +1677,8 @@ class Realm extends Phaser.Scene{
     if(this.orb.visible){ const p=0.5+0.5*Math.sin(t*2.4); this.orbGlow.setScale(1+0.4*p).setAlpha(0.18+0.2*p); }
     this.halls.rotation=t*0.6;
     const qm=S.story.met&&S.quest&&(S.quest.state==='offered'||questDone(S.quest)); this.qMark.setVisible(!!qm).setY(246-Math.abs(Math.sin(t*3))*5);
+    const fg=S.forging?Math.max(0,S.forging.end-now()):0; this.forgeTimer.setVisible(fg>0); if(fg>0) this.forgeTimer.setText('\u2692 '+clock(fg));
+    const dg=S.digging?Math.max(0,S.digging.end-now()):0; this.digTimer.setVisible(dg>0); if(dg>0) this.digTimer.setText('\u26CF '+clock(dg)).setY(248-Math.abs(Math.sin(t*2))*2);
     const qw=questWait(); this.qTimer.setVisible(qw>0); if(qw>0) this.qTimer.setText('\u231B '+clock(qw));
     if(this.dragon.visible){ const a=t*0.22; this.dragon.setPosition(360+310*Math.sin(a),78+22*Math.sin(t*0.9)); this.dragon.setFlipX(Math.cos(a)>0); }
     // Hero's lantern walks out to the expedition and back
