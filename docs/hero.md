@@ -37,7 +37,7 @@ Health is the brake on endless exploring: trips cost health, resting takes time,
 
 ## Crystal quick actions
 
-Two buttons sit under the health bar in the header:
+These live in the **spellbook**: the book button to the right of the health bar opens a bottom sheet (see [Magic](magic.md#spellbook)).
 
 | Button | Cost | Effect |
 |---|---|---|

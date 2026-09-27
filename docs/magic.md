@@ -48,6 +48,11 @@ Spells must be **learned individually** (a one-time cost in gold and crystals). 
 
 A timed spell can't be recast while it's active. Quickened Road can only be cast while the hero is away.
 
-## Crystal quick actions
+## Spellbook
 
-Some crystal uses don't need a spell. The buttons under the hero's health bar are **Mend** (1 Verdant: +50% health) and **Hasten** (1 Storm: halve the remaining trip, once per trip). See [Hero](hero.md#crystal-quick-actions).
+The **book button** to the right of the hero's health bar opens the spellbook, a bottom sheet with everything you can cast right now:
+
+- **Mend** (1 Verdant: heal 50%) and **Hasten** (1 Storm: halve the rest of the trip, once per trip). These are always there and don't need learning. See [Hero](hero.md#crystal-quick-actions).
+- Every spell you've **learned**, with its reagent cost and a Cast button.
+
+Each entry shows why it can't be cast right now, if it can't (for example "Only while your hero is away", or the time left on an active spell). Your crystal counts are shown at the top. A violet dot on the book means something useful is ready: Mend when the hero is below half health, or Hasten during a trip. **Open grimoire** jumps to the Magic tab, where new spells are learned.
