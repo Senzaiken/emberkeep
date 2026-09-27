@@ -28,8 +28,12 @@
   }
   *,*::before,*::after{box-sizing:border-box;}
   [hidden]{display:none!important;}
-  html,body{background:var(--night);margin:0;}
-  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+  /* The document never scrolls (so iOS adds no blurred scroll edge under the clock).
+     The top bar is fixed in the layout; only .scroller below it scrolls. */
+  html,body{background:var(--night);margin:0;height:100%;overflow:hidden;overscroll-behavior:none;}
+  :root{padding:0!important;}
+  body{display:flex;flex-direction:column;}
+  .scroller{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,0px);}
   img{max-width:100%;}
   body{color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
   .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:18px 40px;display:flex;flex-direction:column;gap:12px;}
@@ -47,7 +51,7 @@
   #realm canvas{display:block;}
   .chron{margin:0;font-family:var(--display);font-size:16px;color:var(--muted);min-height:1.4em;text-align:center;transition:opacity .4s;text-wrap:balance;}
 
-  .tabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--tb-h,56px));z-index:2;background:var(--night);}
+  .tabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:sticky;top:0;z-index:2;background:var(--night);}
   .tabs button{font:inherit;font-size:14px;color:var(--muted);background:transparent;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 4px;cursor:pointer;}
   .tabs button:nth-child(3n){border-right:0;}
   .tabs button:nth-child(n+4){border-bottom:0;}
@@ -125,7 +129,6 @@
   .view-toggle button:disabled{opacity:.4;cursor:default;}
 
   /* solid strip under the iPhone status bar so nothing scrolls beneath it */
-  .safe-top{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--night);z-index:9;pointer-events:none;}
 
   /* road event card */
   .event{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(520px,calc(100% - 40px));z-index:6;
@@ -142,7 +145,7 @@
   .ev-default{font-size:12px;color:var(--muted);margin-top:6px;}
 
   /* pinned top bar: gold on the left, day/night on the right */
-  .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;background:rgba(16,19,32,.95);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid var(--line);}
+  .topbar{flex:none;position:relative;z-index:4;background:var(--night);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);}
   .tb-in{max-width:560px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;gap:10px;}
   .tb-logo{width:34px;height:34px;border-radius:8px;flex:none;}
   .tb-gold{display:flex;flex-direction:column;min-width:0;}
@@ -172,6 +175,7 @@
   .satchel-strip{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);}
   .satchel-strip::-webkit-scrollbar{display:none;}
   .satchel-strip .res{font-size:15px;}
+  .satchel-strip .res.zero{opacity:.45;}
   .satchel-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);flex:none;}
   .satchel-more{color:var(--muted);font-size:18px;flex:none;}
   .res svg{width:15px;height:15px;flex:none;}
@@ -207,8 +211,7 @@
   .tabs button.qhint::after{content:'\2726';color:var(--storm);margin-left:5px;text-shadow:0 0 6px var(--storm);}
   .qhint-realm{position:absolute;left:8px;bottom:8px;z-index:1;font-size:12px;color:#efe6ff;background:rgba(40,28,64,.75);border:1px solid rgba(199,168,240,.6);border-radius:999px;padding:4px 10px;pointer-events:none;font-variant-numeric:tabular-nums;}
   /* Arthrex's spire */
-  #sList{scroll-margin-top:calc(env(safe-area-inset-top,0px) + var(--tb-h,56px) + 110px);}
-  #spire{scroll-margin-top:calc(env(safe-area-inset-top,0px) + var(--tb-h,56px) + 110px);}
+  #sList,#spire{scroll-margin-top:110px;}
   .spire{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;}
   .spire-head{display:flex;gap:12px;align-items:center;}
   .spire-head .portrait{width:52px;height:52px;}
@@ -227,11 +230,11 @@
   .relic.found{border-color:var(--gold-deep);}
   .relic:not(.found) b{color:var(--muted);}
 
-  .update-bar{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px) + var(--tb-h,56px));transform:translateX(-50%);width:min(520px,calc(100% - 40px));z-index:7;
+  .update-bar{position:fixed;left:50%;top:calc(10px + var(--tb-h,56px));transform:translateX(-50%);width:min(520px,calc(100% - 40px));z-index:7;
     display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 16px;border-radius:10px;
     background:var(--panel-2);border:1px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:15px;}
   .update-bar .act{min-width:0;padding:6px 14px;}
-  #toast{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px) + var(--tb-h,56px));transform:translateX(-50%);width:max-content;max-width:min(480px,calc(100% - 32px));
+  #toast{position:fixed;left:50%;top:calc(10px + var(--tb-h,56px));transform:translateX(-50%);width:max-content;max-width:min(480px,calc(100% - 32px));
     background:var(--panel-2);border:1px solid var(--gold-deep);color:var(--ink);padding:10px 16px;border-radius:8px;font-size:15px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.4);}
   @media (max-width:420px){ .gear{grid-template-columns:1fr;} }
   @media (prefers-reduced-motion: reduce){ .chron{transition:none;} }
@@ -239,7 +242,6 @@
 </head>
 <body>
 
-<div class="safe-top" aria-hidden="true"></div>
 <header class="topbar" id="topbar">
   <div class="tb-in">
     <img class="tb-logo" src="icons/icon-180.png" alt="Emberkeep">
@@ -248,6 +250,7 @@
   </div>
 </header>
 
+<main class="scroller" id="scroller">
 <div class="wrap">
   <section class="hero-card" aria-label="Your hero">
     <div class="hc-main">
@@ -343,6 +346,7 @@
     </div>
   </section>
 </div>
+</main>
 <div id="toast" hidden></div>
 <div class="update-bar" id="updateBar" hidden role="status">
   <span>A new version of Emberkeep is ready.</span>
@@ -361,10 +365,7 @@
   <div class="sheet" role="dialog" aria-labelledby="satTitle">
     <div class="sheet-grip"></div>
     <div class="sheet-head"><span class="sheet-title" id="satTitle">Satchel</span><button class="act ghost" id="satClose" style="min-width:0;padding:6px 14px"><span>Close</span></button></div>
-    <div class="label">Materials</div>
-    <div class="inv-grid" id="invMats"></div>
-    <div class="label">Crystals</div>
-    <div class="inv-grid" id="invCry"></div>
+    <div id="invWrap"></div>
     <p class="r-desc" style="margin:0">Materials come home from expeditions. Crystals come from the Crystal Mine, the deep regions and Arthrex’s errands.</p>
   </div>
 </div>
@@ -546,14 +547,14 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927191157';
+const BUILD='20260927191526';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},tut:null,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},tut:null,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),stats:Object.assign(f.stats,d.stats)}); }
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -887,8 +888,9 @@ function bookEntries(){
 function renderSatchel(){
   if($('satchelSheet').hidden) return;
   const tile=(k,v)=>`<div class="inv${v?'':' none'}">${ICON(k)}<b>${fmt(v)}</b><span>${NAMES[k]}</span></div>`;
-  setHTML($('invMats'),MATS.map(k=>tile(k,S.mat[k])).join(''));
-  setHTML($('invCry'),CRYS.map(k=>tile(k,S.cry[k])).join(''));
+  const group=(title,keys,src)=>{ const ks=keys.filter(k=>S.seen[k]); return ks.length?`<div class="label">${title}</div><div class="inv-grid">${ks.map(k=>tile(k,src[k])).join('')}</div>`:''; };
+  const html=group('Materials',MATS,S.mat)+group('Crystals',CRYS,S.cry);
+  setHTML($('invWrap'),html||'<p class="r-desc">Nothing yet. Send your hero out to gather wood and stone.</p>');
 }
 let bookSig='';
 function openBook(){ bookSig=''; $('bookSheet').hidden=false; renderBook(); }
@@ -980,7 +982,7 @@ function ICON(k){
   return `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="${c[0]}" opacity=".18"/><path d="M8 1.5 12.5 6 8 14.5 3.5 6Z" fill="${c[0]}"/><path d="M8 1.5 12.5 6H8Z" fill="${c[2]}"/><path d="M8 14.5 12.5 6H8Z" fill="${c[1]}"/></svg>`;
 }
 const chip=(k,v,short)=>`<span class="res ${short?'short':''}">${ICON(k)}${fmt(v)} ${k==='gold'?'gold':NAMES[k]}</span>`;
-const miniChip=(k,v)=>`<span class="res" title="${NAMES[k]}">${ICON(k)}${fmt(v)}</span>`;
+const miniChip=(k,v)=>`<span class="res${v?'':' zero'}" title="${NAMES[k]}">${ICON(k)}${fmt(v)}</span>`;
 const SUN_SVG=`<svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="#f6cf6a" opacity=".15"/><circle cx="13" cy="13" r="6.5" fill="#fff1c2"/><g stroke="#f6cf6a" stroke-width="1.6" stroke-linecap="round"><path d="M13 2.5v2.5M13 21v2.5M2.5 13H5M21 13h2.5M5.6 5.6l1.8 1.8M18.6 18.6l1.8 1.8M5.6 20.4l1.8-1.8M18.6 7.4l1.8-1.8"/></g></svg>`;
 const MOON_SVG=`<svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="#f1e6c8" opacity=".1"/><path d="M17.5 19.5A8 8 0 1 1 11 5a6.5 6.5 0 0 0 6.5 14.5Z" fill="#f1e6c8"/><circle cx="20" cy="6" r="1" fill="#f1e6c8"/><circle cx="22.5" cy="11" r=".7" fill="#f1e6c8"/></svg>`;
 const costHTML=c=>`<div class="cost">${Object.entries(c).map(([k,v])=>chip(k,v,res(k)<v)).join('')}</div>`;
@@ -1113,8 +1115,10 @@ function refresh(){
     setHTML($('clockIcon'),d.day?SUN_SVG:MOON_SVG); }
 
   // stockpile
-  { const held=[...MATS.map(k=>[k,S.mat[k]]),...CRYS.map(k=>[k,S.cry[k]])].filter(([,v])=>v>0);
-    setHTML($('stock'), held.length?held.map(([k,v])=>miniChip(k,v)).join(''):'<span class="r-desc">Empty. Your hero fills it on expeditions.</span>');
+  { // a resource joins the satchel the first time the player holds any of it
+    MATS.forEach(k=>{ if(S.mat[k]>0) S.seen[k]=1; }); CRYS.forEach(k=>{ if(S.cry[k]>0) S.seen[k]=1; });
+    const known=[...MATS.filter(k=>S.seen[k]).map(k=>[k,S.mat[k]]),...CRYS.filter(k=>S.seen[k]).map(k=>[k,S.cry[k]])];
+    setHTML($('stock'), known.length?known.map(([k,v])=>miniChip(k,v)).join(''):'<span class="r-desc">Empty. Your hero fills it on expeditions.</span>');
     renderSatchel(); }
 
   // hero status
@@ -1273,7 +1277,7 @@ function wireUI(){
   $('dlgNext').addEventListener('click',dialogNext);
   $('tutSkip').addEventListener('click',()=>tutEnd(true));
   $('tutNext').addEventListener('click',tutAdvance);
-  addEventListener('scroll',()=>{ if(tutActive()) tutRender(); },{passive:true});
+  $('scroller').addEventListener('scroll',()=>{ if(tutActive()) tutRender(); },{passive:true});
   addEventListener('resize',()=>{ if(tutActive()) tutRender(); });
   $('bookBtn').addEventListener('click',openBook);
   $('bookClose').addEventListener('click',closeBook);

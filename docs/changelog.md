@@ -4,6 +4,8 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **No more blur at the top on iPhone.** The page no longer scrolls as a whole: the top bar is fixed and paints behind the clock, and only the area below it scrolls, so iOS doesn't blur the top edge.
+- **Satchel grows as you discover things.** Only resources you've held appear in the strip and the Satchel sheet. The Materials and Crystals sections appear once their first item is found.
 - **Header redesign.** There's now one slim top bar, always pinned, with gold and rates on the left and day/night on the right. Below it: a compact hero card (health bar with numbers inside, status and countdown, buffs only when active, and the spellbook), and a one-line **satchel** strip that opens a Satchel sheet with everything grouped. New icons for every resource are used in costs, loot and the satchel. The "Emberkeep" title and the scroll-only compact bar are gone. See [Overview](overview.md#screen-layout).
 - **Spellbook.** A book button next to the health bar opens a bottom sheet with Mend, Hasten and every learned spell, ready to cast. It replaces the Mend/Hasten pills under the health bar. Learning stays in the Magic tab's grimoire.
 - **Errand hints.** While an errand is active, a violet ✦ marks what advances it: the Explore tab, tags with progress on the right region rows, or a pill on the castle for tap-gold errands.
