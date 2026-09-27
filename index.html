@@ -26,6 +26,7 @@
     --display:"IM Fell English SC", "Iowan Old Style", Georgia, serif;
     --body:"Alegreya Sans", "Gill Sans", "Segoe UI", system-ui, sans-serif;
   }
+  *,*::before,*::after{box-sizing:border-box;}
   [hidden]{display:none!important;}
   html,body{background:var(--night);margin:0;}
   :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
@@ -146,7 +147,7 @@
   @media (prefers-reduced-motion: reduce){ .minibar{transition:none;} }
 
   /* road event card */
-  .event{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(520px,calc(100% - 32px));z-index:6;
+  .event{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(520px,calc(100% - 40px));z-index:6;
     background:var(--panel);border:1px solid var(--gold-deep);border-radius:12px;padding:14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.55);}
   .ev-title{font-family:var(--display);font-size:22px;line-height:1.15;margin-top:2px;}
   .ev-text{margin:4px 0 10px;color:var(--muted);font-size:15px;}
@@ -165,13 +166,13 @@
   .tut-ring{position:fixed;border-radius:12px;box-shadow:0 0 0 200vmax rgba(5,6,12,.74);outline:2px solid var(--gold);outline-offset:2px;pointer-events:none;
     transition:left .25s,top .25s,width .25s,height .25s;animation:tutPulse 1.6s ease-in-out infinite;}
   @keyframes tutPulse{50%{outline-color:rgba(246,207,106,.35);}}
-  .tut-card{position:fixed;left:50%;transform:translateX(-50%);width:min(480px,calc(100% - 32px));pointer-events:auto;background:var(--panel);border:1px solid var(--gold-deep);border-radius:12px;padding:14px 16px;box-shadow:0 12px 36px rgba(0,0,0,.55);}
+  .tut-card{position:fixed;left:50%;transform:translateX(-50%);width:min(480px,calc(100% - 40px));pointer-events:auto;background:var(--panel);border:1px solid var(--gold-deep);border-radius:12px;padding:14px 16px;box-shadow:0 12px 36px rgba(0,0,0,.55);}
   .tut-card p{margin:4px 0 12px;font-size:16px;line-height:1.45;}
   .tut-btns{display:flex;gap:8px;justify-content:flex-end;}
   .tut-btns .act{min-width:0;padding:7px 14px;}
   @media (prefers-reduced-motion: reduce){ .tut-ring{transition:none;animation:none;} }
   /* story dialog */
-  .dialog-back{position:fixed;inset:0;z-index:8;background:rgba(6,7,14,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
+  .dialog-back{position:fixed;inset:0;z-index:8;background:rgba(6,7,14,.55);display:flex;align-items:flex-end;justify-content:center;padding:20px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
   .dialog{width:min(520px,100%);background:var(--panel);border:1px solid var(--gold-deep);border-radius:14px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:12px;}
   .dlg-head{display:flex;gap:12px;align-items:center;}
   .portrait{width:64px;height:64px;flex:none;border-radius:12px;overflow:hidden;border:1px solid var(--line);}
@@ -199,7 +200,7 @@
   .relic.found{border-color:var(--gold-deep);}
   .relic:not(.found) b{color:var(--muted);}
 
-  .update-bar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(520px,calc(100% - 32px));z-index:7;
+  .update-bar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(520px,calc(100% - 40px));z-index:7;
     display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 16px;border-radius:10px;
     background:var(--panel-2);border:1px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:15px;}
   .update-bar .act{min-width:0;padding:6px 14px;}
@@ -507,7 +508,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927184815';
+const BUILD='20260927185248';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -682,6 +683,7 @@ function finishExp(defeated){
                  :`Back from ${l.name}: ${got||'nothing this time'}.${rel?` Found a relic: ${rel.name}!`:''}`);
   if(defeated) chronicle(`Your hero was beaten back in ${l.name}. They need rest.`);
   else S.stats.trips[l.id]=(S.stats.trips[l.id]||0)+1;
+  if(tutActive()) tutEnd(true);   // an unfinished tutorial wraps up quietly before Arthrex speaks
   if(!S.story.met) setTimeout(meetArthrex,1800);
   scene&&scene.burst(360,250,12);
   eventKey=''; if(view==='journey') setTimeout(()=>{ if(!S.exp) setView('keep'); },2500);

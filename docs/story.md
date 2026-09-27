@@ -17,7 +17,7 @@ Right after the opening card, a spotlight tutorial starts. The whole screen goes
 | 3 | Whisperwood | The hero departs |
 | 4 | The Journey view | You tap **Got it** (it explains tapping ahead to help) |
 
-Every card has **Skip tutorial**. The tutorial resumes at the same step if the game is closed partway through, and it hides while a story dialog is open. Existing saves with progress never see it. **Start from nothing** shows it again.
+If the tutorial is still showing when the hero returns from their first expedition, it completes itself automatically, before Arthrex appears. Every card has **Skip tutorial**. The tutorial resumes at the same step if the game is closed partway through, and it hides while a story dialog is open. Existing saves with progress never see it. **Start from nothing** shows it again.
 
 ## Arthrex, Court Sorcerer
 
