@@ -12,6 +12,7 @@ Design and technical documentation for Emberkeep, a medieval fantasy idle game. 
 | [Economy](economy.md) | Gold, tapping, holdings, upgrades, Renown and ascension |
 | [Expeditions](expeditions.md) | Trip timeline, the Journey view, tap to help, road events, regions |
 | [Hero](hero.md) | Health, damage, defeat, healing, how the hero looks |
+| [The Sea](sea.md) | Harbor, shipyard, sailing and wind, treasure islands, foreign castles |
 | [Relics](relics.md) | Rare finds, levels, the full collection |
 | [Adventurer's Log](log.md) | The permanent collection log and achievements, across every life |
 | [Story and Arthrex](story.md) | The opening, the court sorcerer, his errands and rewards |

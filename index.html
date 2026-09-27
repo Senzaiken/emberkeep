@@ -64,6 +64,12 @@
   .tabs button{font:inherit;font-size:14px;color:var(--muted);background:transparent;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 4px;cursor:pointer;}
   .tabs button:nth-child(3n){border-right:0;}
   .tabs button:nth-child(n+4){border-bottom:0;}
+  .tabs.seven{grid-template-columns:repeat(4,1fr);}
+  .tabs.seven button:nth-child(3n){border-right:1px solid var(--line);}
+  .tabs.seven button:nth-child(4n),.tabs.seven button:last-child{border-right:0;}
+  .tabs.seven button:nth-child(n+4){border-bottom:1px solid var(--line);}
+  .tabs.seven button:nth-child(n+5){border-bottom:0;}
+  .tabs button[hidden]{display:none;}
   .tabs button[aria-selected="true"]{background:var(--panel-2);color:var(--ink);}
   .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--gold);color:var(--night);font-size:11px;font-weight:700;line-height:18px;}
 
@@ -235,6 +241,9 @@
   .stepper button{font:inherit;font-size:18px;width:34px;height:30px;border-radius:7px;border:1px solid var(--gold-deep);background:transparent;color:var(--gold-hi);cursor:pointer;}
   .stepper button:disabled{opacity:.35;cursor:default;}
   .stepper .num{min-width:34px;text-align:center;color:var(--verdant);font-size:17px;}
+  #sbInfo{display:block;font-size:13px;color:var(--muted);line-height:1.3;white-space:normal!important;font-family:var(--body);}
+  #sbAct{min-width:0;flex:none;}
+  #vSea[hidden]{display:none;}
   #jbLeft{display:block;font-size:13px;color:var(--muted);line-height:1.3;white-space:normal!important;overflow:visible;}
   #jbReturn,#jbHaste{min-width:0;flex:none;}
   .jb-info{min-width:0;}
@@ -341,12 +350,17 @@
     <div class="view-toggle" id="viewToggle">
       <button id="vKeep" data-view="keep" aria-pressed="true">Keep</button>
       <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
+      <button id="vSea" data-view="sea" aria-pressed="false" hidden>Sea</button>
     </div>
   </div>
   <div class="journey-bar" id="journeyBar" hidden>
     <div class="jb-info"><span class="label" id="jbWhere">On the road</span><span class="num" id="jbLeft"></span></div>
     <button class="act" id="jbReturn"><small>Bank the haul</small><span>Return home</span></button>
     <button class="act" id="jbHaste" hidden><small>Hasten ½</small><span id="jbHasteTxt"></span></button>
+  </div>
+  <div class="journey-bar" id="seaBar" hidden>
+    <div class="jb-info"><span class="label" id="sbWhere">Open sea</span><span class="num" id="sbInfo"></span></div>
+    <button class="act" id="sbAct"><small id="sbActS"></small><span id="sbActT"></span></button>
   </div>
   <div class="quickbar" id="quickbar" aria-label="Starred spells"></div>
   <p id="chron" class="chron"></p>
@@ -357,6 +371,7 @@
     <button role="tab" id="tab-explore" data-tab="explore" aria-selected="false">Explore</button>
     <button role="tab" id="tab-forge" data-tab="forge" aria-selected="false">Forge<span id="forgeBadge" class="badge" hidden>0</span></button>
     <button role="tab" id="tab-magic" data-tab="magic" aria-selected="false">Magic<span id="magicBadge" class="badge" hidden>0</span></button>
+    <button role="tab" id="tab-sea" data-tab="sea" aria-selected="false" hidden>Harbor<span id="seaBadge" class="badge" hidden>0</span></button>
     <button role="tab" id="tab-asc" data-tab="asc" aria-selected="false">Legacy<span id="logBadge" class="badge" hidden>0</span></button>
   </nav>
 
@@ -396,6 +411,14 @@
     <div class="gear" id="gearNow"></div>
     <div class="panel-head sub"><span class="label">Anvil</span></div>
     <div id="fList" class="list"></div>
+  </section>
+
+  <section id="p-sea" class="panel" hidden>
+    <div class="panel-head"><span class="label">Shipyard</span><span class="label num" id="seaNote"></span></div>
+    <div class="spire" id="yardBox"></div>
+    <div id="shipList" class="list"></div>
+    <div class="panel-head sub"><span class="label">Sea chart</span><span class="label num" id="chartCount"></span></div>
+    <div id="chartList" class="list"></div>
   </section>
 
   <section id="p-magic" class="panel" hidden>
@@ -646,15 +669,56 @@ const SPELLS=[
   {id:'harvest',name:'Bountiful Harvest',learn:{gold:8000,verdant:3},cast:{verdant:1,frost:1},dur:30,text:'Every building produces ×3 for 30 seconds.'},
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
+
+// The sea: a shipyard, a ship, and islands beyond the keep
+const SEA_W=2400, SEA_H=1600, ISQ=0.78, SAIL_BASE=46, DOCK_R=50;
+const ISLES=[
+  {id:'home',name:'Emberkeep',kind:'home',look:'green',x:330,y:800,r:150,seed:11},
+  {id:'gull',name:'Gull Rock',kind:'cache',look:'rock',x:780,y:520,r:55,seed:21,tier:1,refill:15,loot:{stone:[20,40],wood:[5,15]},desc:'A bare rock white with gulls. Smugglers used to bury things here.'},
+  {id:'marsh',name:'Saltmarsh Cay',kind:'cache',look:'marsh',x:720,y:1170,r:85,seed:31,tier:1,refill:15,loot:{wood:[30,60],stone:[10,20]},desc:'Reeds, mud and a drowned village’s cellars.'},
+  {id:'reef',name:'Wreckers’ Reef',kind:'cache',look:'sand',x:1200,y:820,r:65,seed:41,tier:2,refill:25,loot:{copper:[15,30],tin:[10,20],wood:[20,40]},desc:'Broken hulls lie on the sandbar, holds still half full.'},
+  {id:'mist',name:'Mistveil Isle',kind:'cache',look:'lush',x:1640,y:560,r:95,seed:51,tier:2,refill:30,loot:{tin:[10,20],copper:[10,20]},cry:[1,3],desc:'Always shrouded. Crystals grow in its hollow hills.'},
+  {id:'tooth',name:'Serpent’s Tooth',kind:'cache',look:'dark',x:1700,y:1170,r:70,seed:61,tier:3,refill:40,loot:{iron:[20,40],stone:[20,40]},cry:[1,2],desc:'A black fang of rock. Something coils in the water below.'},
+  {id:'drowned',name:'The Drowned Tower',kind:'cache',look:'rock',x:2060,y:760,r:70,seed:71,tier:3,refill:45,loot:{iron:[15,30],tin:[10,20]},cry:[3,5],desc:'A wizard’s tower, half sunk. Its vaults still glow.'},
+  {id:'karak',name:'Karak Brine',kind:'castle',look:'rock',x:1260,y:210,r:110,seed:81,culture:'Dwarven sea-fort',desc:'Dwarves hewed this fort from a sea stack. Their forges never go out.'},
+  {id:'skar',name:'Skarholm',kind:'castle',look:'snow',x:2150,y:240,r:115,seed:91,culture:'Frost jarl’s hall',desc:'A jarl’s longhall on an island of ice and pine.'},
+  {id:'sylvan',name:'Sylvanreach',kind:'castle',look:'lush',x:2160,y:1260,r:125,seed:101,culture:'Elven isle',desc:'White spires above an ancient forest. The elves watch the sea.'},
+  {id:'redtide',name:'Redtide Hold',kind:'castle',look:'sand',x:1150,y:1420,r:105,seed:111,culture:'Corsair stronghold',desc:'A palisade of stolen timber. Corsairs sell what they take here.'},
+];
+const ISLE=Object.fromEntries(ISLES.map(i=>[i.id,i]));
+function seededRand(seed){ let s=seed>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+function isleK(is,a){ const p=is._ph||(is._ph=(()=>{ const r=seededRand(is.seed); return [r()*6.28,r()*6.28,r()*6.28]; })());
+  return 1+0.12*Math.sin(a*2+p[0])+0.08*Math.sin(a*3+p[1])+0.05*Math.sin(a*5+p[2]); }
+// distance from an island's centre in units of its coastline: below 1 is on land
+function isleDist(is,x,y){ const dx=x-is.x, dy=(y-is.y)/ISQ; return Math.hypot(dx,dy)/(is.r*isleK(is,Math.atan2(dy,dx))); }
+const HARBOR={x:ISLE.home.x+ISLE.home.r*isleK(ISLE.home,0)+44,y:ISLE.home.y};
+const YARD={cost:{gold:20000,wood:120,stone:60,iron:10},time:180};
+const SHIP={
+  sails:{label:'Sails',effect:t=>`Speed ×${SAIL_SPEED[t]}`,tiers:[
+    {name:'Patched Sail'},{name:'Linen Sails',cost:{gold:30000,wood:80,copper:40},time:90},
+    {name:'Twin Masts',cost:{gold:3e5,wood:150,tin:40},time:240},{name:'Storm-woven Sails',cost:{gold:3e6,wood:300,copper:100,storm:5},time:600}]},
+  hold:{label:'Hold',effect:t=>`Carries ${HOLD_CAP[t]} goods`,tiers:[
+    {name:'Small Hold'},{name:'Deep Hold',cost:{gold:25000,wood:200,stone:50},time:90},
+    {name:'Merchant Hold',cost:{gold:2.5e5,wood:300,iron:40},time:240},{name:'Dragon’s Hold',cost:{gold:2.5e6,wood:500,iron:120},time:600}]},
+};
+const SAIL_SPEED=[1,1.15,1.3,1.5], HOLD_CAP=[150,300,600,1200];
+// Wind turns slowly with the real clock. Speed depends on the angle to it: fastest with it on the beam, slow into it.
+function windAt(t){ return 0.7+1.4*Math.sin(t/190000)+0.5*Math.sin(t/53000); }
+const WIND_CURVE=[[0,0.8],[90,1],[135,0.55],[160,0.25],[180,0.15]];
+function windFactor(rel){ const d=Math.abs(rel)*180/Math.PI; for(let i=1;i<WIND_CURVE.length;i++){ const [a,fa]=WIND_CURVE[i-1],[b,fb]=WIND_CURVE[i]; if(d<=b) return fa+(fb-fa)*(d-a)/(b-a); } return 0.15; }
+const angDiff=(a,b)=>{ let d=(a-b)%(Math.PI*2); if(d>Math.PI) d-=Math.PI*2; if(d<-Math.PI) d+=Math.PI*2; return d; };
+const COMPASS=['east','south-east','south','south-west','west','north-west','north','north-east'];
+const compass=a=>COMPASS[((Math.round(a/(Math.PI/4))%8)+8)%8];
+
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927221706';
+const BUILD='20260927231915';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
-let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log)}); }
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,sea:{yard:0,job:null,sails:0,hold:0,x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
+let S, upSet, qty=1, scene=null, journey=null, sea=null, game=null, view='keep';
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -1019,7 +1083,7 @@ function claimQuest(){
 }
 function openSpire(){
   document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab==='magic'));
-  ['build','up','explore','forge','magic','asc'].forEach(k=>$('p-'+k).hidden=k!=='magic');
+  TABS.forEach(k=>$('p-'+k).hidden=k!=='magic');
   $('spire').scrollIntoView({behavior:'smooth',block:'start'});
   if(!S.story.met) toast('The spire door is shut. Arthrex keeps to himself, for now.');
 }
@@ -1027,7 +1091,8 @@ function openSpire(){
 /* ---------- Guided tutorial ---------- */
 // Tutorial steps. A step with `wait` shows nothing until its condition holds, then runs `go` once
 // (used to hand over to a story dialog); steps with `target` spotlight that element.
-const openTab=k=>{ document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===k)); ['build','up','explore','forge','magic','asc'].forEach(t=>$('p-'+t).hidden=t!==k); };
+const TABS=['build','up','explore','forge','magic','sea','asc'];
+const openTab=k=>{ document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===k)); TABS.forEach(t=>$('p-'+t).hidden=t!==k); };
 const TUT_ARRIVAL=8;   // index of the step waiting for the first expedition to come home
 const TUT=[
   {target:()=>$('realm'),before:()=>{ setView('keep'); openTab('build'); },
@@ -1150,6 +1215,8 @@ const LOG_GLYPH={
   armor:'<path d="M12 2 20 5v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5Z" fill="#9aa3b0"/><path d="M12 2v20" stroke="#6e7784" stroke-width="1.2"/>',
   pick:'<path d="M4 8q8-7 16 0l-2 1q-6-5-12 0Z" fill="#c9ced6"/><path d="M11.5 6h1.5l-1 16h-1.5Z" fill="#8a6a44"/>',
   mine:'<path d="M3 21 9 9h6l6 12Z" fill="#3a3346"/><path d="M12 11l2 3-2 4-2-4Z" fill="#c7a8f0"/>',
+  isle:'<path d="M1 19q11-7 22 0Z" fill="#d9c48e"/><path d="M12 17V8" stroke="#6a4a2c" stroke-width="1.6"/><path d="M12 8q-5-2-8 1M12 8q5-2 8 1M12 8q-2-4-6-4M12 8q2-4 6-4" stroke="#5f9a4a" stroke-width="1.8" fill="none"/><path d="M1 21.5h22" stroke="#5fb5c4" stroke-width="1.6"/>',
+  castle:'<path d="M4 21V9h3v3h3V9h4v3h3V9h3v12Z" fill="#9aa3b0"/><path d="M10 21v-5q2-2 4 0v5Z" fill="#2a2420"/><path d="M12 3v6" stroke="#6a4a2c" stroke-width="1.2"/><path d="M12 3l5 1.5-5 1.5Z" fill="#b8342a"/>',
   medal:'<path d="M8 2h3l1 5-3 1ZM16 2h-3l-1 5 3 1Z" fill="#8a2f2a"/><circle cx="12" cy="15" r="6.5" fill="var(--mc)"/><circle cx="12" cy="15" r="4" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.2"/>',
 };
 const glyphSvg=g=>`<svg viewBox="0 0 24 24" aria-hidden="true">${g}</svg>`;
@@ -1161,7 +1228,8 @@ function logCatalog(){
   const cats=[
     {id:'npc',title:'Folk of the keep',items:[
       {id:'npc:arthrex',name:'Arthrex',desc:'Court sorcerer. Keeps the spire on the east grounds and pays in crystal for errands.',hint:'Waits for your hero’s first return.',icon:()=>ARTHREX_SVG},
-      {id:'npc:brom',name:'Brom',desc:'Master smith of the keep’s forge.',hint:'Keeps the forge in the yard.',icon:()=>BROM_SVG}]},
+      {id:'npc:brom',name:'Brom',desc:'Master smith of the keep’s forge.',hint:'Keeps the forge in the yard.',icon:()=>BROM_SVG},
+      {id:'npc:maren',name:'Maren',desc:'Shipwright of the harbor below the keep. Builds and refits your ships.',hint:'Waits for a shipyard to run.',icon:()=>MAREN_SVG}]},
     {id:'relic',title:'Relics',items:RELICS.map(r=>({id:'relic:'+r.id,name:r.name,desc:`${fxLine(r.fx,1)} per level, up to level ${RELIC_MAX}.`,hint:`Somewhere in ${LOC[r.region].name}.`,icon:()=>glyphSvg(LOG_GLYPH.relic)}))},
     {id:'res',title:'Resources',items:[...MATS,...CRYS].map(k=>({id:'res:'+k,name:NAMES[k]+(CRYS.includes(k)?' crystal':''),desc:CRYS.includes(k)?'A crystal of bound elemental magic.':'A crafting material from the wilds.',hint:CRYS.includes(k)?'Deep in the earth.':'Out on the roads.',icon:()=>ICON(k)}))},
     {id:'region',title:'Regions',items:LOCS.map(l=>({id:'region:'+l.id,name:l.name,desc:l.desc,hint:l.danger?`Needs armor for danger ${l.danger}.`:'Close to the keep.',icon:()=>glyphSvg(LOG_GLYPH.region)}))},
@@ -1169,6 +1237,7 @@ function logCatalog(){
     {id:'event',title:'Road events',items:EVENTS.map(e=>({id:'event:'+e.id,name:e.title,desc:e.text,hint:'Met on longer expeditions.',icon:()=>glyphSvg(LOG_GLYPH.event)}))},
     {id:'gear',title:'Arms & armor',items:Object.entries(GEAR).flatMap(([k,g])=>g.tiers.slice(1).map((t,i)=>({id:`gear:${k}:${i+1}`,name:t.name,desc:`${g.label}, tier ${i+1}. ${g.effect(i+1)}.`,hint:`Forged by Brom (${g.label.toLowerCase()}).`,icon:()=>glyphSvg(LOG_GLYPH[k==='pick'?'pick':k])})))},
     {id:'spell',title:'Spells',items:SPELLS.map(sp=>({id:'spell:'+sp.id,name:sp.name,desc:sp.text,hint:'Written in the grimoire.',icon:()=>`<span class="log-orb" style="--c:${(SPELL_LOOK[sp.id]||[])[0]||'var(--storm)'}">${spellGlyph(sp.id)}</span>`}))},
+    {id:'isle',title:'Seas & isles',items:ISLES.filter(is=>is.id!=='home').map(is=>({id:'isle:'+is.id,name:is.name,desc:is.kind==='castle'?`${is.culture}. ${is.desc}`:is.desc,hint:`Across the sea, to the ${compass(Math.atan2(is.y-ISLE.home.y,is.x-ISLE.home.x))}.`,icon:()=>glyphSvg(is.kind==='castle'?LOG_GLYPH.castle:LOG_GLYPH.isle)}))},
     {id:'mine',title:'Crystal Mine',items:MINE.map((m,i)=>({id:'mine:'+i,name:m.done,desc:`Yields ${m.els.map(e=>NAMES[e]).join(', ')}.`,hint:'Beneath the keep.',icon:()=>glyphSvg(LOG_GLYPH.mine)}))},
   ];
   const tiers=[5,50,250,1000,5000];
@@ -1181,6 +1250,7 @@ function logCatalog(){
     {title:'Relic hunting',goals:[1,10,50,150,500].map(n=>({id:'ach:relics:'+n,name:`${fmt(n)} ${n===1?'relic':'relics'}`,need:`Find ${fmt(n)} relics.`,test:()=>S.stats.relics>=n}))},
     {title:'Errands for Arthrex',goals:[1,10,50,150,500].map(n=>({id:'ach:quests:'+n,name:`${fmt(n)} ${n===1?'errand':'errands'}`,need:`Complete ${fmt(n)} of Arthrex’s errands.`,test:()=>S.stats.quests>=n}))},
     {title:'Spellcraft',goals:[10,100,1000,5000,25000].map(n=>({id:'ach:casts:'+n,name:`${fmt(n)} spells cast`,need:`Cast ${fmt(n)} spells from the grimoire.`,test:()=>S.stats.casts>=n}))},
+    {title:'Treasure hunting',goals:[1,10,50,250,1000].map(n=>({id:'ach:caches:'+n,name:`${fmt(n)} ${n===1?'treasure':'treasures'} dug`,need:`Dig up ${fmt(n)} island treasures.`,test:()=>(S.stats.caches||0)>=n}))},
     {title:'Dynasties',goals:[2,5,10,25,100].map(n=>({id:'ach:life:'+n,name:`Life ${n}`,need:`Reach your ${n}${n===2?'nd':'th'} life by ascending.`,test:()=>(S.dynasty||1)>=n}))},
   ];
   const byId={}; cats.forEach(c=>c.items.forEach(it=>byId[it.id]=it)); ach.forEach(g=>g.goals.forEach((it,i)=>{ it.tier=i; it.group=g.title; byId[it.id]=it; }));
@@ -1263,6 +1333,15 @@ function dialogNext(){
   if(d.i<d.pages.length-1){ d.i++; renderDialog(); return; }
   dlg=null; $('dialog').hidden=true; d.onDone&&d.onDone();
 }
+const MAREN_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="12" fill="#17283a"/>
+<path d="M0 50q16-6 32 0t32 0V64H0Z" fill="#2e6a8a" opacity=".6"/>
+<path d="M10 64 L16 40 Q32 33 48 40 L54 64Z" fill="#3a5a6e"/><path d="M26 40 L38 40 L36 64 L28 64Z" fill="#e9dfc4"/>
+<rect x="28" y="34" width="8" height="7" fill="#c89a74"/>
+<ellipse cx="32" cy="26" rx="10" ry="11" fill="#d9ab82"/>
+<path d="M21 24q2-13 11-13t11 13q-3-6-11-6t-11 6Z" fill="#8a3a22"/><path d="M42 22q6 8 3 18l-4-3q2-7-1-12Z" fill="#8a3a22"/>
+<path d="M20 20q12-7 24 0l-1 3q-11-5-22 0Z" fill="#b8342a"/>
+<circle cx="28" cy="27" r="1.3" fill="#2a1d18"/><circle cx="36" cy="27" r="1.3" fill="#2a1d18"/><path d="M29 32q3 2 6 0" stroke="#7a4a32" stroke-width="1.2" fill="none"/>
+<circle cx="43" cy="30" r="1.6" fill="#e3ad45"/></svg>`;
 const BROM_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="12" fill="#2a1d18"/>
 <circle cx="12" cy="52" r="14" fill="#d06a45" opacity=".25"/>
 <path d="M8 64 L14 38 Q32 30 50 38 L56 64Z" fill="#6a4a34"/><path d="M22 40 L42 40 L44 64 L20 64Z" fill="#4a3226"/>
@@ -1304,10 +1383,49 @@ function tick(){
   questTick();
   if(S.forging&&t>=S.forging.end) forgeDone();
   if(S.digging&&t>=S.digging.end) digDone();
+  if(S.sea.job&&t>=S.sea.job.end) shipJobDone();
   const wasAway=!!S.exp;
   expTick(t);
   if(!S.exp&&!wasAway){ heal(maxHP()/HP_REGEN_FULL*dt*(S.wounded?0.5:1)); if(S.wounded&&S.hp>=maxHP()) S.wounded=false; }
 }
+
+// ---------- The sea ----------
+const seaUnlocked=()=>S.sea.yard>0||(S.gear.armor>=2&&S.mine>=2);
+const seaCargo=()=>Object.entries(S.sea.cargo).filter(([k])=>k!=='gold').reduce((a,[,n])=>a+n,0);
+const holdCap=()=>HOLD_CAP[S.sea.hold];
+function isleState(id){ return S.sea.isles[id]||(S.sea.isles[id]={found:0,next:0}); }
+const cacheReady=id=>{ const st=isleState(id); return !!st.found&&st.next<=now(); };
+function toCargo(k,n){ n=Math.round(n); if(!(n>0)) return 0; if(k!=='gold'){ n=Math.min(n,holdCap()-seaCargo()); if(n<=0) return 0; }
+  S.sea.cargo[k]=(S.sea.cargo[k]||0)+n; return n; }
+const goodsText=(k,n)=>k==='gold'?`${fmt(n)} gold`:`${fmt(n)} ${NAMES[k]}${CRYS.includes(k)?(n>1?' crystals':' crystal'):''}`;
+function seaUnload(){ const got=[]; for(const [k,n] of Object.entries(S.sea.cargo)){ if(n>0){ addRes(k,n); got.push(goodsText(k,n)); } }
+  S.sea.cargo={}; if(got.length){ S.stats.voyages=(S.stats.voyages||0)+1; toast(`Unloaded at the harbor: ${got.join(', ')}.`); refresh(); } }
+function discoverIsle(is){ const st=isleState(is.id); st.found=1; logUnlock('isle:'+is.id);
+  toast(is.kind==='castle'?`Land ho! ${is.name}, a ${is.culture.toLowerCase()}. Its harbor chain is raised.`:`Land ho! ${is.name}. Something is buried there.`); }
+function canDigCache(id){ const is=ISLE[id]; return !!is&&is.kind==='cache'&&cacheReady(id)&&!!sea&&sea.near===is; }
+function digCache(id){
+  if(!canDigCache(id)) return; const is=ISLE[id], got=[], lost=[];
+  const g=Math.round(Math.max(150*is.tier,(gps(false)*45+tapValue()*15)*is.tier)); toCargo('gold',g); got.push(goodsText('gold',g));
+  const take=(k,n)=>{ const t=toCargo(k,n); if(t) got.push(goodsText(k,t)); if(t<n) lost.push(k); };
+  for(const [k,[a,b]] of Object.entries(is.loot)) take(k,rnd(a,b));
+  if(is.cry){ const n=rnd(...is.cry); for(let i=0;i<n;i++) take(CRYS[rnd(0,3)],1); }
+  isleState(id).next=now()+is.refill*60000; S.stats.caches=(S.stats.caches||0)+1;
+  sea&&sea.floatText(is.x,is.y-is.r*0.5,'Treasure!');
+  toast(`Your crew digs up ${got.join(', ')} on ${is.name}.${lost.length?' The hold is full: some was left behind.':''} Sail home to unload.`); refresh();
+}
+function pickFlotsam(){ const r=Math.random();
+  if(r<0.25){ const g=Math.round(Math.max(20,gps(false)*5+tapValue()*3)); toCargo('gold',g); return `+${fmt(g)} gold`; }
+  const k=r<0.85?'wood':'stone', n=toCargo(k,rnd(3,k==='wood'?8:6)); return n?`+${n} ${NAMES[k]}`:'Hold full'; }
+function buildYard(){ if(S.sea.yard||S.sea.job||!seaUnlocked()||!canPay(YARD.cost)) return; pay(YARD.cost); const n=now();
+  S.sea.job={part:'yard',start:n,end:n+YARD.time*1000}; chronicle('Shipwrights lay a keel on the shore below the keep.'); refresh(); }
+const nextShip=k=>SHIP[k].tiers[S.sea[k]+1];
+function upgradeShip(k){ const t=nextShip(k); if(!S.sea.yard||S.sea.job||!t||!canPay(t.cost)) return; pay(t.cost); const n=now();
+  S.sea.job={part:k,start:n,end:n+t.time*1000}; refresh(); }
+function shipJobDone(){ const j=S.sea.job; if(!j) return; S.sea.job=null;
+  if(j.part==='yard'){ S.sea.yard=1; S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true; logUnlock('npc:maren');
+    const msg='The shipyard is finished, and your cog, the Ember Gull, rides at anchor. Open the Harbor and set sail.'; chronicle('The Ember Gull is launched.'); toast(msg); }
+  else { S.sea[j.part]++; const t=SHIP[j.part].tiers[S.sea[j.part]]; toast(`Maren’s crew fits the ${t.name}.`); if(sea) sea.key=''; }
+  refresh(); }
 
 /* ================= FORMAT ================= */
 const UNITS=['K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
@@ -1370,6 +1488,15 @@ function buildRows(){
       </div>
       <button class="act" id="fb-${k}" data-forge="${k}"><small>Forge</small><span>Craft</span></button>
     </div>`).join('');
+  $('shipList').innerHTML=Object.entries(SHIP).map(([k,g])=>`
+    <div class="row" id="sp-${k}">
+      <div>
+        <div class="r-head"><span class="r-name" id="spn-${k}"></span><span class="r-tag">${g.label}</span></div>
+        <div class="r-desc" id="spe-${k}"></div>
+        <div id="spc-${k}"></div>
+      </div>
+      <button class="act" id="spb-${k}" data-ship="${k}"><small>Refit</small><span>Build</span></button>
+    </div>`).join('');
   mList.innerHTML=`
     <div class="row">
       <div>
@@ -1426,10 +1553,11 @@ function renderEvent(){
   $('evDefault').textContent=`If you don\u2019t choose within ${Math.ceil(left/1000)}s: ${def.opts[def.def].label.toLowerCase()}.`;
 }
 function setView(v){
-  if(v==='journey'&&!S.exp) v='keep';
+  if(v==='journey'&&!S.exp) v='keep'; if(v==='sea'&&!S.sea.yard) v='keep';
   view=v;
-  $('vKeep').setAttribute('aria-pressed',v==='keep'); $('vJourney').setAttribute('aria-pressed',v==='journey');
-  $('realm').setAttribute('aria-label',v==='keep'?'Your keep. Tap to collect gold.':'Your hero on the road. Tap what lies ahead to help.');
+  $('vKeep').setAttribute('aria-pressed',v==='keep'); $('vJourney').setAttribute('aria-pressed',v==='journey'); $('vSea').setAttribute('aria-pressed',v==='sea');
+  $('realm').setAttribute('aria-label',v==='keep'?'Your keep. Tap to collect gold.':v==='sea'?'Your ship at sea. Tap the water to steer.':'Your hero on the road. Tap what lies ahead to help.');
+  if(sea) sea.setShown(v==='sea');
   if(scene){ scene.scene.setVisible(v==='keep'); scene.input.enabled=v==='keep'; }
   if(journey) journey.setShown(v==='journey');
 }
@@ -1447,6 +1575,52 @@ function renderForge(){
   const left=Math.max(0,f.end-now()), pct=Math.min(100,100*(now()-f.start)/(f.end-f.start));
   $('fgLeft').textContent=`Ready in ${fmtTime(left/1000)}`; $('fgBar').style.width=pct+'%'; $('fgStoke').disabled=!canStoke();
   $('forgeNote').textContent=`Ready in ${clock(left)}`;
+}
+let yardKey='';
+function renderHarbor(){
+  const sh=S.sea, open=seaUnlocked();
+  $('tab-sea').hidden=!open; document.querySelector('.tabs').classList.toggle('seven',open); $('vSea').hidden=!sh.yard;
+  if(open&&!sh.seen){ sh.seen=1; chronicle('Traders speak of islands beyond the sea, and castles on them.'); toast('A new tab has opened: Harbor. Raise a shipyard and take to the sea.'); }
+  // the sea bar under the canvas
+  { const on=view==='sea'&&!!sh.yard&&!!sea; $('seaBar').hidden=!on;
+    if(on){ const w=windAt(now()), near=sea.near, gold=sh.cargo.gold||0;
+      $('sbWhere').textContent=near?near.name:sea.inHarbor?'Emberkeep harbor':'Open sea';
+      $('sbInfo').textContent=`Wind from the ${compass(w+Math.PI)} \u00B7 ${Math.round(sea.v||0)} knots \u00B7 hold ${seaCargo()}/${holdCap()}${gold?` \u00B7 ${fmt(gold)} gold`:''}`;
+      let act='', small='', big='', dis=false;
+      if(near&&near.kind==='cache'){ const st=isleState(near.id); act='dig'; small='Go ashore'; if(cacheReady(near.id)) big='Dig for treasure'; else { big=`Refills in ${clock(st.next-now())}`; dis=true; } }
+      else if(near&&near.kind==='castle'){ act='none'; small='Harbor chained'; big='Needs a warship'; dis=true; }
+      else if(sh.anchored){ act='weigh'; small='At anchor'; big='Raise sails'; }
+      else { act='anchor'; small=sea.inHarbor?'In harbor':'Under sail'; big='Drop anchor'; }
+      const b=$('sbAct'); b.dataset.act=act; b.disabled=dis; $('sbActS').textContent=small; $('sbActT').textContent=big; } }
+  const head=(sub)=>`<div class="spire-head"><div class="portrait">${MAREN_SVG}</div><div><div class="quest-title">Maren</div><div class="r-desc">${sub}</div></div></div>`;
+  const j=sh.job, key=[sh.yard,j?j.part:'',sh.sails,sh.hold].join('|');
+  if(key!==yardKey){ yardKey=key;
+    $('yardBox').innerHTML=!sh.yard?(j?head('Her crew is laying the keel of your first ship.')+`<div class="r-meta num" id="yjLeft"></div><div class="qbar"><div id="yjBar" style="width:0;background:var(--frost)"></div></div>`
+        :head('“Timber, stone and a little iron, and I’ll give you the sea.” The shipyard comes with a cog, the <b>Ember Gull</b>.')+`<div id="yardCost"></div><div class="row-btns"><button class="act" id="yardBtn" data-yard="1"><small>Raise the shipyard \u00B7 ${fmtTime(YARD.time)}</small><span>Build</span></button></div>`)
+      :head('The <b>Ember Gull</b>, a sturdy cog.')+`<div class="r-meta" id="shipStats"></div>`
+        +(j?`<div class="r-meta num" id="yjLeft"></div><div class="qbar"><div id="yjBar" style="width:0;background:var(--frost)"></div></div>`:'')
+        +`<div class="row-btns"><button class="act" data-sail="1"><small>Take the helm</small><span>Set sail</span></button></div>`; }
+  $('shipList').hidden=!sh.yard;
+  if(!sh.yard&&!j){ setHTML($('yardCost'),costHTML(YARD.cost)); $('yardBtn').disabled=!canPay(YARD.cost); }
+  if(j){ const left=Math.max(0,j.end-now()); $('yjLeft').textContent=`${j.part==='yard'?'Shipyard':SHIP[j.part].tiers[sh[j.part]+1].name} ready in ${fmtTime(left/1000)}`;
+    $('yjBar').style.width=Math.min(100,100*(now()-j.start)/(j.end-j.start))+'%'; }
+  $('seaNote').textContent=j?`Ready in ${clock(j.end-now())}`:sh.yard?(seaCargo()||sh.cargo.gold?'Cargo aboard':''):'';
+  let can=0;
+  if(sh.yard){ $('shipStats').textContent=`${SHIP.sails.tiers[sh.sails].name} (speed ×${SAIL_SPEED[sh.sails]}) \u00B7 ${SHIP.hold.tiers[sh.hold].name} (${holdCap()} goods)${seaCargo()||sh.cargo.gold?` \u00B7 aboard: ${seaCargo()} goods${sh.cargo.gold?`, ${fmt(sh.cargo.gold)} gold`:''}`:''}`;
+    Object.entries(SHIP).forEach(([k,g])=>{ const t=nextShip(k);
+      if(!t){ $('spn-'+k).textContent=g.tiers[sh[k]].name; $('spe-'+k).textContent='The finest Maren can build.'; setHTML($('spc-'+k),''); $('spb-'+k).disabled=true; return; }
+      $('spn-'+k).textContent=t.name; $('spe-'+k).textContent=g.effect(sh[k]+1); setHTML($('spc-'+k),costHTML(t.cost));
+      const ok=canPay(t.cost)&&!j; if(ok) can++; $('spb-'+k).disabled=!ok;
+      const busy=j&&j.part===k; $('spb-'+k).querySelector('small').textContent=busy?'Building':j?'Yard busy':`Refit \u00B7 ${fmtTime(t.time)}`;
+      $('spb-'+k).querySelector('span').textContent=busy?clock(j.end-now()):'Build'; }); }
+  else if(!j&&canPay(YARD.cost)) can=1;
+  badge('seaBadge',can);
+  const found=ISLES.filter(is=>is.id!=='home'&&isleState(is.id).found);
+  $('chartCount').textContent=`${found.length} / ${ISLES.length-1} charted`;
+  setHTML($('chartList'),ISLES.filter(is=>is.id!=='home').map(is=>{ const st=isleState(is.id), dir=compass(Math.atan2(is.y-ISLE.home.y,is.x-ISLE.home.x));
+    if(!st.found) return `<div class="row"><div><div class="r-head"><span class="r-name" style="color:var(--muted)">Uncharted</span><span class="r-tag">${is.kind==='castle'?'Castle':'Isle'}</span></div><div class="r-desc">Somewhere to the ${dir}.</div></div></div>`;
+    const status=is.kind==='castle'?`${is.culture}. Its harbor chain is raised: you’ll need a warship.`:cacheReady(is.id)?'Treasure waiting: land and dig.':`Dug out. Refills in ${fmtTime((st.next-now())/1000)}.`;
+    return `<div class="row"><div><div class="r-head"><span class="r-name">${is.name}</span><span class="r-tag">${is.kind==='castle'?'Castle':'Tier '+is.tier}</span></div><div class="r-desc">${is.desc}</div><div class="r-meta">${status}</div></div></div>`; }).join(''));
 }
 let spireKey='';
 function renderSpire(){
@@ -1510,6 +1684,7 @@ function refresh(){
       else { const st=stageAt(e,t), rd=roadHome(e.id,st), th=RETREATS[S.retreat??1];
         $('jbWhere').textContent=`Depth ${st+1} \u00B7 ${fmt(carriedCount(e))} carried`;
         $('jbLeft').textContent=`Foes hit ~${rd.hit} \u00B7 road home: ${rd.n?`${rd.n} foe${rd.n>1?'s':''}`:'clear'} \u00B7 ${e.pack?`\u2697 ${e.pack} \u00B7 `:''}turn back at ${th.label}`; } } }
+  renderHarbor();
   if(now()-achT>1000){ achT=now(); checkAchievements(); }
   badge('logBadge',$('p-asc').hidden?(S.logNew||0):0); if(!$('p-asc').hidden) S.logNew=0;
   $('lifeNo').textContent=`Life ${S.dynasty||1}`;
@@ -1676,6 +1851,8 @@ function wireUI(){
   document.querySelectorAll('.sheet-back').forEach(enableSheetDrag);
   $('jbHaste').addEventListener('click',hasten);
   $('jbReturn').addEventListener('click',()=>{ returnHome(); refresh(); });
+  $('sbAct').addEventListener('click',()=>{ const a=$('sbAct').dataset.act, sh=S.sea;
+    if(a==='dig'&&sea&&sea.near) digCache(sea.near.id); else if(a==='anchor'){ sh.anchored=true; } else if(a==='weigh'){ sh.anchored=false; } refresh(); });
   $('retreatSeg').innerHTML=RETREATS.map((r,i)=>`<button data-i="${i}">${r.label}</button>`).join('');
   $('retreatSeg').addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; S.retreat=+b.dataset.i; refresh(); });
   $('packDn').addEventListener('click',()=>{ S.pack=Math.max(0,Math.min(S.pack,packMax())-1); refresh(); });
@@ -1697,7 +1874,7 @@ function wireUI(){
     if(en.can()) en.run(); else toast(`${en.name}: ${en.why()||'you need more crystals'}.`); });
   $('bookGrimoire').addEventListener('click',()=>{ closeBook();
     document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab==='magic'));
-    ['build','up','explore','forge','magic','asc'].forEach(k=>$('p-'+k).hidden=k!=='magic');
+    TABS.forEach(k=>$('p-'+k).hidden=k!=='magic');
     $('sList').scrollIntoView({behavior:'smooth',block:'start'}); });
   $('checkBtn').addEventListener('click',()=>checkForUpdate(true));
   setTimeout(()=>checkForUpdate(false),3000);
@@ -1705,9 +1882,9 @@ function wireUI(){
   document.querySelector('.tabs').addEventListener('click',e=>{
     const b=e.target.closest('button[data-tab]'); if(!b) return;
     document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
-    ['build','up','explore','forge','magic','asc'].forEach(k=>$('p-'+k).hidden=k!==b.dataset.tab);
+    TABS.forEach(k=>$('p-'+k).hidden=k!==b.dataset.tab);
     // the canvas follows the tab: Explore shows the hero's journey, everything else the keep (so you can tap for gold)
-    setView(b.dataset.tab==='explore'&&S.exp?'journey':'keep');
+    setView(b.dataset.tab==='explore'&&S.exp?'journey':b.dataset.tab==='sea'&&S.sea.yard?'sea':'keep');
   });
   $('qty').addEventListener('click',e=>{
     const b=e.target.closest('button[data-q]'); if(!b) return;
@@ -1723,6 +1900,7 @@ function wireUI(){
     else if(d.spire){ ({accept:acceptQuest,reroll:rerollQuest,abandon:abandonQuest,claim:claimQuest,
         lesson:()=>showDialog('arthrex',CRYSTAL_LESSON,'I understand',()=>{})})[d.spire](); }
     else if(d.stoke) stoke();
+    else if(d.yard) buildYard(); else if(d.ship) upgradeShip(d.ship); else if(d.sail){ setView('sea'); $('realm').scrollIntoView({behavior:'smooth',block:'center'}); }
     else if(d.split) splitRock();
     else if(d.buy) buyBuilding(d.buy); else if(d.up) buyUpgrade(d.up); else if(d.go) depart(d.go);
     else if(d.forge) forge(d.forge); else if(d.dig) digMine();
@@ -2260,6 +2438,175 @@ class Journey extends Phaser.Scene{
   }
 }
 
+/* ================= SEA (top-down sailing) ================= */
+const SEA_Z=Z*1.5, VW=W*Z/SEA_Z, VH=H*Z/SEA_Z;   // 480 x 240 world units on screen
+const ISLE_LOOK={
+  green:{sand:0xd9c48e,land:0x5f9a4a,dark:0x3f7436,tree:0x2f5e2e},
+  rock:{sand:0xb9ae98,land:0x7d7a70,dark:0x5e5b54,tree:0x4a6a40},
+  snow:{sand:0xcfd6dc,land:0xe9eef2,dark:0xb9c6d2,tree:0x3f5e58},
+  lush:{sand:0xe0cf98,land:0x4f9a52,dark:0x2f7a46,tree:0x236a3e},
+  sand:{sand:0xe6d29a,land:0xc9b074,dark:0xa8905a,tree:0x5a8a3a},
+  marsh:{sand:0xb8b08a,land:0x6f8a52,dark:0x55703f,tree:0x4a6a3a},
+  dark:{sand:0x9a9488,land:0x4f5a50,dark:0x3a433c,tree:0x2e3a30},
+};
+class Sea extends Phaser.Scene{
+  constructor(){ super({key:'sea',active:true}); }
+  create(){
+    sea=this; this.v=0; this.target=null; this.near=null; this.inHarbor=true; this.flot=[]; this.spawnT=0; this.key='';
+    this.cameras.main.setZoom(SEA_Z);
+    const g=this.make.graphics({add:false}); g.lineStyle(1.4,0xffffff,0.55); const rr=seededRand(7);
+    for(let i=0;i<18;i++){ const x=8+rr()*112,y=8+rr()*112; g.beginPath(); g.arc(x,y,5,Math.PI*1.15,Math.PI*1.85); g.strokePath(); }
+    g.generateTexture('waves',128,128); g.clear(); g.fillStyle(0xffffff); g.fillCircle(4,4,4); g.generateTexture('seadot',8,8); g.destroy();
+    this.water=this.add.rectangle(0,0,VW+2,VH+2,0x2e7ea6).setOrigin(0);
+    this.waves=this.add.tileSprite(0,0,VW+2,VH+2,'waves').setOrigin(0).setAlpha(0.3);
+    this.isles=ISLES.map(is=>{ const c=this.add.container(is.x,is.y); const land=this.add.graphics(), mark=this.add.graphics(), glow=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+      c.add([land,glow,mark]); return {is,c,land,mark,glow}; });
+    this.flotG=this.add.container(0,0);
+    this.wake=this.add.particles(0,0,'seadot',{speed:{min:2,max:10},lifespan:1600,scale:{start:0.7,end:0.1},alpha:{start:0.45,end:0},frequency:70,emitting:false});
+    this.ship=this.add.container(0,0); this.hullG=this.add.graphics(); this.sail=this.add.graphics(); this.flag=this.add.graphics();
+    this.lamp=this.add.circle(-14,0,16,0xf6cf6a,0.18).setBlendMode(Phaser.BlendModes.ADD);
+    this.ship.add([this.lamp,this.hullG,this.sail,this.flag]);
+    this.aimG=this.add.graphics();
+    this.fx=this.add.container(0,0);
+    // HUD: moved to the camera's top-left corner every frame
+    const tx=(s,size,col)=>this.add.text(0,0,s,{fontFamily:DISPLAY_FONT,fontSize:size+'px',color:col||'#ece2c8',stroke:'#0b0d19',strokeThickness:3,resolution:SEA_Z});
+    this.hud=this.add.container(0,0);
+    this.title=tx('The Ember Sea',14).setPosition(8,6);
+    this.hint=this.add.text(8,24,'Tap the sea to steer',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'10px',color:'#cfe6f0',stroke:'#0b0d19',strokeThickness:2,resolution:SEA_Z});
+    this.place=tx('',12,'#f6cf6a').setOrigin(0.5,0).setPosition(VW/2,VH-22);
+    this.mapG=this.add.graphics(); this.rose=this.add.container(VW-22,VH-22); this.roseArrow=this.add.graphics();
+    const roseBg=this.add.graphics(); roseBg.fillStyle(0x0b0d19,0.5); roseBg.fillCircle(0,0,15); roseBg.lineStyle(1,0xc9bea2,0.5); roseBg.strokeCircle(0,0,15);
+    this.rose.add([roseBg,this.roseArrow,this.add.text(0,-24,'WIND',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'8px',color:'#c9bea2',resolution:SEA_Z}).setOrigin(0.5,0)]);
+    this.roseArrow.fillStyle(0xe8eef4); this.roseArrow.fillTriangle(11,0,-5,-5,-5,5); this.roseArrow.fillRect(-11,-1,8,2);
+    this.hud.add([this.mapG,this.title,this.hint,this.place,this.rose]);
+    this.input.on('pointerdown',p=>this.aim(p)); this.input.on('pointermove',p=>{ if(p.isDown) this.aim(p); });
+    this.setShown(false);
+  }
+  setShown(v){ this.shown=v; this.scene.setVisible(v); this.input.enabled=v; if(v){ this.key=''; this.last=0; } }
+  aim(p){ const sh=S.sea; if(!sh.yard||sh.x==null) return; this.target=Math.atan2(p.worldY-sh.y,p.worldX-sh.x); if(sh.anchored){ sh.anchored=false; refresh(); } S.sea.steered=1; }
+  L(c){ return mixColor(mixColor(c,0x0e1120,0.6),c,this.light); }
+  drawIsle(o){
+    const {is,land,glow}=o, look=ISLE_LOOK[is.look], g=land, L=c=>this.L(c), r=seededRand(is.seed+5);
+    g.clear(); glow.clear();
+    const ring=(s,col,a)=>{ const pts=[]; for(let i=0;i<40;i++){ const an=i/40*Math.PI*2, k=isleK(is,an)*s; pts.push({x:Math.cos(an)*is.r*k,y:Math.sin(an)*is.r*k*ISQ}); } g.fillStyle(col,a??1); g.fillPoints(pts,true); };
+    ring(1.28,L(0x6cc0cc),0.35); ring(1.12,L(0x7fcad0),0.4); ring(1.02,L(look.sand)); ring(0.86,L(look.land)); ring(0.55,L(look.dark),0.45);
+    if(is.id==='home'){ const k0=isleK(is,0)*is.r; g.fillStyle(L(0x7a5634)); g.fillRect(k0-12,-4,HARBOR.x-is.x-k0+4,8); g.fillStyle(L(0x5a3e26)); for(let x=k0-10;x<HARBOR.x-is.x-6;x+=6) g.fillRect(x,-4,1,8); }
+    const n=Math.round(is.r/5), snow=is.look==='snow';
+    for(let i=0;i<n;i++){ const an=r()*Math.PI*2, d=Math.sqrt(r())*0.72*isleK(is,an), x=Math.cos(an)*is.r*d, y=Math.sin(an)*is.r*d*ISQ;
+      if(is.kind==='castle'&&Math.abs(x)<48&&y<6&&y>-30) continue; if(is.id==='home'&&Math.abs(x)<44&&y<8&&y>-30) continue;
+      if(r()<0.18){ g.fillStyle(L(0x8a8a88)); g.fillEllipse(x,y,5+r()*4,3+r()*2); continue; }
+      g.fillStyle(0x000000,0.18); g.fillEllipse(x+2,y+2,8,4);
+      if(snow||is.look==='dark'){ g.fillStyle(L(look.tree)); g.fillTriangle(x-4,y+1,x,y-9,x+4,y+1); if(snow){ g.fillStyle(L(0xf4f8fb)); g.fillTriangle(x-2,y-5,x,y-9,x+2,y-5); } }
+      else { g.fillStyle(L(look.tree)); g.fillCircle(x,y-3,4+r()*2); g.fillStyle(L(mixColor(look.tree,0xffffff,0.2))); g.fillCircle(x-1,y-4,2); } }
+    this.drawCastle(g,glow,is.kind==='castle'?is.id:is.id==='home'?'home':is.id==='drowned'?'drowned':null);
+  }
+  drawCastle(g,glow,kind){
+    if(!kind) return; const L=c=>this.L(c), night=1-this.light, win=(x,y,w,h)=>{ g.fillStyle(L(0x2a2430)); g.fillRect(x,y,w,h); if(night>0.3){ glow.fillStyle(0xf6cf6a,0.7*night); glow.fillRect(x,y,w,h); } };
+    g.fillStyle(0x000000,0.2); g.fillEllipse(0,2,84,12);
+    if(kind==='home'){ const st=L(0x9a9ca6), sh=L(0x767884), roof=L(0x7a2e3a);
+      g.fillStyle(st); g.fillRect(-24,-22,48,22); for(let i=0;i<6;i++) g.fillRect(-24+i*8.6,-26,5,4);
+      g.fillStyle(sh); g.fillRect(-32,-34,11,34); g.fillRect(21,-34,11,34); g.fillStyle(st); g.fillRect(-9,-40,18,40);
+      g.fillStyle(roof); g.fillTriangle(-34,-34,-26.5,-50,-19,-34); g.fillTriangle(19,-34,26.5,-50,34,-34); g.fillTriangle(-11,-40,0,-56,11,-40);
+      g.fillStyle(L(0x2a2430)); g.fillRect(-5,-10,10,10); g.fillCircle(0,-10,5); win(-2,-32,4,5); win(-29,-26,3,4); win(24,-26,3,4);
+      g.lineStyle(1,L(0x3a3030)); g.lineBetween(0,-56,0,-64); g.fillStyle(L(0xe8744a)); g.fillTriangle(0,-64,9,-61.5,0,-59); }
+    else if(kind==='karak'){ const st=L(0x6e6862), dk=L(0x55504b), au=L(0xc9a04a);
+      g.fillStyle(dk); g.fillRect(-48,-30,16,30); g.fillRect(32,-30,16,30); g.fillStyle(st); g.fillRect(-36,-24,72,24); g.fillStyle(dk); g.fillRect(-40,-29,80,6);
+      for(let i=0;i<9;i++){ g.fillStyle(dk); g.fillRect(-40+i*9.2,-33,5,4); } g.fillStyle(st); g.fillEllipse(-40,-30,16,5); g.fillEllipse(40,-30,16,5);
+      g.fillStyle(au); g.fillCircle(0,-10,11); g.fillRect(-11,-10,22,10); g.fillStyle(L(0x2a2420)); g.fillCircle(0,-10,8); g.fillRect(-8,-10,16,10);
+      g.fillStyle(au); for(let i=0;i<5;i++) g.fillRect(-26+i*5,-16,2,2); for(let i=0;i<5;i++) g.fillRect(16+i*5,-16,2,2);
+      g.fillStyle(dk); g.fillRect(20,-44,7,14); glow.fillStyle(0xe8744a,0.55); glow.fillCircle(23.5,-46,5); win(-44,-20,4,5); win(38,-20,4,5); }
+    else if(kind==='skar'){ const tb=L(0x6b4a30), dk=L(0x4a3222), snow=L(0xeef3f7);
+      g.fillStyle(tb); g.fillRect(-36,-14,72,14); g.fillStyle(dk); for(let x=-34;x<36;x+=6) g.fillRect(x,-14,1,14);
+      g.fillStyle(L(0xb9c6d2)); g.fillPoints([{x:-42,y:-13},{x:42,y:-13},{x:31,y:-34},{x:-31,y:-34}],true);
+      g.fillStyle(snow); g.fillPoints([{x:-40,y:-16},{x:40,y:-16},{x:30,y:-34},{x:-30,y:-34}],true);
+      g.fillStyle(dk); g.fillTriangle(-31,-34,-38,-45,-27,-37); g.fillTriangle(31,-34,38,-45,27,-37);
+      g.fillStyle(tb); g.fillRect(40,-40,8,40); g.fillStyle(snow); g.fillTriangle(38,-40,44,-50,50,-40);
+      win(-5,-10,10,10); win(-24,-10,4,4); win(20,-10,4,4); }
+    else if(kind==='sylvan'){ const wh=L(0xece6d6), sh=L(0xcfc8b6), tl=L(0x3f8f7a);
+      g.fillStyle(sh); g.fillRect(-26,-40,9,40); g.fillRect(17,-40,9,40); g.fillStyle(wh); g.fillRect(-18,-22,36,22); g.fillRect(-5,-58,10,58);
+      g.fillStyle(tl); g.fillTriangle(-28,-40,-21.5,-58,-15,-40); g.fillTriangle(15,-40,21.5,-58,28,-40); g.fillTriangle(-7,-58,0,-80,7,-58);
+      g.fillStyle(L(0x2a2430)); g.fillCircle(-10,-12,3); g.fillRect(-13,-12,6,6); g.fillCircle(10,-12,3); g.fillRect(7,-12,6,6);
+      win(-1.5,-48,3,6); win(-23,-32,3,5); win(20,-32,3,5); g.fillStyle(L(0x4f9a52)); g.fillCircle(-18,-2,5); g.fillCircle(18,-2,5); g.fillCircle(-26,-44,3); }
+    else if(kind==='redtide'){ const lg=L(0x7a5232), dk=L(0x5a3a22), red=L(0xb8342a);
+      g.lineStyle(1.5,dk); g.lineBetween(-10,0,-8,-30); g.lineBetween(10,0,8,-30); g.lineBetween(-8,-18,8,-18);
+      g.fillStyle(lg); g.fillRect(-12,-40,24,11); g.fillStyle(dk); g.fillTriangle(-14,-40,0,-50,14,-40);
+      for(let x=-40;x<=36;x+=5){ if(Math.abs(x)<7) continue; const h=18+((x*7)%5); g.fillStyle(x%2?lg:dk); g.fillRect(x,-h,4.5,h); g.fillTriangle(x,-h,x+2.25,-h-4,x+4.5,-h); }
+      g.lineStyle(1,dk); g.lineBetween(0,-50,0,-62); g.fillStyle(red); g.fillTriangle(0,-62,12,-58,0,-54); g.lineBetween(-34,-22,-34,-34); g.fillTriangle(-34,-34,-26,-31,-34,-28); win(-4,-38,8,5); }
+    else if(kind==='drowned'){ const st=L(0x6e7a86); g.fillStyle(st); g.fillRect(-8,-34,16,34); g.fillStyle(L(0x55606c)); g.fillPoints([{x:-10,y:-34},{x:10,y:-34},{x:6,y:-40},{x:1,y:-36},{x:-4,y:-42}],true);
+      glow.fillStyle(0xc7a8f0,0.35+0.3*night); glow.fillCircle(0,-22,6); win(-2,-26,4,6); }
+  }
+  drawShip(){
+    const L=c=>this.L(c), g=this.hullG; g.clear();
+    g.fillStyle(0x000000,0.2); g.fillEllipse(2,3,40,16);
+    g.fillStyle(L(0x5a3a22)); g.fillPoints([{x:21,y:0},{x:12,y:-8},{x:-14,y:-8},{x:-18,y:-5},{x:-18,y:5},{x:-14,y:8},{x:12,y:8}],true);
+    g.fillStyle(L(0x9a6a3e)); g.fillPoints([{x:17,y:0},{x:10,y:-6},{x:-12,y:-6},{x:-15,y:-4},{x:-15,y:4},{x:-12,y:6},{x:10,y:6}],true);
+    g.lineStyle(0.7,L(0x6a4a2c)); [-3,0,3].forEach(y=>g.lineBetween(-13,y,11,y)); g.fillStyle(L(0x7a5234)); g.fillRect(-16,-5,6,10);
+    g.fillStyle(L(0x3a2616)); g.fillCircle(2,0,1.8);
+    const s=this.sail; s.clear(); const full=S.sea.sails>=2;
+    s.fillStyle(L(0xece2c8)); s.fillPoints([{x:0,y:-14},{x:5,y:-9},{x:7,y:0},{x:5,y:9},{x:0,y:14}],true);
+    s.fillStyle(L(0xb8342a)); s.fillPoints([{x:0,y:-3},{x:7,y:-2.5},{x:7,y:2.5},{x:0,y:3}],true);
+    s.lineStyle(1.4,L(0x5a3a22)); s.lineBetween(0,-15,0,15);
+    if(full){ s.fillStyle(L(0xe2d6b8)); s.fillPoints([{x:-9,y:-10},{x:-6,y:-6},{x:-5,y:0},{x:-6,y:6},{x:-9,y:10}],true); s.lineBetween(-9,-11,-9,11); }
+    this.sail.x=2; const f=this.flag; f.clear(); f.fillStyle(L(0xe8744a)); f.fillTriangle(0,-1.6,9,0,0,1.6);
+  }
+  floatText(x,y,str,col){ const t=this.add.text(x,y,str,{fontFamily:DISPLAY_FONT,fontSize:'13px',color:col||'#f6cf6a',stroke:'#0b0d19',strokeThickness:3,resolution:SEA_Z}).setOrigin(0.5);
+    this.tweens.add({targets:t,y:y-26,alpha:0,duration:1300,ease:'Cubic.easeOut',onComplete:()=>t.destroy()}); }
+  spawnFlot(){
+    const sh=S.sea; for(let tries=0;tries<8;tries++){ const a=Math.random()*Math.PI*2, d=240+Math.random()*200, x=sh.x+Math.cos(a)*d, y=sh.y+Math.sin(a)*d;
+      if(x<40||y<40||x>SEA_W-40||y>SEA_H-40||ISLES.some(is=>isleDist(is,x,y)<1.35)) continue;
+      const o=this.add.graphics(); o.fillStyle(this.L(0x7a5232)); o.fillEllipse(0,0,9,6); o.lineStyle(1,this.L(0x3a2616)); o.lineBetween(-2,-3,-2,3); o.lineBetween(2,-3,2,3);
+      o.setPosition(x,y); this.flotG.add(o); this.flot.push({x,y,o,ph:Math.random()*6}); return; }
+  }
+  update(time,delta){
+    if(!this.shown) return; const sh=S.sea; if(!sh.yard) return;
+    if(sh.x==null){ sh.x=HARBOR.x; sh.y=HARBOR.y; sh.a=0; sh.anchored=true; }
+    const dt=Math.min(0.25,delta/1000), t=now(), d=dayInfo();
+    const key=Math.round(d.light*16)+'|'+sh.sails; if(key!==this.key){ this.key=key; this.light=d.light; this.isles.forEach(o=>this.drawIsle(o)); this.drawShip(); }
+    // steering and wind
+    if(this.target!=null){ const df=angDiff(this.target,sh.a), turn=(1.1+0.25*sh.sails)*dt; sh.a+=Math.max(-turn,Math.min(turn,df)); if(Math.abs(df)<0.004) this.target=null; }
+    const w=windAt(t), f=windFactor(angDiff(sh.a,w)), vmax=sh.anchored?0:SAIL_BASE*SAIL_SPEED[sh.sails]*f;
+    this.v+=(vmax-this.v)*Math.min(1,dt*(vmax>this.v?0.7:1.4)); this.speedF=f;
+    let nx=sh.x+Math.cos(sh.a)*this.v*dt, ny=sh.y+Math.sin(sh.a)*this.v*dt;
+    for(const is of ISLES){ const dd=isleDist(is,nx,ny); if(dd<1.04){ const an=Math.atan2((ny-is.y)/ISQ,nx-is.x), cr=is.r*isleK(is,an)*1.04; nx=is.x+Math.cos(an)*cr; ny=is.y+Math.sin(an)*cr*ISQ; this.v*=0.85; } }
+    nx=Math.max(20,Math.min(SEA_W-20,nx)); ny=Math.max(20,Math.min(SEA_H-20,ny)); sh.x=nx; sh.y=ny;
+    // islands in reach: discovery, landing
+    let near=null, nd=1e9;
+    for(const is of ISLES){ if(is.id==='home') continue; const dd=isleDist(is,sh.x,sh.y), st=isleState(is.id);
+      if(!st.found&&dd<1+260/is.r) discoverIsle(is);
+      const reach=1+(is.kind==='castle'?90:60)/is.r; if(dd<reach&&dd<nd){ nd=dd; near=is; } }
+    this.near=near;
+    const inH=Math.hypot(sh.x-HARBOR.x,sh.y-HARBOR.y)<DOCK_R; if(inH&&!this.inHarbor) seaUnload(); this.inHarbor=inH;
+    // flotsam
+    this.spawnT-=dt; if(this.spawnT<=0){ this.spawnT=4; if(this.flot.length<6) this.spawnFlot(); }
+    this.flot=this.flot.filter(fl=>{ fl.o.y=fl.y+Math.sin(time/500+fl.ph)*1.2; fl.o.rotation=Math.sin(time/700+fl.ph)*0.3;
+      const dd=Math.hypot(fl.x-sh.x,fl.y-sh.y); if(dd<18){ const r=pickFlotsam(); this.floatText(fl.x,fl.y-6,r); fl.o.destroy(); return false; }
+      if(dd>700){ fl.o.destroy(); return false; } return true; });
+    // camera and hud
+    const cx=Math.max(VW/2,Math.min(SEA_W-VW/2,sh.x)), cy=Math.max(VH/2,Math.min(SEA_H-VH/2,sh.y)); this.cameras.main.centerOn(cx,cy);
+    const L0=cx-VW/2, T0=cy-VH/2;
+    this.water.setPosition(L0-1,T0-1).setFillStyle(mixColor(0x0f2a44,0x2e7ea6,d.light));
+    this.waves.setPosition(L0-1,T0-1).setTilePosition(L0+time*0.006,T0+Math.sin(time/2600)*6);
+    this.hud.setPosition(L0,T0);
+    this.ship.setPosition(sh.x,sh.y+Math.sin(time/600)*0.6).setRotation(sh.a).setScale(1.35);
+    this.sail.rotation=Math.max(-1.2,Math.min(1.2,angDiff(w,sh.a))); this.sail.scaleX=0.4+0.6*Math.min(1,this.v/SAIL_BASE);
+    this.flag.setPosition(2,0).setRotation(angDiff(w,sh.a)+Math.sin(time/180)*0.15);
+    this.lamp.setVisible(d.light<0.5).setAlpha(0.2*(1-d.light*2));
+    const stern={x:sh.x-Math.cos(sh.a)*17,y:sh.y-Math.sin(sh.a)*17}; this.wake.setPosition(stern.x,stern.y); this.wake.emitting=this.v>4; this.wake.frequency=Math.max(40,160-this.v*3);
+    this.aimG.clear(); if(this.target!=null){ const ax=sh.x+Math.cos(this.target)*36, ay=sh.y+Math.sin(this.target)*36; this.aimG.lineStyle(1.2,0xf6cf6a,0.6); this.aimG.strokeCircle(ax,ay,4); }
+    this.roseArrow.rotation=w;
+    this.hint.setVisible(!sh.steered||sh.anchored).setText(sh.anchored?'At anchor. Tap the sea to set sail':'Tap the sea to steer');
+    this.place.setText(near?`${near.name}${near.culture?' · '+near.culture:''}`:this.inHarbor?'Emberkeep harbor':'');
+    // chart: discovered islands, the harbor and the ship
+    const m=this.mapG, mw=84, mh=mw*SEA_H/SEA_W, mx=8, my=VH-mh-8, sc=mw/SEA_W; m.clear();
+    m.fillStyle(0x0b0d19,0.55); m.fillRect(mx,my,mw,mh); m.lineStyle(1,0xc9bea2,0.5); m.strokeRect(mx,my,mw,mh);
+    ISLES.forEach(is=>{ if(is.id!=='home'&&!isleState(is.id).found) return; m.fillStyle(is.kind==='castle'?0xe3ad45:is.id==='home'?0xe8744a:0x7cc97a); m.fillCircle(mx+is.x*sc,my+is.y*sc,Math.max(1.5,is.r*sc*0.8)); });
+    m.fillStyle(0xffffff); m.fillCircle(mx+sh.x*sc,my+sh.y*sc,1.6);
+    // treasure marks on charted isles with a cache ready
+    this.isles.forEach(o=>{ const is=o.is; o.mark.clear(); if(is.kind!=='cache'||!cacheReady(is.id)) return; const a=Math.sin(time/300)*0.15+0.85;
+      o.mark.lineStyle(2.2,0xd9443a,a); o.mark.lineBetween(-5,-5+is.r*0.2,5,5+is.r*0.2); o.mark.lineBetween(5,-5+is.r*0.2,-5,5+is.r*0.2); });
+  }
+}
+
 /* ================= BOOT ================= */
 function start(data){
   S=(data&&data.S)?Object.assign(fresh(),data.S):(load()||fresh());
@@ -2281,7 +2628,7 @@ function start(data){
   setInterval(()=>{ tick(); refresh(); },100);
   setInterval(save,3000);
   const boot=()=>{ if(game) return; game=new Phaser.Game({type:Phaser.AUTO,parent:'realm',width:W*Z,height:H*Z,backgroundColor:'#0b0d1a',
-    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},banner:false,scene:[Realm,Journey]}); };
+    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},banner:false,scene:[Realm,Journey,Sea]}); };
   const fontReady=document.fonts?document.fonts.load(`34px ${DISPLAY_FONT}`):Promise.resolve();
   Promise.race([fontReady,new Promise(r=>setTimeout(r,1500))]).then(boot,boot);
 }

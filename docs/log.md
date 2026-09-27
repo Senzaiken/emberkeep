@@ -12,7 +12,7 @@ Undiscovered entries are blacked-out silhouettes labelled **???**. Tapping one s
 
 | Section | Entries | Unlocked when |
 |---|---:|---|
-| Folk of the keep | 2 | You meet Arthrex, or Brom |
+| Folk of the keep | 3 | You meet Arthrex or Brom, or Maren finishes your shipyard |
 | Relics | 15 | You find the relic |
 | Resources | 9 | You first hold the material or crystal |
 | Regions | 5 | Your hero first sets out for it |
@@ -21,6 +21,7 @@ Undiscovered entries are blacked-out silhouettes labelled **???**. Tapping one s
 | Arms & armor | 12 | Brom finishes forging that piece |
 | Spells | 5 | You learn the spell |
 | Crystal Mine | 4 | The gallery is dug |
+| Seas & isles | 10 | You sail within sight of the island or castle |
 
 ## Achievements
 
@@ -36,6 +37,7 @@ Medals in five tiers: bronze, silver, gold, frost and mythic. Locked medals are 
 | Relics found | 1 / 10 / 50 / 150 / 500 |
 | Arthrex's errands completed | 1 / 10 / 50 / 150 / 500 |
 | Spells cast (grimoire spells) | 10 / 100 / 1K / 5K / 25K |
+| Treasure hunting (island treasures dug) | 1 / 10 / 50 / 250 / 1,000 |
 | Dynasties (reach life N) | 2 / 5 / 10 / 25 / 100 |
 
 Achievements are checked about once a second.

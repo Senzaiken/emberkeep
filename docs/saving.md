@@ -43,7 +43,8 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `favs` | Starred spell ids, in order (the quick-cast bar) |
 | `tut`, `tutV`, `tutBase` | Tutorial step index (`null` = not started, past the last step = finished or skipped), tutorial version (3; saves on version 2 at step 7 or later move up one for the new Return home step), and an old tap-count field |
 | `quest`, `questNext`, `questSpan` | Arthrex's current errand (or `null`), when the next one is offered, and the length of that wait (for the progress bar) |
-| `stats` | Lifetime counters: `trips{region}`, `foes`, `foeKinds{}`, `tapGold`, `relics`, `quests`, `casts` |
+| `stats` | Lifetime counters: `trips{region}`, `foes`, `foeKinds{}`, `tapGold`, `relics`, `quests`, `casts`, `caches` (island treasures dug), `voyages` (cargo unloaded) |
+| `sea` | `{yard, job, sails, hold, x, y, a, anchored, steered, cargo{}, isles{}, seen}`: shipyard built (0/1), the shipwright's job `{part, start, end}` or `null`, sail and hold tiers, ship position and heading, cargo aboard, and per island `{found, next}` (charted, and when its treasure refills). Reset on ascension. |
 | `dynasty` | Current life number (1 + ascensions) |
 | `log`, `logNew`, `logInit` | Adventurer's Log entries `{id: {t, life}}`, unseen count, and whether the one-time backfill ran |
 | `mine`, `mineAcc` | Crystal Mine depth and progress toward the next crystal |

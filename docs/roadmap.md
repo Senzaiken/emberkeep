@@ -1,5 +1,12 @@
 # Roadmap
 
+## The sea
+
+Phase 1 (shipyard, sailing, treasure islands) is built. Next:
+
+- [ ] **Phase 2: broadside battles.** Hull upgrades, raiders and castle fleets, fought live by maneuvering so your side faces the enemy. Wind and reload timing matter. Sinking loses the hold.
+- [ ] **Phase 3: claiming castles.** Break a castle's fleet, then besiege it (the hero leads the assault). Each claimed castle is a full second realm you can switch to, with its own look, holdings and a unique perk: Karak Brine (dwarven), Skarholm (frost jarl), Sylvanreach (elven), Redtide Hold (corsair).
+
 ## Next up
 
 - [ ] Decide what day and night mean for gameplay (see ideas below).
