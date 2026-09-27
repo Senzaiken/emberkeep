@@ -35,6 +35,7 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `known`, `spells` | Learned spell ids; active spell expiry timestamps |
 | `exp` | Current expedition or `null`: `{v:2, id, start, len, pause, gen, rolled, deepest, beats[], events[], used[], carry{}, pack, blessed, seq, returning, retAt, end, hasted}`. `len` is ms per depth, `pause` is time added by road events, `gen` the last depth generated, `carry` the haul not yet banked, `pack` draughts left. Each beat is `{id, t, st, k, r, n, done, tap, bonus?, foe?, cut?, ret?}` (`st` depth, `cut` skipped by turning back, `ret` a foe on the road home), and each event is `{id, t, deadline, done, choice, cut?}`. Saves with an older fixed-length trip bank its remaining loot and clear it on load. |
 | `retreat`, `pack` | Turn-back setting (index into 50% / 30% / 15% / Never, default 1) and the number of Verdant draughts to pack. Kept through ascension. |
+| `claimed`, `realm`, `siege` | Claimed castles `{id: {t, how}}`, the realm shown in the Build tab and Keep view (`home` or a castle id), and a blockade in progress `{id, start, end}` or `null`. Reset on ascension. Realm holdings are ordinary entries in `owned`/`up` (ids like `rt_rum`, `kb_forge`). |
 | `wounded` | `true` after a defeat, until the hero is back to full health (halves resting). |
 | `hp` | Hero health |
 | `relics` | Relic levels, by id |
@@ -43,8 +44,8 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `favs` | Starred spell ids, in order (the quick-cast bar) |
 | `tut`, `tutV`, `tutBase` | Tutorial step index (`null` = not started, past the last step = finished or skipped), tutorial version (3; saves on version 2 at step 7 or later move up one for the new Return home step), and an old tap-count field |
 | `quest`, `questNext`, `questSpan` | Arthrex's current errand (or `null`), when the next one is offered, and the length of that wait (for the progress bar) |
-| `stats` | Lifetime counters: `trips{region}`, `foes`, `foeKinds{}`, `tapGold`, `relics`, `quests`, `casts`, `caches` (island treasures dug), `voyages` (cargo unloaded) |
-| `sea` | `{yard, job, sails, hold, x, y, a, anchored, steered, cargo{}, isles{}, seen}`: shipyard built (0/1), the shipwright's job `{part, start, end}` or `null`, sail and hold tiers, ship position and heading, cargo aboard, and per island `{found, next}` (charted, and when its treasure refills). Reset on ascension. |
+| `stats` | Lifetime counters: `trips{region}`, `foes`, `foeKinds{}`, `tapGold`, `relics`, `quests`, `casts`, `caches` (island treasures dug), `voyages` (cargo unloaded), `ships` (ships sunk or boarded), `castles` (castles claimed) |
+| `sea` | `{yard, job, sails, hold, hull, arms, hp, fleets{}, x, y, a, anchored, steered, cargo{}, isles{}, seen}`: shipyard built (0/1), the shipwright's job `{part, start, end}` or `null`, sail, hold, hull and arms tiers, current hull (`null` = full), guard ships left per castle (missing = full fleet), ship position and heading, cargo aboard, and per island `{found, next}` (charted, and when its treasure refills). Reset on ascension. |
 | `dynasty` | Current life number (1 + ascensions) |
 | `log`, `logNew`, `logInit` | Adventurer's Log entries `{id: {t, life}}`, unseen count, and whether the one-time backfill ran |
 | `mine`, `mineAcc` | Crystal Mine depth and progress toward the next crystal |

@@ -64,9 +64,11 @@
   .tabs button{font:inherit;font-size:14px;color:var(--muted);background:transparent;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 4px;cursor:pointer;}
   .tabs button:nth-child(3n){border-right:0;}
   .tabs button:nth-child(n+4){border-bottom:0;}
+  .tabs:not(.seven) #tab-asc{border-right:0;}
   .tabs.seven{grid-template-columns:repeat(4,1fr);}
   .tabs.seven button:nth-child(3n){border-right:1px solid var(--line);}
-  .tabs.seven button:nth-child(4n),.tabs.seven button:last-child{border-right:0;}
+  .tabs.seven button:nth-child(4n){border-right:0;}
+  .tabs.seven button:last-child{border-right:1px solid var(--line);}
   .tabs.seven button:nth-child(n+4){border-bottom:1px solid var(--line);}
   .tabs.seven button:nth-child(n+5){border-bottom:0;}
   .tabs button[hidden]{display:none;}
@@ -230,6 +232,10 @@
   .tabs button.qhint::after{content:'\2726';color:var(--storm);margin-left:5px;text-shadow:0 0 6px var(--storm);}
   .qhint-realm{position:absolute;left:8px;top:8px;z-index:1;font-size:12px;color:#efe6ff;background:rgba(40,28,64,.75);border:1px solid rgba(199,168,240,.6);border-radius:999px;padding:4px 10px;pointer-events:none;font-variant-numeric:tabular-nums;}
   /* journey bar: shown under the scene while watching the hero's journey */
+  .realm-pick{margin:4px 0 8px;display:flex;flex-direction:column;gap:6px;}
+  .realm-pick .seg{overflow-x:auto;scrollbar-width:none;}
+  .realm-pick .seg button{white-space:nowrap;flex:1;}
+  .realm-pick .r-desc{margin:0;font-size:13px;}
   .prep{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:10px 12px;margin:4px 0 8px;display:flex;flex-direction:column;gap:8px;}
   .prep-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .prep .r-desc{margin:0;font-size:13px;}
@@ -368,9 +374,9 @@
   <nav class="tabs" role="tablist">
     <button role="tab" id="tab-build" data-tab="build" aria-selected="true">Build</button>
     <button role="tab" id="tab-up" data-tab="up" aria-selected="false">Upgrades<span id="upBadge" class="badge" hidden>0</span></button>
+    <button role="tab" id="tab-magic" data-tab="magic" aria-selected="false">Magic<span id="magicBadge" class="badge" hidden>0</span></button>
     <button role="tab" id="tab-explore" data-tab="explore" aria-selected="false">Explore</button>
     <button role="tab" id="tab-forge" data-tab="forge" aria-selected="false">Forge<span id="forgeBadge" class="badge" hidden>0</span></button>
-    <button role="tab" id="tab-magic" data-tab="magic" aria-selected="false">Magic<span id="magicBadge" class="badge" hidden>0</span></button>
     <button role="tab" id="tab-sea" data-tab="sea" aria-selected="false" hidden>Harbor<span id="seaBadge" class="badge" hidden>0</span></button>
     <button role="tab" id="tab-asc" data-tab="asc" aria-selected="false">Legacy<span id="logBadge" class="badge" hidden>0</span></button>
   </nav>
@@ -384,6 +390,7 @@
         <button id="qmax" data-q="max" aria-pressed="false">Max</button>
       </div>
     </div>
+    <div class="realm-pick" id="realmPick" hidden><div class="seg" id="realmSeg"></div><p class="r-desc" id="realmPerk"></p></div>
     <div id="bList" class="list"></div>
   </section>
 
@@ -508,6 +515,13 @@
     <button class="act" id="dlgNext"><span>Next</span></button>
   </div>
 </div>
+<div class="event" id="siegeCard" hidden role="dialog" aria-labelledby="sgTitle">
+  <div class="label" id="sgWhere"></div>
+  <div class="ev-title" id="sgTitle"></div>
+  <p class="ev-text" id="sgText"></p>
+  <div class="ev-opts" id="sgOpts"></div>
+  <div class="ev-opts" style="margin-top:8px"><button class="act quiet" id="sgClose"><span>Not yet</span><small>Sail on</small></button></div>
+</div>
 <div class="event" id="eventCard" hidden role="dialog" aria-labelledby="evTitle">
   <div class="label" id="evWhere"></div>
   <div class="ev-title" id="evTitle"></div>
@@ -537,6 +551,37 @@ const BUILDINGS=[
   ['tower','Apprentice Hall',2e7,7800,'Arthrex\u2019s apprentices transmute lead for coin. Each hall also speeds the crystal mine by 10%.',['Chalk Circles','Scrying Pools','Arcane Library','Archmage\u2019s Seat','Star-Forged Spire'],'Apprentices gather at the foot of Arthrex\u2019s spire.'],
   ['dragon','Dragon’s Lair',3.3e8,44000,'A tamed wyrm broods on a growing hoard.',['Gilded Scales','Wyrm Eggs','Hoard Tithes','Elder Wyrm','Dragonlord’s Pact'],'A dragon has made its lair in your realm.'],
 ].map(([id,name,base,rate,desc,ups,chron])=>({id,name,base,rate,desc,ups,chron}));
+// Claimed castles are realms of their own, each with five holdings of its people (they all pay into one treasury)
+const REALMS={
+  redtide:{name:'Redtide Hold',def:1,perk:'Treasure, flotsam and prize ships yield double gold, and your hold carries 50% more.',holdings:[
+    ['rt_rum','Rum Distillery',2e4,60,'Molasses in, rum out, sold dear in every port.',['Copper Stills','Spiced Casks','Fleet Contracts']],
+    ['rt_dice','Dice House',2.2e5,380,'Loaded dice and honest-looking dealers.',['Weighted Bones','High Tables','The House Always Wins']],
+    ['rt_fence','Fence’s Den',2.4e6,2200,'No questions asked about where it came from.',['Ledger of Names','Night Buyers','Crown Pardons']],
+    ['rt_chart','Chart-maker’s Loft',2.6e7,12000,'Secret sea charts, sold one copy at a time.',['Inked Soundings','Hidden Shoals','The True Map']],
+    ['rt_prize','Prize Court',3e8,65000,'Captured ships are judged, sold and taxed here.',['Letters of Marque','Swift Verdicts','Admiralty Seal']]]},
+  karak:{name:'Karak Brine',def:2,perk:'Forging and shipwright work take half the time, and expeditions bring back 25% more stone and ore.',holdings:[
+    ['kb_ale','Ale Cellars',1e5,250,'Dwarven ale, aged in stone for a hundred years.',['Stone Kegs','Deep Barley','Ancestor’s Brew']],
+    ['kb_stone','Stonecutters’ Guild',1.1e6,1500,'Blocks so true they need no mortar.',['Diamond Saws','Plumb Lines','Mountain Charter']],
+    ['kb_forge','Deep Forges',1.2e7,8500,'Fires fed by the sea-stack’s own heat.',['Bellows Engines','Bronze Anvils','Forge-Father’s Rites']],
+    ['kb_rune','Rune Hall',1.3e8,48000,'Rune-smiths etch wards that sell for a fortune.',['Silver Styluses','Binding Words','Elder Runes']],
+    ['kb_vault','Mithril Vault',1.5e9,270000,'A vein of mithril, guarded day and night.',['Lamp Crews','Vault Doors','Heartstone Seam']]]},
+  skar:{name:'Skarholm',def:3,perk:'Your ship sails 20% faster with 25% more hull, and your hero has 25 more health.',holdings:[
+    ['sk_whale','Whaling Camp',5e5,1100,'Oil, bone and baleen from the cold sea.',['Iron Harpoons','Rendering Pots','Whale-Roads']],
+    ['sk_fur','Fur Traders',5.5e6,6500,'White fox and bear pelts for southern lords.',['Trap Lines','Tanning Pits','Jarl’s Seal']],
+    ['sk_mead','Mead Hall',6e7,37000,'Feasts that last a week, and gifts for every guest.',['Honey Stores','Long Tables','Gold-Ring Giving']],
+    ['sk_shed','Longship Sheds',6.5e8,210000,'Keels laid for raiders and traders alike.',['Clinker Planking','Dragon Prows','Sea-King’s Fleet']],
+    ['sk_skald','Skalds’ Circle',7e9,1.2e6,'Songs of your deeds, sung in every hall for coin.',['Harp Strings','Saga Scrolls','Undying Fame']]]},
+  sylvan:{name:'Sylvanreach',def:4,perk:'The crystal mine works 50% faster, and Verdant draughts heal 75% instead of 50%.',holdings:[
+    ['sv_silk','Silk Groves',2e6,4200,'Moth-silk spun in the canopy.',['Moonlit Looms','Dyer’s Secrets','Starsilk']],
+    ['sv_moon','Moonwell',2.2e7,24000,'Pilgrims pay to drink from its silver water.',['Silver Basins','Night Vigils','Lunar Blessing']],
+    ['sv_glade','Archers’ Glade',2.4e8,140000,'Elven bows and fletching, prized on every coast.',['Yew Groves','Swan Fletching','Ranger Charters']],
+    ['sv_star','Starwatch',2.6e9,800000,'Astrologers who chart fortunes for kings.',['Brass Astrolabes','Star Tables','The Great Conjunction']],
+    ['sv_elder','Elder Tree',2.8e10,4.5e6,'The oldest living thing on the sea. Its sap is worth its weight in gold.',['Gentle Tapping','Root Songs','Heartwood Pact']]]},
+};
+for(const [rid,R] of Object.entries(REALMS)){
+  R.holdings=R.holdings.map(([id,name,base,rate,desc,ups])=>({id,name,base,rate,desc,ups,realm:rid,chron:`${name} opens its doors in ${R.name}.`}));
+  BUILDINGS.push(...R.holdings);
+}
 const BI=Object.fromEntries(BUILDINGS.map((b,i)=>[b.id,i]));
 const TIER_REQ=[1,10,25,50,100], TIER_COST=[10,50,500,5e4,5e6];
 const TAPS=[
@@ -549,7 +594,7 @@ const TAPS=[
 ];
 const UPGRADES=[];
 TAPS.forEach((t,i)=>UPGRADES.push({...t,kind:'t',prev:i?TAPS[i-1].id:null}));
-BUILDINGS.forEach(b=>b.ups.forEach((n,i)=>UPGRADES.push({id:b.id+i,name:n,cost:b.base*TIER_COST[i],kind:'b',b:b.id,req:TIER_REQ[i],text:`${b.name}s produce ×2`})));
+BUILDINGS.forEach(b=>b.ups.forEach((n,i)=>UPGRADES.push({id:b.id+i,name:n,cost:b.base*TIER_COST[i],kind:'b',b:b.id,req:TIER_REQ[i],text:b.realm?`${b.name} (${REALMS[b.realm].name}) produces ×2`:`${b.name}s produce ×2`})));
 UPGRADES.sort((a,b)=>a.cost-b.cost);
 
 // Hero equipment: tier 0 is what you start with
@@ -702,6 +747,24 @@ const SHIP={
     {name:'Merchant Hold',cost:{gold:2.5e5,wood:300,iron:40},time:240},{name:'Dragon’s Hold',cost:{gold:2.5e6,wood:500,iron:120},time:600}]},
 };
 const SAIL_SPEED=[1,1.15,1.3,1.5], HOLD_CAP=[150,300,600,1200];
+SHIP.hull={label:'Hull',effect:t=>`${HULL_HP[t]} hull`,tiers:[
+  {name:'Cog Hull'},{name:'Oak-ribbed Hull',cost:{gold:40000,wood:150,iron:20},time:90},
+  {name:'Iron-banded Hull',cost:{gold:4e5,wood:250,iron:60},time:240},{name:'Dwarf-riveted Hull',cost:{gold:4e6,iron:150,tin:60},time:600}]};
+SHIP.arms={label:'Arms',effect:t=>`${ARMS[t].n} bolts a side · ${ARMS[t].dmg} damage each · reload ${ARMS[t].reload}s${ARMS[t].fire?' · burning bolts':''}`,tiers:[
+  {name:'Crossbow Rail'},{name:'Deck Ballistae',cost:{gold:35000,wood:100,iron:25},time:90},
+  {name:'Twin Ballista Batteries',cost:{gold:3.5e5,wood:150,iron:60,copper:40},time:240},{name:'Ember Ballistae',cost:{gold:3.5e6,iron:150,tin:50,ember:10},time:600}]};
+const HULL_HP=[100,160,240,340];
+const ARMS=[{n:3,dmg:5,reload:3.5},{n:4,dmg:7,reload:3},{n:5,dmg:9,reload:2.6},{n:6,dmg:12,reload:2.2,fire:true}];
+const BOLT_RANGE=190, BOLT_SPEED=240;
+// Ships met at sea. Raiders roam the open water; each foreign castle is guarded by its own fleet.
+const FLEET={
+  raider:{name:'Corsair Raider',hp:70,speed:0.95,n:2,dmg:5,range:150,reload:4,tier:1,hull:0x3a2a1e,deck:0x6a4a30,sail:0x8a2a22,stripe:0x1a1410,desc:'A lean corsair sloop. Strikes fast and runs when hurt.'},
+  galley:{name:'Redtide Galley',hp:130,speed:0.9,n:3,dmg:6,range:150,reload:3.6,tier:2,hull:0x4a2e1e,deck:0x7a5232,sail:0xb8342a,stripe:0xe3ad45,desc:'Oared corsair galleys that guard Redtide Hold.'},
+  ironclad:{name:'Dwarven Ironclad',hp:230,speed:0.72,n:3,dmg:9,range:150,reload:4,tier:3,hull:0x4a4a52,deck:0x6e6862,sail:0x8a6a3a,stripe:0xc9a04a,desc:'Slow, iron-plated and hard to sink. Karak Brine’s guard.'},
+  dragonship:{name:'Jarl’s Dragonship',hp:170,speed:1.15,n:3,dmg:8,range:140,reload:3,tier:3,hull:0x5a3a22,deck:0x7a5a3a,sail:0xd8d8d0,stripe:0xb8342a,desc:'Shield-lined longships of Skarholm. The fastest ships on the sea.'},
+  swanship:{name:'Elven Swanship',hp:200,speed:1.05,n:3,dmg:10,range:195,reload:3.4,tier:4,hull:0xe8e2d0,deck:0xcfc8b6,sail:0x3f8f7a,stripe:0xe3ad45,desc:'White-hulled and long-ranged. Sylvanreach’s watch on the sea.'},
+};
+const CASTLE_GUARD={redtide:{type:'galley',count:2},karak:{type:'ironclad',count:3},skar:{type:'dragonship',count:3},sylvan:{type:'swanship',count:3}};
 // Wind turns slowly with the real clock. Speed depends on the angle to it: fastest with it on the beam, slow into it.
 function windAt(t){ return 0.7+1.4*Math.sin(t/190000)+0.5*Math.sin(t/53000); }
 const WIND_CURVE=[[0,0.8],[90,1],[135,0.55],[160,0.25],[180,0.15]];
@@ -711,14 +774,14 @@ const COMPASS=['east','south-east','south','south-west','west','north-west','nor
 const compass=a=>COMPASS[((Math.round(a/(Math.PI/4))%8)+8)%8];
 
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927231915';
+const BUILD='20260927235423';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,sea:{yard:0,job:null,sails:0,hold:0,x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
-let S, upSet, qty=1, scene=null, journey=null, sea=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea)}); }
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
+let S, upSet, qty=1, scene=null, journey=null, sea=null, fief=null, game=null, view='keep';
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -776,7 +839,7 @@ function nextGear(slot){ return GEAR[slot].tiers[S.gear[slot]+1]; }
 const FORGE_TIME=[0,15,60,180,480], STOKE_COST={ember:1};
 function forge(slot){
   const t=nextGear(slot); if(!t||S.forging||!canPay(t.cost)) return;
-  pay(t.cost); const secs=FORGE_TIME[S.gear[slot]+1], n=now();
+  pay(t.cost); const secs=FORGE_TIME[S.gear[slot]+1]*(claimed('karak')?0.5:1), n=now();
   S.forging={slot,start:n,end:n+secs*1000};
   chronicle(`Brom fires up the forge for your ${t.name}.`); refresh();
 }
@@ -794,7 +857,8 @@ function stoke(){
 
 // Hero health
 const HP_REGEN_FULL=240, MEND_COST={verdant:1}, HASTE_COST={storm:1};
-const maxHP=()=>100+25*S.gear.armor+relicBonus('hp');
+const claimed=id=>!!(S.claimed&&S.claimed[id]);
+const maxHP=()=>100+25*S.gear.armor+relicBonus('hp')+(claimed('skar')?25:0);
 function heal(n){ const before=S.hp; S.hp=Math.min(maxHP(),S.hp+n); return Math.round(S.hp-before); }
 function hurt(n){ n=Math.max(1,Math.round(n)); S.hp=Math.max(0,S.hp-n); journey&&journey.hurtFx(n);
   if(S.exp){ autoDrink(); if(S.hp<=0) finishExp(true); else checkRetreat(); } return n; }
@@ -829,7 +893,7 @@ const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=rnd(0,i); [a[i],a[j]]=
 const STAGE_GAIN=0.25, STAGE_HARM=0.15, AUTO_DRINK=0.4, MAX_TRIP=8*3600*1000;
 const RETREATS=[{p:0.5,label:'50%'},{p:0.3,label:'30%'},{p:0.15,label:'15%'},{p:0,label:'Never'}];
 const packMax=()=>Math.min(6,2+S.gear.armor);
-function yieldMult(k){ return (k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick])*(1+relicBonus(k)); }
+function yieldMult(k){ return (k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick]*(claimed('karak')?1.25:1))*(1+relicBonus(k)); }
 function lootRange(l,k,[a,b]){ const m=yieldMult(k); return [Math.round(a*m),Math.round(b*m)]; }
 function expDuration(l){ return l.dur*(1-0.08*S.gear.armor)*(1-relicBonus('speed')); }   // seconds per depth
 function foeDamage(l,st){ return l.dmg*(1+STAGE_HARM*(st||0))*Math.max(0.35,1-0.12*S.gear.armor-0.06*S.gear.weapon); }
@@ -880,7 +944,7 @@ function depart(id){
   setView('journey'); refresh();
 }
 function autoDrink(){ const e=S.exp; if(!e) return;
-  while(e.pack>0&&S.hp>0&&S.hp<maxHP()*AUTO_DRINK){ e.pack--; const h=heal(maxHP()*0.5); journey&&journey.healFx(); toast(`Your hero drinks a Verdant draught (+${h} health). ${e.pack} left.`); } }
+  while(e.pack>0&&S.hp>0&&S.hp<maxHP()*AUTO_DRINK){ e.pack--; const h=heal(maxHP()*(claimed('sylvan')?0.75:0.5)); journey&&journey.healFx(); toast(`Your hero drinks a Verdant draught (+${h} health). ${e.pack} left.`); } }
 function checkRetreat(){ const e=S.exp; if(!e||e.returning) return; const th=RETREATS[S.retreat??1].p;
   if(th>0&&S.hp<=maxHP()*th) startReturn('hurt'); }
 let simT=0;   // the moment being played out (differs from now() while catching up after time away)
@@ -968,7 +1032,7 @@ function migrateOldExp(){ const e=S.exp; if(!e||e.v===2) return;
   (e.beats||[]).forEach(b=>{ if(!b.done&&b.k!=='chest'&&b.n>0) addRes(b.r,b.n); }); S.exp=null; }
 
 // Crystal mine
-function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))*(1+relicBonus('mine'))); }
+function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))*(1+relicBonus('mine'))*(claimed('sylvan')?1.5:1)); }
 // Digging a gallery takes time (the current level keeps producing meanwhile). Frost splits rock to speed it up.
 const DIG_TIME=[30,120,300,720], SPLIT_COST={frost:1};
 function digMine(){ const d=MINE[S.mine]; if(!d||S.digging||!canPay(d.cost)) return; pay(d.cost); const n=now();
@@ -1091,7 +1155,7 @@ function openSpire(){
 /* ---------- Guided tutorial ---------- */
 // Tutorial steps. A step with `wait` shows nothing until its condition holds, then runs `go` once
 // (used to hand over to a story dialog); steps with `target` spotlight that element.
-const TABS=['build','up','explore','forge','magic','sea','asc'];
+const TABS=['build','up','magic','explore','forge','sea','asc'];
 const openTab=k=>{ document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===k)); TABS.forEach(t=>$('p-'+t).hidden=t!==k); };
 const TUT_ARRIVAL=8;   // index of the step waiting for the first expedition to come home
 const TUT=[
@@ -1217,6 +1281,7 @@ const LOG_GLYPH={
   mine:'<path d="M3 21 9 9h6l6 12Z" fill="#3a3346"/><path d="M12 11l2 3-2 4-2-4Z" fill="#c7a8f0"/>',
   isle:'<path d="M1 19q11-7 22 0Z" fill="#d9c48e"/><path d="M12 17V8" stroke="#6a4a2c" stroke-width="1.6"/><path d="M12 8q-5-2-8 1M12 8q5-2 8 1M12 8q-2-4-6-4M12 8q2-4 6-4" stroke="#5f9a4a" stroke-width="1.8" fill="none"/><path d="M1 21.5h22" stroke="#5fb5c4" stroke-width="1.6"/>',
   castle:'<path d="M4 21V9h3v3h3V9h4v3h3V9h3v12Z" fill="#9aa3b0"/><path d="M10 21v-5q2-2 4 0v5Z" fill="#2a2420"/><path d="M12 3v6" stroke="#6a4a2c" stroke-width="1.2"/><path d="M12 3l5 1.5-5 1.5Z" fill="#b8342a"/>',
+  ship:'<path d="M3 15h18l-3 5H6Z" fill="#7a5232"/><path d="M12 3v12" stroke="#3a2616" stroke-width="1.4"/><path d="M12 4q6 4 0 10Z" fill="#ece2c8"/><path d="M12 5q-5 4 0 8Z" fill="#b8342a"/>',
   medal:'<path d="M8 2h3l1 5-3 1ZM16 2h-3l-1 5 3 1Z" fill="#8a2f2a"/><circle cx="12" cy="15" r="6.5" fill="var(--mc)"/><circle cx="12" cy="15" r="4" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.2"/>',
 };
 const glyphSvg=g=>`<svg viewBox="0 0 24 24" aria-hidden="true">${g}</svg>`;
@@ -1238,11 +1303,13 @@ function logCatalog(){
     {id:'gear',title:'Arms & armor',items:Object.entries(GEAR).flatMap(([k,g])=>g.tiers.slice(1).map((t,i)=>({id:`gear:${k}:${i+1}`,name:t.name,desc:`${g.label}, tier ${i+1}. ${g.effect(i+1)}.`,hint:`Forged by Brom (${g.label.toLowerCase()}).`,icon:()=>glyphSvg(LOG_GLYPH[k==='pick'?'pick':k])})))},
     {id:'spell',title:'Spells',items:SPELLS.map(sp=>({id:'spell:'+sp.id,name:sp.name,desc:sp.text,hint:'Written in the grimoire.',icon:()=>`<span class="log-orb" style="--c:${(SPELL_LOOK[sp.id]||[])[0]||'var(--storm)'}">${spellGlyph(sp.id)}</span>`}))},
     {id:'isle',title:'Seas & isles',items:ISLES.filter(is=>is.id!=='home').map(is=>({id:'isle:'+is.id,name:is.name,desc:is.kind==='castle'?`${is.culture}. ${is.desc}`:is.desc,hint:`Across the sea, to the ${compass(Math.atan2(is.y-ISLE.home.y,is.x-ISLE.home.x))}.`,icon:()=>glyphSvg(is.kind==='castle'?LOG_GLYPH.castle:LOG_GLYPH.isle)}))},
+    {id:'realm',title:'Your realms',items:Object.entries(REALMS).map(([k,r])=>({id:'realm:'+k,name:r.name,desc:`${ISLE[k].culture}, claimed. ${r.perk}`,hint:'Break its fleet, then take it.',icon:()=>glyphSvg(LOG_GLYPH.castle)}))},
+    {id:'ship',title:'Ships of the sea',items:Object.entries(FLEET).map(([k,f])=>({id:'ship:'+k,name:f.name,desc:f.desc,hint:'Met under sail on the Ember Sea.',icon:()=>glyphSvg(LOG_GLYPH.ship)}))},
     {id:'mine',title:'Crystal Mine',items:MINE.map((m,i)=>({id:'mine:'+i,name:m.done,desc:`Yields ${m.els.map(e=>NAMES[e]).join(', ')}.`,hint:'Beneath the keep.',icon:()=>glyphSvg(LOG_GLYPH.mine)}))},
   ];
   const tiers=[5,50,250,1000,5000];
   const ach=[
-    ...BUILDINGS.map(b=>({title:plural(b),goals:tiers.map(n=>({id:`ach:own:${b.id}:${n}`,name:`${fmt(n)} ${plural(b)}`,need:`Own ${fmt(n)} ${plural(b)} at once.`,test:()=>owned(b.id)>=n}))})),
+    ...BUILDINGS.filter(b=>!b.realm).map(b=>({title:plural(b),goals:tiers.map(n=>({id:`ach:own:${b.id}:${n}`,name:`${fmt(n)} ${plural(b)}`,need:`Own ${fmt(n)} ${plural(b)} at once.`,test:()=>owned(b.id)>=n}))})),
     {title:'Treasury',goals:[1e3,1e6,1e9,1e12,1e15].map(n=>({id:'ach:gold:'+n,name:`${fmt(n)} gold`,need:`Earn ${fmt(n)} gold across all your lives.`,test:()=>S.life>=n}))},
     {title:'Tapping',goals:[100,1e3,1e4,1e5,1e6].map(n=>({id:'ach:taps:'+n,name:`${fmt(n)} taps`,need:`Tap the keep ${fmt(n)} times.`,test:()=>S.taps>=n}))},
     {title:'Expeditions',goals:[1,10,100,500,2500].map(n=>({id:'ach:trips:'+n,name:`${fmt(n)} ${n===1?'expedition':'expeditions'}`,need:`Complete ${fmt(n)} expeditions.`,test:()=>Object.values(S.stats.trips).reduce((a,b)=>a+b,0)>=n}))},
@@ -1251,6 +1318,7 @@ function logCatalog(){
     {title:'Errands for Arthrex',goals:[1,10,50,150,500].map(n=>({id:'ach:quests:'+n,name:`${fmt(n)} ${n===1?'errand':'errands'}`,need:`Complete ${fmt(n)} of Arthrex’s errands.`,test:()=>S.stats.quests>=n}))},
     {title:'Spellcraft',goals:[10,100,1000,5000,25000].map(n=>({id:'ach:casts:'+n,name:`${fmt(n)} spells cast`,need:`Cast ${fmt(n)} spells from the grimoire.`,test:()=>S.stats.casts>=n}))},
     {title:'Treasure hunting',goals:[1,10,50,250,1000].map(n=>({id:'ach:caches:'+n,name:`${fmt(n)} ${n===1?'treasure':'treasures'} dug`,need:`Dig up ${fmt(n)} island treasures.`,test:()=>(S.stats.caches||0)>=n}))},
+    {title:'Sea battles',goals:[1,10,50,250,1000].map(n=>({id:'ach:ships:'+n,name:`${fmt(n)} ${n===1?'ship':'ships'} taken`,need:`Sink or board ${fmt(n)} ships.`,test:()=>(S.stats.ships||0)>=n}))},
     {title:'Dynasties',goals:[2,5,10,25,100].map(n=>({id:'ach:life:'+n,name:`Life ${n}`,need:`Reach your ${n}${n===2?'nd':'th'} life by ascending.`,test:()=>(S.dynasty||1)>=n}))},
   ];
   const byId={}; cats.forEach(c=>c.items.forEach(it=>byId[it.id]=it)); ach.forEach(g=>g.goals.forEach((it,i)=>{ it.tier=i; it.group=g.title; byId[it.id]=it; }));
@@ -1358,7 +1426,7 @@ const ARTHREX_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" 
 <rect x="27.5" y="29" width="3" height="1.6" fill="#1b2336"/><rect x="33.5" y="29" width="3" height="1.6" fill="#1b2336"/>
 <path d="M21 46 L26 42 L28 48Z" fill="#e3ad45"/></svg>`;
 
-function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto){ S.taps++; S.stats.tapGold+=v; } scene&&scene.fx(x,y,v,auto); }
+function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto){ S.taps++; S.stats.tapGold+=v; } const f=S.realm!=='home'&&fief&&fief.shown?fief:scene; f&&f.fx(x,y,v,auto); }
 function pendingRenown(){ return Math.floor(Math.sqrt(S.total/1e6)); }
 function ascend(){
   const p=pendingRenown(); if(p<1) return;
@@ -1366,7 +1434,7 @@ function ascend(){
   const keep={renown:S.renown+p,life:S.life,taps:S.taps,story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats)),
     dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:1,
     seen:{...S.seen},favs:S.favs.slice(),retreat:S.retreat,pack:S.pack,tut:S.tut,tutV:S.tutV};
-  S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set();
+  S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set(); setView('keep');
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
 function wipe(){ S=fresh(); S.hp=maxHP(); upSet=new Set(); setView('keep'); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); setTimeout(introStory,300); }
@@ -1384,6 +1452,8 @@ function tick(){
   if(S.forging&&t>=S.forging.end) forgeDone();
   if(S.digging&&t>=S.digging.end) digDone();
   if(S.sea.job&&t>=S.sea.job.end) shipJobDone();
+  if(S.siege&&t>=S.siege.end) claimCastle(S.siege.id,'blockade');
+  if(S.sea.yard&&S.sea.hp!=null&&S.sea.hp<maxHull()&&inHarborPos()){ S.sea.hp=Math.min(maxHull(),S.sea.hp+maxHull()/180*dt); if(S.sea.hp>=maxHull()) S.sea.hp=null; }
   const wasAway=!!S.exp;
   expTick(t);
   if(!S.exp&&!wasAway){ heal(maxHP()/HP_REGEN_FULL*dt*(S.wounded?0.5:1)); if(S.wounded&&S.hp>=maxHP()) S.wounded=false; }
@@ -1392,20 +1462,21 @@ function tick(){
 // ---------- The sea ----------
 const seaUnlocked=()=>S.sea.yard>0||(S.gear.armor>=2&&S.mine>=2);
 const seaCargo=()=>Object.entries(S.sea.cargo).filter(([k])=>k!=='gold').reduce((a,[,n])=>a+n,0);
-const holdCap=()=>HOLD_CAP[S.sea.hold];
+const holdCap=()=>Math.round(HOLD_CAP[S.sea.hold]*(claimed('redtide')?1.5:1));
+const seaGold=()=>claimed('redtide')?2:1;
 function isleState(id){ return S.sea.isles[id]||(S.sea.isles[id]={found:0,next:0}); }
 const cacheReady=id=>{ const st=isleState(id); return !!st.found&&st.next<=now(); };
 function toCargo(k,n){ n=Math.round(n); if(!(n>0)) return 0; if(k!=='gold'){ n=Math.min(n,holdCap()-seaCargo()); if(n<=0) return 0; }
   S.sea.cargo[k]=(S.sea.cargo[k]||0)+n; return n; }
 const goodsText=(k,n)=>k==='gold'?`${fmt(n)} gold`:`${fmt(n)} ${NAMES[k]}${CRYS.includes(k)?(n>1?' crystals':' crystal'):''}`;
-function seaUnload(){ const got=[]; for(const [k,n] of Object.entries(S.sea.cargo)){ if(n>0){ addRes(k,n); got.push(goodsText(k,n)); } }
-  S.sea.cargo={}; if(got.length){ S.stats.voyages=(S.stats.voyages||0)+1; toast(`Unloaded at the harbor: ${got.join(', ')}.`); refresh(); } }
+function seaUnload(where){ const got=[]; for(const [k,n] of Object.entries(S.sea.cargo)){ if(n>0){ addRes(k,n); got.push(goodsText(k,n)); } }
+  S.sea.cargo={}; if(got.length){ S.stats.voyages=(S.stats.voyages||0)+1; toast(`Unloaded at ${where||'the harbor'}: ${got.join(', ')}.`); refresh(); } }
 function discoverIsle(is){ const st=isleState(is.id); st.found=1; logUnlock('isle:'+is.id);
   toast(is.kind==='castle'?`Land ho! ${is.name}, a ${is.culture.toLowerCase()}. Its harbor chain is raised.`:`Land ho! ${is.name}. Something is buried there.`); }
 function canDigCache(id){ const is=ISLE[id]; return !!is&&is.kind==='cache'&&cacheReady(id)&&!!sea&&sea.near===is; }
 function digCache(id){
   if(!canDigCache(id)) return; const is=ISLE[id], got=[], lost=[];
-  const g=Math.round(Math.max(150*is.tier,(gps(false)*45+tapValue()*15)*is.tier)); toCargo('gold',g); got.push(goodsText('gold',g));
+  const g=Math.round(Math.max(150*is.tier,(gps(false)*45+tapValue()*15)*is.tier)*seaGold()); toCargo('gold',g); got.push(goodsText('gold',g));
   const take=(k,n)=>{ const t=toCargo(k,n); if(t) got.push(goodsText(k,t)); if(t<n) lost.push(k); };
   for(const [k,[a,b]] of Object.entries(is.loot)) take(k,rnd(a,b));
   if(is.cry){ const n=rnd(...is.cry); for(let i=0;i<n;i++) take(CRYS[rnd(0,3)],1); }
@@ -1414,13 +1485,67 @@ function digCache(id){
   toast(`Your crew digs up ${got.join(', ')} on ${is.name}.${lost.length?' The hold is full: some was left behind.':''} Sail home to unload.`); refresh();
 }
 function pickFlotsam(){ const r=Math.random();
-  if(r<0.25){ const g=Math.round(Math.max(20,gps(false)*5+tapValue()*3)); toCargo('gold',g); return `+${fmt(g)} gold`; }
+  if(r<0.25){ const g=Math.round(Math.max(20,gps(false)*5+tapValue()*3)*seaGold()); toCargo('gold',g); return `+${fmt(g)} gold`; }
   const k=r<0.85?'wood':'stone', n=toCargo(k,rnd(3,k==='wood'?8:6)); return n?`+${n} ${NAMES[k]}`:'Hold full'; }
 function buildYard(){ if(S.sea.yard||S.sea.job||!seaUnlocked()||!canPay(YARD.cost)) return; pay(YARD.cost); const n=now();
   S.sea.job={part:'yard',start:n,end:n+YARD.time*1000}; chronicle('Shipwrights lay a keel on the shore below the keep.'); refresh(); }
 const nextShip=k=>SHIP[k].tiers[S.sea[k]+1];
+// Sea battles
+const maxHull=()=>Math.round(HULL_HP[S.sea.hull]*(claimed('skar')?1.25:1));
+const shipHP=()=>S.sea.hp==null?maxHull():S.sea.hp;
+const guardsLeft=id=>S.sea.fleets[id]??CASTLE_GUARD[id].count;
+const inHarborPos=()=>S.sea.x!=null&&Math.hypot(S.sea.x-HARBOR.x,S.sea.y-HARBOR.y)<DOCK_R;
+function shipLoot(tier,mult){
+  const out=[['gold',Math.round(Math.max(100*tier,(gps(false)*30+tapValue()*10)*tier)*mult*seaGold())]];
+  const t={1:{wood:[10,25],stone:[5,15]},2:{copper:[10,20],iron:[5,10],wood:[10,20]},3:{iron:[15,30],tin:[8,15]},4:{iron:[20,35],tin:[10,20]}}[tier];
+  for(const [k,[a,b]] of Object.entries(t)) out.push([k,Math.round(rnd(a,b)*mult)]);
+  const cr=tier>=4?rnd(2,4):tier>=3?1:0; for(let i=0;i<cr;i++) out.push([CRYS[rnd(0,3)],1]);
+  return out.filter(([,n])=>n>0);
+}
+function shipBeaten(type,guard){
+  S.stats.ships=(S.stats.ships||0)+1; logUnlock('ship:'+type);
+  if(guard){ const left=Math.max(0,guardsLeft(guard)-1); S.sea.fleets[guard]=left;
+    if(!left){ const is=ISLE[guard]; chronicle(`${is.name}’s fleet is broken.`); toast(`The last of ${is.name}’s fleet is gone, and its harbor chain falls. The castle can be besieged.`); } }
+}
+function boardFoe(e){
+  if(!e||e.dead) return; if(S.exp){ toast('Your hero is away on an expedition. There is no one to lead the boarding party.'); return; }
+  const cost=Math.round(8+6*e.T.tier); if(S.hp<=cost){ toast(`Your hero is too hurt to lead a boarding party (needs more than ${cost} health).`); return; }
+  S.hp-=cost; const got=[]; for(const [k,n] of shipLoot(e.T.tier,1.5)){ const t=toCargo(k,n); if(t) got.push(goodsText(k,t)); }
+  sea&&sea.removeFoe(e,true); shipBeaten(e.type,e.guard);
+  toast(`Your hero leads the boarders over the rail and takes the ${e.T.name} (−${cost} health): ${got.join(', ')||'the hold is full'}.`); refresh();
+}
+// Sieges: once a castle's fleet is broken, take it by storm, by night, or by blockade
+const siegePower=()=>S.gear.weapon+S.gear.armor+S.sea.arms;
+function stormCost(id,night){ const D=REALMS[id].def, f=Math.max(0.15,Math.min(0.9,0.3+0.15*D-0.04*siegePower())); return Math.round(maxHP()*f*(night?0.5:1)); }
+const blockadeMins=id=>8+6*REALMS[id].def;
+function siegeOpts(id){ const day=dayInfo().day, sc=stormCost(id,false), nc=stormCost(id,true), away=!!S.exp;
+  return [
+    {k:'storm',label:'Storm the gate',sub:`Your hero leads the assault · −${sc} health`,ok:!away&&S.hp>sc,why:away?'Your hero is on an expedition':S.hp<=sc?`Needs more than ${sc} health`:''},
+    {k:'night',label:'Scale the walls by night',sub:`Half the cost · −${nc} health`,ok:!day&&!away&&S.hp>nc,why:day?'Only at night':away?'Your hero is on an expedition':S.hp<=nc?`Needs more than ${nc} health`:''},
+    {k:'blockade',label:'Blockade the harbor',sub:`No blood spilled · ${blockadeMins(id)} minutes at anchor here`,ok:!S.siege,why:''}]; }
+function openSiege(id){ const is=ISLE[id], R=REALMS[id];
+  $('sgTitle').textContent=`Besiege ${is.name}`; $('sgWhere').textContent=is.culture;
+  $('sgText').textContent=`${is.desc} Its fleet is broken and the harbor chain is down. Take it, and ${R.name} is yours to rule: ${R.perk.charAt(0).toLowerCase()+R.perk.slice(1)}`;
+  $('sgOpts').innerHTML=siegeOpts(id).map(o=>`<button class="act" data-sg="${o.k}" data-id="${id}" ${o.ok?'':'disabled'}><span>${o.label}</span><small>${o.why||o.sub}</small></button>`).join('');
+  $('siegeCard').hidden=false; }
+function doSiege(k,id){ $('siegeCard').hidden=true; if(claimed(id)) return;
+  if(k==='blockade'){ const n=now(); S.siege={id,start:n,end:n+blockadeMins(id)*60000}; S.sea.anchored=true;
+    toast(`Your ship drops anchor across ${ISLE[id].name}’s harbor. Nothing gets in or out. It falls in ${blockadeMins(id)} minutes.`); refresh(); return; }
+  const cost=stormCost(id,k==='night'); if(S.exp||S.hp<=cost) return; S.hp-=cost; claimCastle(id,k); }
+function liftBlockade(){ if(!S.siege) return; toast(`You lift the blockade of ${ISLE[S.siege.id].name}.`); S.siege=null; refresh(); }
+function claimCastle(id,how){
+  const is=ISLE[id], R=REALMS[id]; S.claimed[id]={t:now(),how:how||'blockade'}; S.siege=null; S.sea.fleets[id]=0;
+  S.stats.castles=(S.stats.castles||0)+1; logUnlock('realm:'+id);
+  chronicle(`${is.name} flies your banner.`);
+  toast(`${R.name} is yours! ${how==='storm'?'Your hero storms the gate.':how==='night'?'Your hero’s men are over the walls before dawn.':'Starved and cut off, the castle opens its gates.'} Switch realms in the Build tab to rule it. ${R.perk}`);
+  if(sea) sea.key=''; refresh(); }
+function shipSunk(){
+  S.sea.cargo={}; S.sea.hp=Math.round(maxHull()*0.25); S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true;
+  chronicle('The Ember Gull went down. Her crew was fished out and towed home.');
+  toast('The Ember Gull is holed and sinks! The crew is fished out and towed home, but the cargo is lost. She is repairing in the harbor.'); refresh();
+}
 function upgradeShip(k){ const t=nextShip(k); if(!S.sea.yard||S.sea.job||!t||!canPay(t.cost)) return; pay(t.cost); const n=now();
-  S.sea.job={part:k,start:n,end:n+t.time*1000}; refresh(); }
+  S.sea.job={part:k,start:n,end:n+t.time*1000*(claimed('karak')?0.5:1)}; refresh(); }
 function shipJobDone(){ const j=S.sea.job; if(!j) return; S.sea.job=null;
   if(j.part==='yard'){ S.sea.yard=1; S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true; logUnlock('npc:maren');
     const msg='The shipyard is finished, and your cog, the Ember Gull, rides at anchor. Open the Harbor and set sail.'; chronicle('The Ember Gull is launched.'); toast(msg); }
@@ -1558,7 +1683,8 @@ function setView(v){
   $('vKeep').setAttribute('aria-pressed',v==='keep'); $('vJourney').setAttribute('aria-pressed',v==='journey'); $('vSea').setAttribute('aria-pressed',v==='sea');
   $('realm').setAttribute('aria-label',v==='keep'?'Your keep. Tap to collect gold.':v==='sea'?'Your ship at sea. Tap the water to steer.':'Your hero on the road. Tap what lies ahead to help.');
   if(sea) sea.setShown(v==='sea');
-  if(scene){ scene.scene.setVisible(v==='keep'); scene.input.enabled=v==='keep'; }
+  const home=S.realm==='home'; if(scene){ scene.scene.setVisible(v==='keep'&&home); scene.input.enabled=v==='keep'&&home; }
+  if(fief) fief.setShown(v==='keep'&&!home);
   if(journey) journey.setShown(v==='journey');
 }
 let forgeKey='';
@@ -1585,10 +1711,19 @@ function renderHarbor(){
   { const on=view==='sea'&&!!sh.yard&&!!sea; $('seaBar').hidden=!on;
     if(on){ const w=windAt(now()), near=sea.near, gold=sh.cargo.gold||0;
       $('sbWhere').textContent=near?near.name:sea.inHarbor?'Emberkeep harbor':'Open sea';
-      $('sbInfo').textContent=`Wind from the ${compass(w+Math.PI)} \u00B7 ${Math.round(sea.v||0)} knots \u00B7 hold ${seaCargo()}/${holdCap()}${gold?` \u00B7 ${fmt(gold)} gold`:''}`;
-      let act='', small='', big='', dis=false;
-      if(near&&near.kind==='cache'){ const st=isleState(near.id); act='dig'; small='Go ashore'; if(cacheReady(near.id)) big='Dig for treasure'; else { big=`Refills in ${clock(st.next-now())}`; dis=true; } }
-      else if(near&&near.kind==='castle'){ act='none'; small='Harbor chained'; big='Needs a warship'; dis=true; }
+      const hullTxt=shipHP()<maxHull()?` \u00B7 hull ${Math.ceil(shipHP())}/${maxHull()}`:'';
+      $('sbInfo').textContent=`Wind from the ${compass(w+Math.PI)} \u00B7 ${Math.round(sea.v||0)} knots \u00B7 hold ${seaCargo()}/${holdCap()}${gold?` \u00B7 ${fmt(gold)} gold`:''}${hullTxt}`;
+      let act='', small='', big='', dis=false; const foe=sea.foeNear(330);
+      if(foe){ const fd=Math.hypot(foe.x-sh.x,foe.y-sh.y), side=sea.sideFor(foe), rl=sea.rl[side<0?0:1];
+        $('sbWhere').textContent=foe.T.name;
+        $('sbInfo').textContent=`Their hull ${Math.max(0,Math.ceil(foe.hp))}/${foe.max} \u00B7 yours ${Math.ceil(shipHP())}/${maxHull()} \u00B7 ${Math.round(fd)} yards`;
+        if(foe.hp<=foe.max*0.3&&fd<55){ act='board'; small='She’s crippled'; big='Board her!'; }
+        else { act='fire'; small=`Fire to ${side<0?'port':'starboard'}`; big=rl>0?`Reloading ${rl.toFixed(1)}s`:'Fire!'; dis=rl>0; } }
+      else if(near&&near.kind==='cache'){ const st=isleState(near.id); act='dig'; small='Go ashore'; if(cacheReady(near.id)) big='Dig for treasure'; else { big=`Refills in ${clock(st.next-now())}`; dis=true; } }
+      else if(near&&near.kind==='castle'&&claimed(near.id)){ act='none'; small='Your port'; big='Cargo unloads here'; dis=true; }
+      else if(S.siege&&near&&S.siege.id===near.id){ act='lift'; small=`Blockade \u00B7 falls in ${clock(S.siege.end-now())}`; big='Lift blockade'; }
+      else if(near&&near.kind==='castle'&&guardsLeft(near.id)>0){ act='none'; small='Harbor chained'; big=`${guardsLeft(near.id)} guard ship${guardsLeft(near.id)>1?'s':''} left`; dis=true; }
+      else if(near&&near.kind==='castle'){ act='siege'; small='The chain is down'; big='Besiege'; }
       else if(sh.anchored){ act='weigh'; small='At anchor'; big='Raise sails'; }
       else { act='anchor'; small=sea.inHarbor?'In harbor':'Under sail'; big='Drop anchor'; }
       const b=$('sbAct'); b.dataset.act=act; b.disabled=dis; $('sbActS').textContent=small; $('sbActT').textContent=big; } }
@@ -1606,7 +1741,7 @@ function renderHarbor(){
     $('yjBar').style.width=Math.min(100,100*(now()-j.start)/(j.end-j.start))+'%'; }
   $('seaNote').textContent=j?`Ready in ${clock(j.end-now())}`:sh.yard?(seaCargo()||sh.cargo.gold?'Cargo aboard':''):'';
   let can=0;
-  if(sh.yard){ $('shipStats').textContent=`${SHIP.sails.tiers[sh.sails].name} (speed ×${SAIL_SPEED[sh.sails]}) \u00B7 ${SHIP.hold.tiers[sh.hold].name} (${holdCap()} goods)${seaCargo()||sh.cargo.gold?` \u00B7 aboard: ${seaCargo()} goods${sh.cargo.gold?`, ${fmt(sh.cargo.gold)} gold`:''}`:''}`;
+  if(sh.yard){ $('shipStats').textContent=`Hull ${Math.ceil(shipHP())}/${maxHull()}${shipHP()<maxHull()?(inHarborPos()?' (repairing)':' (repairs in harbor)'):''} \u00B7 ${ARMS[sh.arms].n} bolts a side \u00B7 speed ×${SAIL_SPEED[sh.sails]} \u00B7 hold ${holdCap()}${seaCargo()||sh.cargo.gold?` \u00B7 aboard: ${seaCargo()} goods${sh.cargo.gold?`, ${fmt(sh.cargo.gold)} gold`:''}`:''}`;
     Object.entries(SHIP).forEach(([k,g])=>{ const t=nextShip(k);
       if(!t){ $('spn-'+k).textContent=g.tiers[sh[k]].name; $('spe-'+k).textContent='The finest Maren can build.'; setHTML($('spc-'+k),''); $('spb-'+k).disabled=true; return; }
       $('spn-'+k).textContent=t.name; $('spe-'+k).textContent=g.effect(sh[k]+1); setHTML($('spc-'+k),costHTML(t.cost));
@@ -1619,7 +1754,7 @@ function renderHarbor(){
   $('chartCount').textContent=`${found.length} / ${ISLES.length-1} charted`;
   setHTML($('chartList'),ISLES.filter(is=>is.id!=='home').map(is=>{ const st=isleState(is.id), dir=compass(Math.atan2(is.y-ISLE.home.y,is.x-ISLE.home.x));
     if(!st.found) return `<div class="row"><div><div class="r-head"><span class="r-name" style="color:var(--muted)">Uncharted</span><span class="r-tag">${is.kind==='castle'?'Castle':'Isle'}</span></div><div class="r-desc">Somewhere to the ${dir}.</div></div></div>`;
-    const status=is.kind==='castle'?`${is.culture}. Its harbor chain is raised: you’ll need a warship.`:cacheReady(is.id)?'Treasure waiting: land and dig.':`Dug out. Refills in ${fmtTime((st.next-now())/1000)}.`;
+    const status=is.kind==='castle'?(claimed(is.id)?`Yours. ${REALMS[is.id].perk} Its port takes your cargo.`:S.siege&&S.siege.id===is.id?`Under blockade: falls in ${fmtTime((S.siege.end-now())/1000)}.`:guardsLeft(is.id)>0?`${is.culture}. Guarded by ${guardsLeft(is.id)} ${FLEET[CASTLE_GUARD[is.id].type].name}${guardsLeft(is.id)>1?'s':''}.`:`${is.culture}. Its fleet is broken: the castle can be besieged.`):cacheReady(is.id)?'Treasure waiting: land and dig.':`Dug out. Refills in ${fmtTime((st.next-now())/1000)}.`;
     return `<div class="row"><div><div class="r-head"><span class="r-name">${is.name}</span><span class="r-tag">${is.kind==='castle'?'Castle':'Tier '+is.tier}</span></div><div class="r-desc">${is.desc}</div><div class="r-meta">${status}</div></div></div>`; }).join(''));
 }
 let spireKey='';
@@ -1699,9 +1834,15 @@ function refresh(){
 
   // buildings
   let shownMystery=false;
-  BUILDINGS.forEach((b,i)=>{
-    const row=$('b-'+b.id);
-    const known=i===0||owned(b.id)>0||owned(BUILDINGS[i-1].id)>0||S.total>=b.base*0.5;
+  { const rs=['home',...Object.keys(REALMS).filter(claimed)]; if(!rs.includes(S.realm)) S.realm='home';
+    $('realmPick').hidden=rs.length<2; const key=rs.join()+'|'+S.realm;
+    if(rs.length>1&&$('realmSeg').dataset.k!==key){ $('realmSeg').dataset.k=key; $('realmSeg').innerHTML=rs.map(r=>`<button data-realm="${r}" aria-pressed="${r===S.realm}">${r==='home'?'Emberkeep':REALMS[r].name}</button>`).join(''); }
+    $('realmPerk').textContent=S.realm==='home'?'Your home keep. Every realm’s holdings pay into one treasury.':REALMS[S.realm].perk; }
+  BUILDINGS.forEach(b=>{
+    const row=$('b-'+b.id), rl=b.realm||'home';
+    if(rl!==S.realm){ row.hidden=true; return; }
+    const list=BUILDINGS.filter(x=>(x.realm||'home')===rl), j=list.indexOf(b);
+    const known=j===0||owned(b.id)>0||owned(list[j-1].id)>0||S.total>=b.base*0.5;
     if(!known){
       if(shownMystery){ row.hidden=true; return; }
       shownMystery=true; row.hidden=false; row.classList.add('mystery');
@@ -1851,8 +1992,13 @@ function wireUI(){
   document.querySelectorAll('.sheet-back').forEach(enableSheetDrag);
   $('jbHaste').addEventListener('click',hasten);
   $('jbReturn').addEventListener('click',()=>{ returnHome(); refresh(); });
+  $('sgClose').addEventListener('click',()=>$('siegeCard').hidden=true);
+  $('sgOpts').addEventListener('click',e=>{ const b=e.target.closest('button[data-sg]'); if(!b||b.disabled) return; doSiege(b.dataset.sg,b.dataset.id); });
+  $('realmSeg').addEventListener('click',e=>{ const b=e.target.closest('button[data-realm]'); if(!b) return; S.realm=b.dataset.realm; setView('keep'); refresh(); });
   $('sbAct').addEventListener('click',()=>{ const a=$('sbAct').dataset.act, sh=S.sea;
-    if(a==='dig'&&sea&&sea.near) digCache(sea.near.id); else if(a==='anchor'){ sh.anchored=true; } else if(a==='weigh'){ sh.anchored=false; } refresh(); });
+    if(a==='siege'&&sea&&sea.near) openSiege(sea.near.id); else if(a==='lift') liftBlockade();
+    else if(a==='fire'&&sea) sea.fire(); else if(a==='board'&&sea){ const f=sea.foeNear(60); if(f) boardFoe(f); }
+    else if(a==='dig'&&sea&&sea.near) digCache(sea.near.id); else if(a==='anchor'){ sh.anchored=true; } else if(a==='weigh'){ sh.anchored=false; } refresh(); });
   $('retreatSeg').innerHTML=RETREATS.map((r,i)=>`<button data-i="${i}">${r.label}</button>`).join('');
   $('retreatSeg').addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; S.retreat=+b.dataset.i; refresh(); });
   $('packDn').addEventListener('click',()=>{ S.pack=Math.max(0,Math.min(S.pack,packMax())-1); refresh(); });
@@ -2001,7 +2147,7 @@ class Realm extends Phaser.Scene{
     this.input.on('pointerdown',p=>{ const x=p.worldX, y=p.worldY;
       if(x>656&&x<716&&y>80&&y<300){ openSpire(); return; }
       tap(x,y,false); });
-    this.scene.setVisible(view==='keep'); this.input.enabled=view==='keep';
+    this.scene.setVisible(view==='keep'&&S.realm==='home'); this.input.enabled=view==='keep'&&S.realm==='home';
   }
   L(night,day){ return mixColor(night,day,this.light); }
   drawSky(){
@@ -2452,7 +2598,7 @@ const ISLE_LOOK={
 class Sea extends Phaser.Scene{
   constructor(){ super({key:'sea',active:true}); }
   create(){
-    sea=this; this.v=0; this.target=null; this.near=null; this.inHarbor=true; this.flot=[]; this.spawnT=0; this.key='';
+    sea=this; this.foes=[]; this.bolts=[]; this.rl=[0,0]; this.raidT=20; this.v=0; this.target=null; this.near=null; this.inHarbor=true; this.flot=[]; this.spawnT=0; this.key='';
     this.cameras.main.setZoom(SEA_Z);
     const g=this.make.graphics({add:false}); g.lineStyle(1.4,0xffffff,0.55); const rr=seededRand(7);
     for(let i=0;i<18;i++){ const x=8+rr()*112,y=8+rr()*112; g.beginPath(); g.arc(x,y,5,Math.PI*1.15,Math.PI*1.85); g.strokePath(); }
@@ -2466,7 +2612,9 @@ class Sea extends Phaser.Scene{
     this.ship=this.add.container(0,0); this.hullG=this.add.graphics(); this.sail=this.add.graphics(); this.flag=this.add.graphics();
     this.lamp=this.add.circle(-14,0,16,0xf6cf6a,0.18).setBlendMode(Phaser.BlendModes.ADD);
     this.ship.add([this.lamp,this.hullG,this.sail,this.flag]);
-    this.aimG=this.add.graphics();
+    this.aimG=this.add.graphics(); this.boltG=this.add.graphics();
+    this.puff=this.add.particles(0,0,'seadot',{speed:{min:10,max:40},lifespan:500,scale:{start:0.6,end:0},alpha:{start:0.7,end:0},emitting:false});
+    this.boltG.setDepth(6); this.aimG.setDepth(6); this.puff.setDepth(7);
     this.fx=this.add.container(0,0);
     // HUD: moved to the camera's top-left corner every frame
     const tx=(s,size,col)=>this.add.text(0,0,s,{fontFamily:DISPLAY_FONT,fontSize:size+'px',color:col||'#ece2c8',stroke:'#0b0d19',strokeThickness:3,resolution:SEA_Z});
@@ -2478,12 +2626,12 @@ class Sea extends Phaser.Scene{
     const roseBg=this.add.graphics(); roseBg.fillStyle(0x0b0d19,0.5); roseBg.fillCircle(0,0,15); roseBg.lineStyle(1,0xc9bea2,0.5); roseBg.strokeCircle(0,0,15);
     this.rose.add([roseBg,this.roseArrow,this.add.text(0,-24,'WIND',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'8px',color:'#c9bea2',resolution:SEA_Z}).setOrigin(0.5,0)]);
     this.roseArrow.fillStyle(0xe8eef4); this.roseArrow.fillTriangle(11,0,-5,-5,-5,5); this.roseArrow.fillRect(-11,-1,8,2);
-    this.hud.add([this.mapG,this.title,this.hint,this.place,this.rose]);
-    this.input.on('pointerdown',p=>this.aim(p)); this.input.on('pointermove',p=>{ if(p.isDown) this.aim(p); });
+    this.hud.add([this.mapG,this.title,this.hint,this.place,this.rose]); this.hud.setDepth(20); this.ship.setDepth(5); this.wake.setDepth(3); this.flotG.setDepth(2);
+    this.input.on('pointerdown',p=>{ if(S.siege) toast(`Your ship holds the blockade of ${ISLE[S.siege.id].name}. Lift it to sail.`); this.aim(p); }); this.input.on('pointermove',p=>{ if(p.isDown) this.aim(p); });
     this.setShown(false);
   }
   setShown(v){ this.shown=v; this.scene.setVisible(v); this.input.enabled=v; if(v){ this.key=''; this.last=0; } }
-  aim(p){ const sh=S.sea; if(!sh.yard||sh.x==null) return; this.target=Math.atan2(p.worldY-sh.y,p.worldX-sh.x); if(sh.anchored){ sh.anchored=false; refresh(); } S.sea.steered=1; }
+  aim(p){ const sh=S.sea; if(!sh.yard||sh.x==null||S.siege) return; this.target=Math.atan2(p.worldY-sh.y,p.worldX-sh.x); if(sh.anchored){ sh.anchored=false; refresh(); } S.sea.steered=1; }
   L(c){ return mixColor(mixColor(c,0x0e1120,0.6),c,this.light); }
   drawIsle(o){
     const {is,land,glow}=o, look=ISLE_LOOK[is.look], g=land, L=c=>this.L(c), r=seededRand(is.seed+5);
@@ -2514,7 +2662,7 @@ class Sea extends Phaser.Scene{
       for(let i=0;i<9;i++){ g.fillStyle(dk); g.fillRect(-40+i*9.2,-33,5,4); } g.fillStyle(st); g.fillEllipse(-40,-30,16,5); g.fillEllipse(40,-30,16,5);
       g.fillStyle(au); g.fillCircle(0,-10,11); g.fillRect(-11,-10,22,10); g.fillStyle(L(0x2a2420)); g.fillCircle(0,-10,8); g.fillRect(-8,-10,16,10);
       g.fillStyle(au); for(let i=0;i<5;i++) g.fillRect(-26+i*5,-16,2,2); for(let i=0;i<5;i++) g.fillRect(16+i*5,-16,2,2);
-      g.fillStyle(dk); g.fillRect(20,-44,7,14); glow.fillStyle(0xe8744a,0.55); glow.fillCircle(23.5,-46,5); win(-44,-20,4,5); win(38,-20,4,5); }
+      g.fillStyle(dk); g.fillRect(20,-44,7,14); glow.fillStyle(0xe8744a,0.15+0.4*night); glow.fillCircle(23.5,-46,4); win(-44,-20,4,5); win(38,-20,4,5); }
     else if(kind==='skar'){ const tb=L(0x6b4a30), dk=L(0x4a3222), snow=L(0xeef3f7);
       g.fillStyle(tb); g.fillRect(-36,-14,72,14); g.fillStyle(dk); for(let x=-34;x<36;x+=6) g.fillRect(x,-14,1,14);
       g.fillStyle(L(0xb9c6d2)); g.fillPoints([{x:-42,y:-13},{x:42,y:-13},{x:31,y:-34},{x:-31,y:-34}],true);
@@ -2535,27 +2683,93 @@ class Sea extends Phaser.Scene{
     else if(kind==='drowned'){ const st=L(0x6e7a86); g.fillStyle(st); g.fillRect(-8,-34,16,34); g.fillStyle(L(0x55606c)); g.fillPoints([{x:-10,y:-34},{x:10,y:-34},{x:6,y:-40},{x:1,y:-36},{x:-4,y:-42}],true);
       glow.fillStyle(0xc7a8f0,0.35+0.3*night); glow.fillCircle(0,-22,6); win(-2,-26,4,6); }
   }
-  drawShip(){
-    const L=c=>this.L(c), g=this.hullG; g.clear();
+  paintShip(g,s,lk,kind,two){
+    const L=c=>this.L(c); g.clear(); s.clear();
     g.fillStyle(0x000000,0.2); g.fillEllipse(2,3,40,16);
-    g.fillStyle(L(0x5a3a22)); g.fillPoints([{x:21,y:0},{x:12,y:-8},{x:-14,y:-8},{x:-18,y:-5},{x:-18,y:5},{x:-14,y:8},{x:12,y:8}],true);
-    g.fillStyle(L(0x9a6a3e)); g.fillPoints([{x:17,y:0},{x:10,y:-6},{x:-12,y:-6},{x:-15,y:-4},{x:-15,y:4},{x:-12,y:6},{x:10,y:6}],true);
-    g.lineStyle(0.7,L(0x6a4a2c)); [-3,0,3].forEach(y=>g.lineBetween(-13,y,11,y)); g.fillStyle(L(0x7a5234)); g.fillRect(-16,-5,6,10);
+    g.fillStyle(L(lk.hull)); g.fillPoints([{x:21,y:0},{x:12,y:-8},{x:-14,y:-8},{x:-18,y:-5},{x:-18,y:5},{x:-14,y:8},{x:12,y:8}],true);
+    g.fillStyle(L(lk.deck)); g.fillPoints([{x:17,y:0},{x:10,y:-6},{x:-12,y:-6},{x:-15,y:-4},{x:-15,y:4},{x:-12,y:6},{x:10,y:6}],true);
+    g.lineStyle(0.7,L(mixColor(lk.deck,0x000000,0.3))); [-3,0,3].forEach(y=>g.lineBetween(-13,y,11,y));
+    if(kind==='dragonship'){ for(let x=-12;x<=10;x+=4.4){ g.fillStyle(L(x%2?0xb8342a:0xe3ad45)); g.fillCircle(x,-7.6,1.7); g.fillStyle(L(x%2?0xe3ad45:0xb8342a)); g.fillCircle(x,7.6,1.7); }
+      g.lineStyle(2,L(lk.hull)); g.beginPath(); g.arc(22,-3,3,Math.PI*0.5,Math.PI*1.6); g.strokePath(); }
+    else if(kind==='ironclad'){ g.lineStyle(1,L(0x9a9aa0)); [-10,-4,2,8].forEach(x=>{ g.lineBetween(x,-8,x,-6); g.lineBetween(x,6,x,8); }); g.fillStyle(L(0x2a2a30)); g.fillRect(-4,-3,8,6); }
+    else if(kind==='swanship'){ g.lineStyle(2.2,L(0xf4efe2)); g.beginPath(); g.moveTo(19,0); g.lineTo(24,-2); g.lineTo(25,-5); g.strokePath(); g.fillStyle(L(0xe3ad45)); g.fillCircle(25.5,-5.5,1.2); }
+    else if(kind==='galley'){ g.lineStyle(1,L(0x3a2616)); for(let x=-10;x<=8;x+=4){ g.lineBetween(x,-8,x-2,-12); g.lineBetween(x,8,x-2,12); } }
+    else { g.fillStyle(L(mixColor(lk.hull,0xffffff,0.15))); g.fillRect(-16,-5,6,10); }
     g.fillStyle(L(0x3a2616)); g.fillCircle(2,0,1.8);
-    const s=this.sail; s.clear(); const full=S.sea.sails>=2;
-    s.fillStyle(L(0xece2c8)); s.fillPoints([{x:0,y:-14},{x:5,y:-9},{x:7,y:0},{x:5,y:9},{x:0,y:14}],true);
-    s.fillStyle(L(0xb8342a)); s.fillPoints([{x:0,y:-3},{x:7,y:-2.5},{x:7,y:2.5},{x:0,y:3}],true);
-    s.lineStyle(1.4,L(0x5a3a22)); s.lineBetween(0,-15,0,15);
-    if(full){ s.fillStyle(L(0xe2d6b8)); s.fillPoints([{x:-9,y:-10},{x:-6,y:-6},{x:-5,y:0},{x:-6,y:6},{x:-9,y:10}],true); s.lineBetween(-9,-11,-9,11); }
-    this.sail.x=2; const f=this.flag; f.clear(); f.fillStyle(L(0xe8744a)); f.fillTriangle(0,-1.6,9,0,0,1.6);
+    const sq=kind==='dragonship';
+    s.fillStyle(L(lk.sail)); s.fillPoints(sq?[{x:0,y:-13},{x:5,y:-12},{x:6,y:0},{x:5,y:12},{x:0,y:13}]:[{x:0,y:-14},{x:5,y:-9},{x:7,y:0},{x:5,y:9},{x:0,y:14}],true);
+    s.fillStyle(L(lk.stripe)); if(sq){ [-9,-3,3,9].forEach(y=>s.fillRect(0,y-1.5,5.6,3)); } else s.fillPoints([{x:0,y:-3},{x:7,y:-2.5},{x:7,y:2.5},{x:0,y:3}],true);
+    s.lineStyle(1.4,L(0x3a2616)); s.lineBetween(0,-15,0,15);
+    if(two){ s.fillStyle(L(mixColor(lk.sail,0x000000,0.06))); s.fillPoints([{x:-9,y:-10},{x:-6,y:-6},{x:-5,y:0},{x:-6,y:6},{x:-9,y:10}],true); s.lineBetween(-9,-11,-9,11); }
+    s.x=2;
   }
-  floatText(x,y,str,col){ const t=this.add.text(x,y,str,{fontFamily:DISPLAY_FONT,fontSize:'13px',color:col||'#f6cf6a',stroke:'#0b0d19',strokeThickness:3,resolution:SEA_Z}).setOrigin(0.5);
+  drawShip(){
+    this.paintShip(this.hullG,this.sail,{hull:0x5a3a22,deck:0x9a6a3e,sail:0xece2c8,stripe:0xb8342a},'player',S.sea.sails>=2);
+    const f=this.flag; f.clear(); f.fillStyle(this.L(0xe8744a)); f.fillTriangle(0,-1.6,9,0,0,1.6);
+    this.foes.forEach(e=>this.paintShip(e.g,e.s,e.T,e.type,e.T.n>2));
+  }
+  // ---------- battles ----------
+  spawnFoe(type,x,y,guard){
+    const T=FLEET[type], c=this.add.container(x,y), g=this.add.graphics(), sl=this.add.graphics(); c.add([g,sl]); c.setScale(1.35);
+    this.paintShip(g,sl,T,type,T.n>2); const bar=this.add.graphics();
+    const e={type,T,x,y,a:Math.random()*6.28,v:0,hp:T.hp,max:T.hp,rl:[1+Math.random()*2,1+Math.random()*2],c,g,s:sl,bar,guard,mode:'patrol',side:Math.random()<0.5?-1:1,pt:null,hx:x,hy:y};
+    c.setDepth(4); bar.setDepth(9); this.foes.push(e); return e;
+  }
+  removeFoe(e,captured){ if(e.dead) return; e.dead=true; e.bar.destroy();
+    if(captured){ this.floatText(e.x,e.y-20,'Captured!','#9ff0a0'); this.tweens.add({targets:e.c,alpha:0,duration:900,onComplete:()=>e.c.destroy()}); }
+    else this.tweens.add({targets:e.c,alpha:0,angle:e.c.angle+40,scale:0.9,duration:1600,onComplete:()=>e.c.destroy()});
+    this.foes=this.foes.filter(x=>x!==e); }
+  foeNear(r){ let best=null, bd=r||320; const sh=S.sea; for(const e of this.foes){ const d=Math.hypot(e.x-sh.x,e.y-sh.y); if(d<bd){ bd=d; best=e; } } return best; }
+  sideFor(e){ const sh=S.sea; return e?(angDiff(Math.atan2(e.y-sh.y,e.x-sh.x),sh.a)>0?1:-1):1; }
+  volley(o,side,n,dmg,range,from,fire){
+    const na=o.a+side*Math.PI/2;
+    for(let i=0;i<n;i++){ const off=(n>1?(i/(n-1)-0.5):0)*22, an=na+(Math.random()-0.5)*0.1;
+      const x=o.x+Math.cos(o.a)*off+Math.cos(na)*11, y=o.y+Math.sin(o.a)*off+Math.sin(na)*11;
+      this.bolts.push({x,y,vx:Math.cos(an)*BOLT_SPEED+Math.cos(o.a)*o.v*0.5,vy:Math.sin(an)*BOLT_SPEED+Math.sin(o.a)*o.v*0.5,life:range/BOLT_SPEED*(0.92+Math.random()*0.16),dmg,from,fire});
+      this.puff.setParticleTint(0xe8e2d0); this.puff.explode(2,x,y); }
+  }
+  fire(){ const sh=S.sea, A=ARMS[sh.arms], e=this.foeNear(360), side=this.sideFor(e), i=side<0?0:1;
+    if(this.rl[i]>0) return; this.volley({x:sh.x,y:sh.y,a:sh.a,v:this.v},side,A.n,A.dmg,BOLT_RANGE,'me',A.fire); this.rl[i]=A.reload; refresh(); }
+  hitFoe(e,dmg){ e.hp-=dmg; e.hurt=true; this.floatText(e.x,e.y-16,'-'+dmg,'#ffd9b8');
+    if(e.guard) this.foes.forEach(f=>{ if(f.guard===e.guard) f.hurt=true; });
+    if(e.hp<=0){ const loot=shipLoot(e.T.tier,0.6), per=Math.ceil(loot.length/3);
+      for(let k=0;k<3;k++){ const part=loot.slice(k*per,(k+1)*per); if(part.length) this.addFlot(e.x+(Math.random()-0.5)*40,e.y+(Math.random()-0.5)*30,part); }
+      this.floatText(e.x,e.y-24,'Sunk!','#f6cf6a'); this.removeFoe(e,false); shipBeaten(e.type,e.guard); refresh(); } }
+  hitMe(dmg){ const sh=S.sea; sh.hp=shipHP()-dmg; this.floatText(sh.x,sh.y-18,'-'+dmg,'#ff7a66'); this.cameras.main.shake(100,0.003);
+    if(sh.hp<=0){ this.foes.slice().forEach(e=>{ e.dead=true; e.bar.destroy(); e.c.destroy(); }); this.foes=[]; this.bolts=[]; this.target=null; this.v=0; shipSunk(); } }
+  foeTick(e,dt,time,w){
+    const sh=S.sea, T=e.T, dx=sh.x-e.x, dy=sh.y-e.y, d=Math.hypot(dx,dy), b=Math.atan2(dy,dx);
+    const safe=Math.hypot(sh.x-HARBOR.x,sh.y-HARBOR.y)<260;
+    if(e.mode!=='flee') e.mode=!safe&&(e.guard?(d<330||(e.hurt&&d<700)):d<290)?'fight':'patrol';
+    if(!e.guard&&e.mode==='fight'&&e.hp<e.max*0.25) e.mode='flee';
+    let want;
+    if(e.mode==='fight') want=d>T.range*0.95?b+e.side*0.45:d<75?b+e.side*(Math.PI/2+0.6):b+e.side*Math.PI/2;
+    else if(e.mode==='flee') want=b+Math.PI;
+    else { const hx=e.guard?ISLE[e.guard].x:e.hx, hy=e.guard?ISLE[e.guard].y:e.hy;
+      if(!e.pt||Math.hypot(e.pt.x-e.x,e.pt.y-e.y)<30){ const an=Math.random()*6.28, R=(e.guard?ISLE[e.guard].r*1.3+60:90)+Math.random()*70; e.pt={x:hx+Math.cos(an)*R,y:hy+Math.sin(an)*R*ISQ}; }
+      want=Math.atan2(e.pt.y-e.y,e.pt.x-e.x); }
+    for(const is of ISLES){ if(isleDist(is,e.x+Math.cos(e.a)*45,e.y+Math.sin(e.a)*45)<1.12){ const away=Math.atan2(e.y-is.y,e.x-is.x); want=away+(angDiff(e.a,away)>0?1.1:-1.1); break; } }
+    const df=angDiff(want,e.a), tr=1.1*dt; e.a+=Math.max(-tr,Math.min(tr,df));
+    const vmax=SAIL_BASE*T.speed*Math.max(0.45,windFactor(angDiff(e.a,w)))*(e.mode==='flee'?1.15:e.mode==='patrol'?0.55:1);
+    e.v+=(vmax-e.v)*Math.min(1,dt*0.8);
+    let nx=e.x+Math.cos(e.a)*e.v*dt, ny=e.y+Math.sin(e.a)*e.v*dt;
+    for(const is of ISLES){ if(isleDist(is,nx,ny)<1.04){ const an=Math.atan2((ny-is.y)/ISQ,nx-is.x), cr=is.r*isleK(is,an)*1.04; nx=is.x+Math.cos(an)*cr; ny=is.y+Math.sin(an)*cr*ISQ; } }
+    e.x=Math.max(20,Math.min(SEA_W-20,nx)); e.y=Math.max(20,Math.min(SEA_H-20,ny));
+    e.rl[0]-=dt; e.rl[1]-=dt;
+    if(e.mode==='fight'&&d<T.range) [[0,-1],[1,1]].forEach(([i,sd])=>{ if(e.rl[i]<=0&&Math.abs(angDiff(b,e.a+sd*Math.PI/2))<0.32){ this.volley(e,sd,T.n,T.dmg,T.range,'foe'); e.rl[i]=T.reload*(0.9+Math.random()*0.3); } });
+    e.c.setPosition(e.x,e.y+Math.sin(time/600+e.hx)*0.6).setRotation(e.a); e.s.rotation=Math.max(-1.2,Math.min(1.2,angDiff(w,e.a)));
+    e.bar.clear(); if(e.hurt||e.mode==='fight'){ e.bar.fillStyle(0x1a1016,0.8); e.bar.fillRect(e.x-16,e.y-30,32,4); e.bar.fillStyle(e.hp<e.max*0.3?0x9ff0a0:0xd0584a); e.bar.fillRect(e.x-16,e.y-30,32*Math.max(0,e.hp)/e.max,4); }
+    if(!e.guard&&d>950) this.removeFoe(e,true);
+  }
+  addFlot(x,y,loot){ const o=this.add.graphics(); o.fillStyle(this.L(loot?0x5a3a22:0x7a5232)); o.fillEllipse(0,0,loot?12:9,loot?7:6); o.lineStyle(1,this.L(0x3a2616)); o.lineBetween(-2,-3,-2,3); o.lineBetween(2,-3,2,3);
+    if(loot){ o.fillStyle(this.L(0xe3ad45)); o.fillCircle(3,-1,1.4); }
+    o.setPosition(x,y); this.flotG.add(o); this.flot.push({x,y,o,ph:Math.random()*6,loot}); }
+  floatText(x,y,str,col){ const t=this.add.text(x,y,str,{fontFamily:DISPLAY_FONT,fontSize:'13px',color:col||'#f6cf6a',stroke:'#0b0d19',strokeThickness:3,resolution:SEA_Z}).setOrigin(0.5).setDepth(8);
     this.tweens.add({targets:t,y:y-26,alpha:0,duration:1300,ease:'Cubic.easeOut',onComplete:()=>t.destroy()}); }
   spawnFlot(){
     const sh=S.sea; for(let tries=0;tries<8;tries++){ const a=Math.random()*Math.PI*2, d=240+Math.random()*200, x=sh.x+Math.cos(a)*d, y=sh.y+Math.sin(a)*d;
       if(x<40||y<40||x>SEA_W-40||y>SEA_H-40||ISLES.some(is=>isleDist(is,x,y)<1.35)) continue;
-      const o=this.add.graphics(); o.fillStyle(this.L(0x7a5232)); o.fillEllipse(0,0,9,6); o.lineStyle(1,this.L(0x3a2616)); o.lineBetween(-2,-3,-2,3); o.lineBetween(2,-3,2,3);
-      o.setPosition(x,y); this.flotG.add(o); this.flot.push({x,y,o,ph:Math.random()*6}); return; }
+      this.addFlot(x,y,null); return; }
   }
   update(time,delta){
     if(!this.shown) return; const sh=S.sea; if(!sh.yard) return;
@@ -2564,7 +2778,7 @@ class Sea extends Phaser.Scene{
     const key=Math.round(d.light*16)+'|'+sh.sails; if(key!==this.key){ this.key=key; this.light=d.light; this.isles.forEach(o=>this.drawIsle(o)); this.drawShip(); }
     // steering and wind
     if(this.target!=null){ const df=angDiff(this.target,sh.a), turn=(1.1+0.25*sh.sails)*dt; sh.a+=Math.max(-turn,Math.min(turn,df)); if(Math.abs(df)<0.004) this.target=null; }
-    const w=windAt(t), f=windFactor(angDiff(sh.a,w)), vmax=sh.anchored?0:SAIL_BASE*SAIL_SPEED[sh.sails]*f;
+    const w=windAt(t), f=windFactor(angDiff(sh.a,w)), vmax=sh.anchored||S.siege?0:SAIL_BASE*SAIL_SPEED[sh.sails]*(claimed('skar')?1.2:1)*f;
     this.v+=(vmax-this.v)*Math.min(1,dt*(vmax>this.v?0.7:1.4)); this.speedF=f;
     let nx=sh.x+Math.cos(sh.a)*this.v*dt, ny=sh.y+Math.sin(sh.a)*this.v*dt;
     for(const is of ISLES){ const dd=isleDist(is,nx,ny); if(dd<1.04){ const an=Math.atan2((ny-is.y)/ISQ,nx-is.x), cr=is.r*isleK(is,an)*1.04; nx=is.x+Math.cos(an)*cr; ny=is.y+Math.sin(an)*cr*ISQ; this.v*=0.85; } }
@@ -2575,12 +2789,35 @@ class Sea extends Phaser.Scene{
       if(!st.found&&dd<1+260/is.r) discoverIsle(is);
       const reach=1+(is.kind==='castle'?90:60)/is.r; if(dd<reach&&dd<nd){ nd=dd; near=is; } }
     this.near=near;
+    if(near&&near.kind==='castle'&&claimed(near.id)&&(seaCargo()||sh.cargo.gold)) seaUnload(near.name);
     const inH=Math.hypot(sh.x-HARBOR.x,sh.y-HARBOR.y)<DOCK_R; if(inH&&!this.inHarbor) seaUnload(); this.inHarbor=inH;
     // flotsam
     this.spawnT-=dt; if(this.spawnT<=0){ this.spawnT=4; if(this.flot.length<6) this.spawnFlot(); }
     this.flot=this.flot.filter(fl=>{ fl.o.y=fl.y+Math.sin(time/500+fl.ph)*1.2; fl.o.rotation=Math.sin(time/700+fl.ph)*0.3;
-      const dd=Math.hypot(fl.x-sh.x,fl.y-sh.y); if(dd<18){ const r=pickFlotsam(); this.floatText(fl.x,fl.y-6,r); fl.o.destroy(); return false; }
-      if(dd>700){ fl.o.destroy(); return false; } return true; });
+      const dd=Math.hypot(fl.x-sh.x,fl.y-sh.y); if(dd<18){ let r;
+        if(fl.loot){ let n=0; fl.loot.forEach(([k,v])=>{ n+=toCargo(k,v); }); r=n?'Salvage!':'Hold full'; } else r=pickFlotsam();
+        this.floatText(fl.x,fl.y-6,r); fl.o.destroy(); refresh(); return false; }
+      if(dd>(fl.loot?1400:700)){ fl.o.destroy(); return false; } return true; });
+    // battles: raiders roam, castle fleets guard their harbors
+    this.rl[0]-=dt; this.rl[1]-=dt;
+    if(!this.inHarbor){ this.raidT-=dt; if(this.raidT<=0){ this.raidT=30+Math.random()*25;
+      const cap=1+(ISLES.some(is=>is.kind==='castle'&&isleState(is.id).found)?1:0);
+      if(this.foes.filter(e=>!e.guard).length<cap&&Math.hypot(sh.x-HARBOR.x,sh.y-HARBOR.y)>420) for(let k=0;k<8;k++){ const an=Math.random()*6.28, dd=430+Math.random()*90, x=sh.x+Math.cos(an)*dd, y=sh.y+Math.sin(an)*dd;
+        if(x<60||y<60||x>SEA_W-60||y>SEA_H-60||ISLES.some(is=>isleDist(is,x,y)<1.4)||Math.hypot(x-HARBOR.x,y-HARBOR.y)<500) continue;
+        this.spawnFoe((sh.hull+sh.arms>=2&&Math.random()<0.45)?'galley':'raider',x,y,null); break; } } }
+    for(const [cid,cg] of Object.entries(CASTLE_GUARD)){ const is=ISLE[cid], dd=Math.hypot(sh.x-is.x,sh.y-is.y), mine=this.foes.filter(e=>e.guard===cid);
+      if(dd<620&&!mine.length&&guardsLeft(cid)>0&&!(S.claimed&&S.claimed[cid])){ for(let k=0;k<guardsLeft(cid);k++){ const an=k/guardsLeft(cid)*6.28+0.4; this.spawnFoe(cg.type,is.x+Math.cos(an)*(is.r*1.35+50),is.y+Math.sin(an)*(is.r*1.35+50)*ISQ,cid); } }
+      else if(dd>950&&mine.length) mine.forEach(e=>{ e.dead=true; e.bar.destroy(); e.c.destroy(); this.foes=this.foes.filter(x=>x!==e); }); }
+    this.foes.slice().forEach(e=>this.foeTick(e,dt,time,w));
+    this.boltG.clear();
+    this.bolts=this.bolts.filter(bt=>{ bt.x+=bt.vx*dt; bt.y+=bt.vy*dt; bt.life-=dt;
+      if(bt.from==='me'){ for(const e of this.foes){ if(Math.hypot(bt.x-e.x,bt.y-e.y)<17){ this.puff.setParticleTint(0x8a5a32); this.puff.explode(6,bt.x,bt.y); this.hitFoe(e,bt.dmg); return false; } } }
+      else if(Math.hypot(bt.x-sh.x,bt.y-sh.y)<17){ this.puff.setParticleTint(0x8a5a32); this.puff.explode(6,bt.x,bt.y); this.hitMe(bt.dmg); return false; }
+      if(bt.life<=0||ISLES.some(is=>isleDist(is,bt.x,bt.y)<0.95)){ this.puff.setParticleTint(0xffffff); this.puff.explode(3,bt.x,bt.y); return false; }
+      this.boltG.lineStyle(1.8,bt.fire?0xff9a4a:0x2a1a10); this.boltG.lineBetween(bt.x,bt.y,bt.x-bt.vx*0.035,bt.y-bt.vy*0.035);
+      if(bt.fire){ this.boltG.fillStyle(0xffd27a,0.8); this.boltG.fillCircle(bt.x,bt.y,1.5); }
+      return true; });
+    if(!S.sea.yard) return;
     // camera and hud
     const cx=Math.max(VW/2,Math.min(SEA_W-VW/2,sh.x)), cy=Math.max(VH/2,Math.min(SEA_H-VH/2,sh.y)); this.cameras.main.centerOn(cx,cy);
     const L0=cx-VW/2, T0=cy-VH/2;
@@ -2600,10 +2837,80 @@ class Sea extends Phaser.Scene{
     const m=this.mapG, mw=84, mh=mw*SEA_H/SEA_W, mx=8, my=VH-mh-8, sc=mw/SEA_W; m.clear();
     m.fillStyle(0x0b0d19,0.55); m.fillRect(mx,my,mw,mh); m.lineStyle(1,0xc9bea2,0.5); m.strokeRect(mx,my,mw,mh);
     ISLES.forEach(is=>{ if(is.id!=='home'&&!isleState(is.id).found) return; m.fillStyle(is.kind==='castle'?0xe3ad45:is.id==='home'?0xe8744a:0x7cc97a); m.fillCircle(mx+is.x*sc,my+is.y*sc,Math.max(1.5,is.r*sc*0.8)); });
+    m.fillStyle(0xd9443a); this.foes.forEach(e=>m.fillCircle(mx+e.x*sc,my+e.y*sc,1.2));
     m.fillStyle(0xffffff); m.fillCircle(mx+sh.x*sc,my+sh.y*sc,1.6);
     // treasure marks on charted isles with a cache ready
     this.isles.forEach(o=>{ const is=o.is; o.mark.clear(); if(is.kind!=='cache'||!cacheReady(is.id)) return; const a=Math.sin(time/300)*0.15+0.85;
       o.mark.lineStyle(2.2,0xd9443a,a); o.mark.lineBetween(-5,-5+is.r*0.2,5,5+is.r*0.2); o.mark.lineBetween(5,-5+is.r*0.2,-5,5+is.r*0.2); });
+  }
+}
+
+/* ================= FIEF (the keep view of a claimed castle) ================= */
+const FIEF_LOOK={
+  redtide:{land:0xc9b074,far:0xa8905a,sea:0x2e7ea6,house:0x7a5232,roof:0xb8342a,tree:0x5a8a3a,palm:true},
+  karak:{land:0x7d7a70,far:0x5e5b54,sea:0x2e6f96,house:0x6e6862,roof:0xc9a04a,tree:0x4a6a40},
+  skar:{land:0xe9eef2,far:0xb9c6d2,sea:0x3a6f92,house:0x6b4a30,roof:0xeef3f7,tree:0x3f5e58,pine:true},
+  sylvan:{land:0x4f9a52,far:0x2f7a46,sea:0x2e8aa6,house:0xece6d6,roof:0x3f8f7a,tree:0x236a3e},
+};
+const FIEF_SPOTS=[[105,318],[190,336],[545,336],[628,316],[690,340]];
+class Fief extends Phaser.Scene{
+  constructor(){ super({key:'fief',active:true}); }
+  create(){
+    fief=this; this.key=''; this.floaters=0; this.light=1;
+    this.cameras.main.setZoom(Z).centerOn(W/2,H/2);
+    this.skyG=this.add.graphics();
+    this.stars=this.add.container(0,0); for(let i=0;i<50;i++) this.stars.add(this.add.circle(Math.random()*W,Math.random()*160,0.5+Math.random(),0xeadfc4,0.3+Math.random()*0.6));
+    this.sun=this.add.circle(0,0,20,0xfff4d6); this.moon=this.add.circle(0,0,18,0xf1e6c8);
+    this.landG=this.add.graphics(); this.glowG=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    this.castle=this.add.container(360,300).setScale(2.4); this.castleG=this.add.graphics(); this.castleGlow=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD); this.castle.add([this.castleG,this.castleGlow]);
+    this.houseG=this.add.graphics(); this.houseGlow=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    this.coins=this.add.particles(0,0,'coin',{speed:{min:90,max:210},angle:{min:220,max:320},gravityY:520,lifespan:900,scale:{start:0.55,end:0.25},emitting:false});
+    this.title=this.add.text(12,10,'',{fontFamily:DISPLAY_FONT,fontSize:'20px',color:'#ece2c8',stroke:'#0b0d19',strokeThickness:4,resolution:Z});
+    this.sub=this.add.text(12,34,'',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'13px',color:'#cfc6ad',stroke:'#0b0d19',strokeThickness:3,resolution:Z});
+    this.input.on('pointerdown',p=>tap(p.worldX,p.worldY,false));
+    this.setShown(view==='keep'&&S.realm!=='home');
+  }
+  setShown(v){ this.shown=v; this.scene.setVisible(v); this.input.enabled=v; if(v) this.key=''; }
+  L(c){ return mixColor(mixColor(c,0x0e1120,0.6),c,this.light); }
+  fx(x,y,v,auto){
+    if(this.floaters<36){ this.floaters++;
+      const t=this.add.text(x+(auto?0:Phaser.Math.Between(-10,10)),y-6,'+'+fmt(v),{fontFamily:DISPLAY_FONT,fontSize:auto?'22px':'34px',color:auto?'#e4d4ff':'#f6cf6a',stroke:'#0b0d19',strokeThickness:5,resolution:Z}).setOrigin(0.5);
+      this.tweens.add({targets:t,y:y-70,alpha:0,duration:auto?700:950,ease:'Cubic.easeOut',onComplete:()=>{t.destroy();this.floaters--;}}); }
+    this.coins.explode(auto?2:6,x,y);
+    if(!auto){ this.tweens.killTweensOf(this.castle); this.castle.setScale(2.4); this.tweens.add({targets:this.castle,scaleX:2.45,scaleY:2.37,duration:60,yoyo:true}); }
+  }
+  draw(id,lk,d){
+    const L=c=>this.L(c), R=REALMS[id], rr=seededRand(ISLE[id].seed);
+    const [top,bot]=skyCols(d.light,d.warm); this.skyG.clear(); this.skyG.fillGradientStyle(top,top,bot,bot,1); this.skyG.fillRect(0,0,W,H);
+    const g=this.landG; g.clear(); this.glowG.clear();
+    g.fillStyle(L(lk.sea)); g.fillRect(0,196,W,70); g.lineStyle(1,L(mixColor(lk.sea,0xffffff,0.3)),0.5); for(let i=0;i<14;i++){ const x=rr()*W, y=204+rr()*50; g.lineBetween(x,y,x+10+rr()*14,y); }
+    g.fillStyle(L(lk.far)); g.fillEllipse(90,204,220,26); g.fillEllipse(640,206,200,22);
+    g.fillStyle(L(lk.land)); g.fillPoints([{x:0,y:250},{x:120,y:236},{x:260,y:228},{x:360,y:224},{x:480,y:230},{x:600,y:238},{x:720,y:246},{x:720,y:360},{x:0,y:360}],true);
+    g.fillStyle(L(mixColor(lk.land,0x000000,0.12))); g.fillPoints([{x:0,y:300},{x:200,y:292},{x:360,y:296},{x:520,y:290},{x:720,y:300},{x:720,y:360},{x:0,y:360}],true);
+    for(let i=0;i<26;i++){ const x=rr()*W, y=248+rr()*100; if(Math.abs(x-360)<120&&y<320) continue; if(FIEF_SPOTS.some(([sx,sy])=>Math.abs(sx-x)<34&&Math.abs(sy-y)<30)) continue;
+      g.fillStyle(0x000000,0.15); g.fillEllipse(x+3,y+2,14,5);
+      if(lk.pine){ g.fillStyle(L(lk.tree)); g.fillTriangle(x-7,y,x,y-20,x+7,y); g.fillStyle(L(0xf4f8fb)); g.fillTriangle(x-3,y-11,x,y-20,x+3,y-11); }
+      else if(lk.palm){ g.lineStyle(2,L(0x7a5a3a)); g.lineBetween(x,y,x+3,y-18); g.fillStyle(L(lk.tree)); g.fillEllipse(x-2,y-19,14,4); g.fillEllipse(x+8,y-19,14,4); g.fillEllipse(x+3,y-22,6,10); }
+      else { g.fillStyle(L(lk.tree)); g.fillCircle(x,y-7,7); g.fillStyle(L(mixColor(lk.tree,0xffffff,0.2))); g.fillCircle(x-2,y-9,3); } }
+    this.castleG.clear(); this.castleGlow.clear();
+    Sea.prototype.drawCastle.call({L:c=>this.L(c),light:this.light},this.castleG,this.castleGlow,id);
+    const h=this.houseG, hg=this.houseGlow; h.clear(); hg.clear();
+    R.holdings.forEach((b,i)=>{ const n=owned(b.id); if(!n) return; const [x,y]=FIEF_SPOTS[i], s=1+Math.min(n,100)/100*0.5;
+      h.fillStyle(0x000000,0.2); h.fillEllipse(x+2,y+1,34*s,7);
+      h.fillStyle(L(lk.house)); h.fillRect(x-13*s,y-14*s,26*s,14*s);
+      h.fillStyle(L(lk.roof)); h.fillTriangle(x-16*s,y-14*s,x,y-26*s,x+16*s,y-14*s);
+      h.fillStyle(L(0x2a2430)); h.fillRect(x-3*s,y-8*s,6*s,8*s);
+      h.fillStyle(this.light<0.5?0xf0b44a:L(0x3b3a45)); h.fillRect(x-10*s,y-11*s,4*s,4*s); h.fillRect(x+6*s,y-11*s,4*s,4*s);
+      if(this.light<0.5){ hg.fillStyle(0xf0b44a,0.25*(1-this.light)); hg.fillCircle(x-8*s,y-9*s,7); hg.fillCircle(x+8*s,y-9*s,7); } });
+    this.title.setText(R.name); this.sub.setText(`${ISLE[id].culture} · ${R.holdings.reduce((a,b)=>a+owned(b.id),0)} holdings`);
+  }
+  update(){
+    if(!this.shown) return; const id=S.realm, lk=FIEF_LOOK[id]; if(!lk) return;
+    const d=dayInfo(); this.light=d.light;
+    const key=id+'|'+Math.round(d.light*24)+'|'+Math.round(d.warm*12)+'|'+REALMS[id].holdings.map(b=>Math.min(owned(b.id),100)).join();
+    if(key!==this.key){ this.key=key; this.draw(id,lk,d); }
+    this.stars.setAlpha((1-d.light)*(1-d.warm*0.7)); const x=-30+d.u*780, y=190-150*Math.sin(Math.PI*d.u);
+    this.sun.setVisible(d.day).setPosition(x,y); this.moon.setVisible(!d.day).setPosition(x,y);
   }
 }
 
@@ -2628,11 +2935,12 @@ function start(data){
   setInterval(()=>{ tick(); refresh(); },100);
   setInterval(save,3000);
   const boot=()=>{ if(game) return; game=new Phaser.Game({type:Phaser.AUTO,parent:'realm',width:W*Z,height:H*Z,backgroundColor:'#0b0d1a',
-    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},banner:false,scene:[Realm,Journey,Sea]}); };
+    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},banner:false,scene:[Realm,Journey,Sea,Fief]}); };
   const fontReady=document.fonts?document.fonts.load(`34px ${DISPLAY_FONT}`):Promise.resolve();
   Promise.race([fontReady,new Promise(r=>setTimeout(r,1500))]).then(boot,boot);
 }
 start({});
+if(/[?&]debug/.test(location.search)) window.__ek={S:()=>S,sea:()=>sea};   // test hook
 })();
 </script>
 

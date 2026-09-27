@@ -22,6 +22,8 @@ Undiscovered entries are blacked-out silhouettes labelled **???**. Tapping one s
 | Spells | 5 | You learn the spell |
 | Crystal Mine | 4 | The gallery is dug |
 | Seas & isles | 10 | You sail within sight of the island or castle |
+| Your realms | 4 | You claim the castle |
+| Ships of the sea | 5 | You sink or board that kind of ship |
 
 ## Achievements
 
@@ -38,6 +40,7 @@ Medals in five tiers: bronze, silver, gold, frost and mythic. Locked medals are 
 | Arthrex's errands completed | 1 / 10 / 50 / 150 / 500 |
 | Spells cast (grimoire spells) | 10 / 100 / 1K / 5K / 25K |
 | Treasure hunting (island treasures dug) | 1 / 10 / 50 / 250 / 1,000 |
+| Sea battles (ships sunk or boarded) | 1 / 10 / 50 / 250 / 1,000 |
 | Dynasties (reach life N) | 2 / 5 / 10 / 25 / 100 |
 
 Achievements are checked about once a second.

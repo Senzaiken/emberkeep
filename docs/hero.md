@@ -6,7 +6,7 @@ The hero is the one who leaves the keep: expeditions, road events and fights. Th
 
 | | |
 |---|---|
-| Max health | 100 + 25 × armor tier (+ relic bonuses) |
+| Max health | 100 + 25 × armor tier (+ relic bonuses, +25 with Skarholm claimed) |
 | Setting out | every expedition **costs health** up front: Whisperwood 10, Greystone Quarry 15, Copperfen Hills 22, Ironroot Deep 30, Shattered Caldera 45. The hero needs more health than the cost to depart. |
 | Resting at the keep | heals from empty to full in 4 minutes (8 while **wounded**), only while not on an expedition, including while the game is closed |
 
@@ -17,6 +17,7 @@ Health is shown in the header, and as a small bar over the hero in the Journey v
 - **Setting out**: the region's travel cost, paid when the hero departs.
 
 - **Foes**: each foe on the road hits once when the hero reaches it, for the region's damage × (1 + 0.15 × (depth − 1)) × `max(0.35, 1 − 0.12 × armor tier − 0.06 × weapon tier)`. Tapping the foe first halves the hit. Foes also wait on the road home (see [Expeditions](expeditions.md#the-road-home)).
+- **At sea**: leading a boarding party costs 8 + 6 × the ship's tier, and storming a castle costs a share of max health (see [The Sea](sea.md#sieges)).
 - **Road events**: losing the fight at the Goblin Toll Bridge costs 20% of max health, and an ambush at the Abandoned Camp costs 15%.
 
 The Explore tab shows the approximate damage per hit at depth 1 for each region with your current gear. The journey bar shows it for the current depth.

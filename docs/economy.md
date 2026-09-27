@@ -31,6 +31,8 @@ A holding is revealed once the previous one is owned, or once the reign has earn
 
 Castle windows light up as you own more holdings: one more window per 4 holdings.
 
+Claimed castles add five holdings each, in their own realm. See [The Sea](sea.md#claimed-castles-realms). Holding achievements count only these eight home holdings.
+
 ## Upgrades
 
 ### Holding techniques

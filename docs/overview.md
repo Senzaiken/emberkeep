@@ -13,7 +13,7 @@ Tone: medieval fantasy, low-tech. No modern or futuristic technology.
 3. **Forge** better equipment from those materials. Better gear means stronger taps, safer and faster expeditions, and better mining.
 4. Dig the **Crystal Mine** for Ember, Frost, Verdant and Storm crystals.
 5. **Learn spells** one at a time, then cast them using crystals as reagents.
-6. Later, open the **Harbor**: build a ship, sail the sea, dig up island treasure, and (soon) claim foreign castles. See [The Sea](sea.md).
+6. Later, open the **Harbor**: build a ship, sail the sea, dig up island treasure, fight broadside battles, and claim four foreign castles as realms of your own. See [The Sea](sea.md).
 7. **Ascend** to found a new dynasty, trading your reign's progress for permanent Renown.
 
 The systems feed each other. Expeditions need armor, armor needs ore, ore needs expeditions and a good pickaxe, and spells need crystals from the mine, which is dug with gold, stone and ore.
@@ -25,7 +25,7 @@ From top to bottom:
 1. **Top bar**, fixed in place (only the area below it scrolls, which also keeps iOS from blurring it under the clock): app icon, gold, gold/sec · gold/tap on the left; the sun or moon with "dusk in …" / "dawn in …" on the right.
 2. **Hero card**: the health bar (numbers inside), what the hero is doing with a countdown on the right (trip return or time to full health), a thin trip-progress line, an **active spells** row (one fixed-height line of chips with icon, name and seconds left; it scrolls sideways if many are active, and reads "No spells active" otherwise, so the layout never jumps), and the **spellbook** button on the right.
 3. **Satchel strip**: one line of icons and counts for every resource you've **discovered**. A resource joins the first time you hold any of it, and stays (dimmed at 0) after that. It scrolls sideways if it gets long, so it never grows taller. Tap it for the **Satchel** sheet, with discovered materials and crystals grouped and named. A group only appears once its first resource is found, so a new game starts nearly empty and the satchel grows as you explore.
-4. The **realm canvas** (Keep / Journey), then a row of **starred spells** (quick-cast icons) right below it. It follows the tabs: opening **Explore** during a trip shows the Journey, and every other tab switches back to the Keep so you can tap for gold. The Keep/Journey switch still flips it by hand. Once a shipyard exists, a **Sea** button joins Keep and Journey, and the Harbor tab shows the sea. Below it are the chronicle line and the **tabs** (Build, Upgrades, Explore, Forge, Magic, Legacy, plus Harbor once unlocked, which makes the grid four columns), which pin just under the top bar when you scroll.
+4. The **realm canvas** (Keep / Journey), then a row of **starred spells** (quick-cast icons) right below it. It follows the tabs: opening **Explore** during a trip shows the Journey, and every other tab switches back to the Keep so you can tap for gold. The Keep/Journey switch still flips it by hand. Once a shipyard exists, a **Sea** button joins Keep and Journey, and the Harbor tab shows the sea. Below it are the chronicle line and the **tabs** (Build · Upgrades · Magic · Explore / Forge · Legacy, and with the Harbor unlocked Build · Upgrades · Magic · Explore / Forge · Harbor · Legacy in four columns), which pin just under the top bar when you scroll.
 
 Every resource has its own icon (coin, log, rock, ingots for copper/tin/iron, cut crystals in their element colour), used everywhere costs and loot appear. New resource types get an icon, a row in the satchel sheet, and appear in the strip automatically.
 
@@ -58,5 +58,6 @@ Development happens from a phone. Uri describes a change, Claude edits the code,
 | `UI` | DOM rows, `refresh()`, tabs, toasts |
 | `PHASER REALM` | Day/night cycle, the `Realm` scene (the keep), scenery drawing |
 | `JOURNEY` | The `Journey` scene: side-scrolling expedition view, hero sprite, beats, tap to help |
-| `SEA` | The `Sea` scene: top-down sailing, wind, islands and castles, flotsam, chart and wind rose |
+| `SEA` | The `Sea` scene: top-down sailing, wind, islands and castles, flotsam, broadside battles, chart and wind rose |
+| `FIEF` | The `Fief` scene: the Keep view of a claimed castle's realm |
 | `BOOT` | Start-up, game loop timers |

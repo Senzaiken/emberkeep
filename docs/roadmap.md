@@ -2,10 +2,11 @@
 
 ## The sea
 
-Phase 1 (shipyard, sailing, treasure islands) is built. Next:
+All three phases are built: sailing and treasure, broadside battles, sieges and claimed realms. Ideas for later:
 
-- [ ] **Phase 2: broadside battles.** Hull upgrades, raiders and castle fleets, fought live by maneuvering so your side faces the enemy. Wind and reload timing matter. Sinking loses the hold.
-- [ ] **Phase 3: claiming castles.** Break a castle's fleet, then besiege it (the hero leads the assault). Each claimed castle is a full second realm you can switch to, with its own look, holdings and a unique perk: Karak Brine (dwarven), Skarholm (frost jarl), Sylvanreach (elven), Redtide Hold (corsair).
+- [ ] Sea beasts (a serpent at Serpent's Tooth), storms, and trade runs between your ports.
+- [ ] Realm-specific events, and each castle's own story character.
+- [ ] Holding achievements for the claimed realms.
 
 ## Next up
 
