@@ -49,7 +49,7 @@ The court sorcerer explains crystals after your first expedition and gives you 1
 
 ## Spells
 
-Spells must be **learned individually** (a one-time cost in gold and crystals). After that, each cast costs crystal reagents. Learned spells are **kept through ascension**.
+Spells must be **learned individually** (a one-time cost in gold and crystals). After that, each cast costs crystal reagents. Learned spells **reset on ascension** and must be learned again.
 
 | Spell | Learn cost | Reagents per cast | Effect |
 |---|---|---|---|

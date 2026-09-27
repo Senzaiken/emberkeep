@@ -353,7 +353,7 @@
 
   <section id="p-asc" class="panel asc" hidden>
     <div class="panel-head"><span class="label">Dynasty</span></div>
-    <p>Abdicate and found a new dynasty. Gold, buildings, upgrades, materials, crystals and the crystal mine are lost. Your hero keeps their equipment and every spell they have learned. You earn Renown from the gold this reign gathered, and each point adds 5% to all gold, forever.</p>
+    <p>Abdicate and found a new dynasty. Everything starts over: gold, holdings, upgrades, your hero\u2019s gear and spells, relics, materials, crystals and the mine. What you keep is <b>Renown</b>, earned from the gold this reign gathered. Each point adds 5% to all gold, forever, so every new dynasty rises faster.</p>
     <div class="stats">
       <div class="label">Renown<span id="renown">0</span></div>
       <div class="label">Bonus<span id="renownBonus">+0%</span></div>
@@ -576,7 +576,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927203023';
+const BUILD='20260927203241';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1059,7 +1059,9 @@ function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto){ S.taps++; S.stat
 function pendingRenown(){ return Math.floor(Math.sqrt(S.total/1e6)); }
 function ascend(){
   const p=pendingRenown(); if(p<1) return;
-  const keep={renown:S.renown+p,life:S.life,taps:S.taps,known:S.known.slice(),gear:{...S.gear},forging:S.forging,relics:{...S.relics},story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats))};
+  // Full reset: only Renown, lifetime stats, story progress and UI preferences carry over.
+  const keep={renown:S.renown+p,life:S.life,taps:S.taps,story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats)),
+    seen:{...S.seen},favs:S.favs.slice(),tut:S.tut,tutV:S.tutV};
   S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set();
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }

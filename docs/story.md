@@ -95,4 +95,4 @@ Once the errand is done, the Magic tab's badge and the **!** over Arthrex take o
 
 ## What carries through ascension
 
-Having met Arthrex, and the lifetime counters errands use (trips, foes, tap gold, relics), are kept. Any open errand is cleared.
+Having met Arthrex and Brom (and having finished the tutorial) is kept, as are the lifetime counters errands use (trips, foes, tap gold, relics). Any open errand is cleared. Brom's first gift and Arthrex's 10 crystals are not given again.

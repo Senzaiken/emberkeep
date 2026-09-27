@@ -62,5 +62,6 @@ These unlock in order, each one once the previous is bought and the reign has ea
 
 - Renown earned on ascending: `floor(sqrt(reignGold / 1,000,000))`, so the first point needs 1M gold in one reign.
 - Each point of Renown adds **+5%** to all gold (taps and holdings).
-- **Ascending resets:** gold, holdings, upgrades, materials, crystals, the Crystal Mine, any running expedition and active spells.
-- **Ascending keeps:** Renown, hero equipment, learned spells, relics, lifetime stats. The hero's health is restored to full.
+- **Ascending is a full reset:** gold, holdings, upgrades, hero equipment (and anything Brom is forging), learned spells, relics, materials, crystals, the Crystal Mine, any running expedition, active spells and Arthrex's current errand.
+- **Ascending keeps:** Renown (and its gold bonus), lifetime stats, story progress (the tutorial isn't replayed, and Arthrex and Brom remember you), discovered resources, and starred spells (they show again once relearned). The hero starts at full health.
+- Planned: Renown becomes spendable on a Renown tech tree (see [Roadmap](roadmap.md)).

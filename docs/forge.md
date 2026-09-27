@@ -2,7 +2,7 @@
 
 The forge is run by **Brom, Master Smith**, who introduces it during the tutorial (see [Story](story.md#brom-master-smith)).
 
-The hero has three equipment slots. Each slot upgrades one tier at a time using gold plus materials from [Expeditions](expeditions.md). Equipment is **kept through ascension**.
+The hero has three equipment slots. Each slot upgrades one tier at a time using gold plus materials from [Expeditions](expeditions.md). Equipment **resets on ascension**.
 
 Material progression: **wood and stone → copper → bronze (copper + tin) → iron**.
 
@@ -17,7 +17,7 @@ Brom works on **one piece at a time**. You pay when you start, and the piece is 
 | 3 | 3m |
 | 4 | 8m |
 
-**Stoke the forge** (1 Ember crystal) halves the time left, and you can use it repeatedly. It's on the anvil card at the top of the Forge tab and in the spellbook. A ⚒ countdown shows near the keep while he works. Anything in progress is kept through ascension, like the gear itself.
+**Stoke the forge** (1 Ember crystal) halves the time left, and you can use it repeatedly. It's on the anvil card at the top of the Forge tab and in the spellbook. A ⚒ countdown shows near the keep while he works. Anything in progress is lost on ascension, along with the gear.
 
 ## Weapon
 

@@ -8,6 +8,8 @@
 
 ## Later
 
+- [ ] **Renown tech tree.** Spend Renown on permanent perks (for example a starting gold pouch, faster forging, extra relic chance, a head start on the mine), on top of the passive +5% gold per point.
+
 - [ ] Premium currency (for example Aether Shards) with an instant full heal as the first use. Hero health is already built to support it.
 - [ ] More road events, and region-specific ones for every region.
 - [ ] Boss beats at the end of the dangerous regions.

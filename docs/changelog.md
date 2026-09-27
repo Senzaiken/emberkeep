@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Ascension is a full reset.** Gear, learned spells and relics no longer carry over. Only Renown (+5% gold per point), lifetime stats, story progress and UI preferences persist. A Renown tech tree is planned.
 - **Starred spells moved below the scene.** They're now in their own row under the castle scene, bigger and labelled, so tapping the keep can't cast them by accident.
 - **Starred spells.** Star (☆) any spellbook entry to pin it as a round icon on the castle scene. Icons are colored when castable, greyed when you lack crystals (tapping explains why), and show a draining ring with seconds left while active. You can star several. The errand pill moved to the top-left of the scene.
 - **Canvas follows the tabs.** Switching to Build (or any tab other than Explore) returns the canvas to the keep for tapping. Opening Explore during a trip shows the journey.

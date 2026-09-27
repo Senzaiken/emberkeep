@@ -12,7 +12,7 @@ Relics are rare finds from expeditions. Each one gives a permanent passive bonus
 
 Finding a relic you already own raises its level, up to **level 5**. The bonus is multiplied by the level. Once all of a region's relics are level 5, that region stops dropping them.
 
-Relics are **kept through ascension**, just like equipment and learned spells.
+Relics **reset on ascension**, like everything except Renown.
 
 ## The collection
 
