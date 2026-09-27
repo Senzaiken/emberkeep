@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Errand hints.** While an errand is active, a violet ✦ marks what advances it: the Explore tab, tags with progress on the right region rows, or a pill on the castle for tap-gold errands.
 - **Errand timer.** A countdown to Arthrex's next errand floats over him in the keep view, and appears in the spire section with a progress bar.
 - **Tutorial polish.** The tutorial auto-completes when the first expedition returns, before Arthrex speaks. Fixed the tutorial, road-event and update cards running edge to edge on phones: all overlay cards now keep a 20px margin.
 - **Guided tutorial.** A spotlight walkthrough for new games: tap the keep, open Explore, send the hero to Whisperwood, learn to tap ahead in the Journey view. The rest of the screen is shadowed and blocked, and there's a **Skip tutorial** button on every step. See [Story and Arthrex](story.md#guided-tutorial).

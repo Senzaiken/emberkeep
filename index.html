@@ -180,6 +180,10 @@
   .dlg-name{font-family:var(--display);font-size:21px;line-height:1.15;}
   .dlg-text{margin:0;font-size:17px;line-height:1.5;max-width:60ch;}
   .dialog .act{align-self:flex-end;min-width:140px;}
+  /* errand hints: point at whatever moves Arthrex's errand forward */
+  .qtag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--storm);border:1px solid rgba(199,168,240,.5);border-radius:999px;padding:1px 7px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .tabs button.qhint::after{content:'\2726';color:var(--storm);margin-left:5px;text-shadow:0 0 6px var(--storm);}
+  .qhint-realm{position:absolute;left:8px;bottom:8px;z-index:1;font-size:12px;color:#efe6ff;background:rgba(40,28,64,.75);border:1px solid rgba(199,168,240,.6);border-radius:999px;padding:4px 10px;pointer-events:none;font-variant-numeric:tabular-nums;}
   /* Arthrex's spire */
   #spire{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 150px);}
   .spire{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;}
@@ -247,6 +251,7 @@
 
   <div class="realm-wrap">
     <div id="realm" role="button" aria-label="Your keep. Tap to collect gold."></div>
+    <div class="qhint-realm" id="qRealm" hidden></div>
     <div class="view-toggle" id="viewToggle">
       <button id="vKeep" data-view="keep" aria-pressed="true">Keep</button>
       <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
@@ -508,7 +513,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927190217';
+const BUILD='20260927190354';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -918,7 +923,7 @@ function buildRows(){
   lList.innerHTML=LOCS.map(l=>`
     <div class="row" id="l-${l.id}">
       <div>
-        <div class="r-head"><span class="r-name">${l.name}</span><span class="r-tag" id="lt-${l.id}"></span></div>
+        <div class="r-head"><span class="r-name">${l.name}</span><span class="r-tag" id="lt-${l.id}"></span><span class="qtag" id="lqt-${l.id}" hidden></span></div>
         <div class="r-desc">${l.desc}</div>
         <div class="r-meta" id="lf-${l.id}"></div>
         <div id="ll-${l.id}"></div>
@@ -1075,12 +1080,20 @@ function refresh(){
 
   renderUpgrades();
 
+  // errand hints
+  const aq=S.quest&&S.quest.state==='active'&&!questDone(S.quest)?S.quest:null, aqp=aq?questProgress(aq):0;
+  $('tab-explore').classList.toggle('qhint',!!aq&&aq.type!=='tapgold');
+  const qr=$('qRealm'), showRealm=!!aq&&aq.type==='tapgold'&&view==='keep';
+  qr.hidden=!showRealm; if(showRealm) qr.textContent=`\u2726 Errand \u00B7 tap the keep \u00B7 ${fmt(aqp)} / ${fmt(aq.need)}`;
   // expeditions
   $('expNote').textContent=S.gear.armor?`Trips ${Math.round((1-expDuration({dur:1}))*100)}% faster`:'';
   LOCS.forEach(l=>{
     const locked=S.gear.armor<l.danger, busy=!!S.exp, here=S.exp&&S.exp.id===l.id;
     $('l-'+l.id).classList.toggle('locked',locked);
     $('lt-'+l.id).textContent=l.danger?`Danger ${l.danger}`:'Safe';
+    const helps=!!aq&&!locked&&(aq.type==='trip'?aq.region===l.id:aq.type==='gather'?!!l.loot[aq.mat]:aq.type==='foes'||aq.type==='relic');
+    const qt=$('lqt-'+l.id); qt.hidden=!helps;
+    if(helps) qt.textContent=aq.type==='gather'?`\u2726 Errand \u00B7 ${NAMES[aq.mat]} ${fmt(S.mat[aq.mat])}/${aq.need}`:`\u2726 Errand \u00B7 ${fmt(aqp)}/${fmt(aq.need)}`;
     $('lf-'+l.id).textContent=`Costs ${tripCost(l)} health · foes: ${l.foes.map(f=>FOE_NAMES[f]).join(', ')}, about ${Math.round(foeDamage(l))} a hit`;
     const tooHurt=S.hp<=tripCost(l);
     const loot=Object.entries(l.loot).map(([k,r])=>{ const [a,b]=lootRange(l,k,r); return `<span class="res" style="--c:var(--${k})"><i></i>${a}–${b} ${NAMES[k]}</span>`; }).join('')
