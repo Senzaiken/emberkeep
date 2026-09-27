@@ -223,6 +223,13 @@
   .qtag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--storm);border:1px solid rgba(199,168,240,.5);border-radius:999px;padding:1px 7px;white-space:nowrap;font-variant-numeric:tabular-nums;}
   .tabs button.qhint::after{content:'\2726';color:var(--storm);margin-left:5px;text-shadow:0 0 6px var(--storm);}
   .qhint-realm{position:absolute;left:8px;top:8px;z-index:1;font-size:12px;color:#efe6ff;background:rgba(40,28,64,.75);border:1px solid rgba(199,168,240,.6);border-radius:999px;padding:4px 10px;pointer-events:none;font-variant-numeric:tabular-nums;}
+  /* journey bar: shown under the scene while watching the hero's journey */
+  .journey-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+  .jb-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .jb-info .label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .jb-info .num{font-family:var(--display);font-size:18px;color:var(--gold-hi);white-space:nowrap;}
+  .journey-bar .act{min-width:0;flex:none;background:var(--panel-2);border-color:var(--storm);color:var(--ink);box-shadow:0 0 10px rgba(199,168,240,.25);}
+  .journey-bar .act:disabled{border-color:var(--line);box-shadow:none;color:var(--muted);}
   /* quick-cast bar: starred spells over the bottom-right of the scene */
   .quickbar{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;margin-top:-2px;}
   .quickbar::-webkit-scrollbar{display:none;}
@@ -322,6 +329,10 @@
       <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
     </div>
   </div>
+  <div class="journey-bar" id="journeyBar" hidden>
+    <div class="jb-info"><span class="label" id="jbWhere">On the road</span><span class="num" id="jbLeft"></span></div>
+    <button class="act" id="jbHaste"><small>Hasten ½</small><span id="jbHasteTxt"></span></button>
+  </div>
   <div class="quickbar" id="quickbar" aria-label="Starred spells"></div>
   <p id="chron" class="chron"></p>
 
@@ -359,7 +370,7 @@
   </section>
 
   <section id="p-forge" class="panel" hidden>
-    <div class="panel-head"><span class="label">Brom\u2019s anvil</span><span class="label num" id="forgeNote"></span></div>
+    <div class="panel-head"><span class="label">Brom’s anvil</span><span class="label num" id="forgeNote"></span></div>
     <div class="spire" id="forgeBox"></div>
     <div class="panel-head sub"><span class="label">Equipped</span></div>
     <div class="gear" id="gearNow"></div>
@@ -378,7 +389,7 @@
 
   <section id="p-asc" class="panel asc" hidden>
     <div class="panel-head"><span class="label">Dynasty</span><span class="label num" id="lifeNo"></span></div>
-    <p>Abdicate and found a new dynasty. Everything starts over: gold, holdings, upgrades, your hero\u2019s gear and spells, relics, materials, crystals and the mine. What you keep is <b>Renown</b>, earned from the gold this reign gathered. Each point adds 5% to all gold, forever, so every new dynasty rises faster.</p>
+    <p>Abdicate and found a new dynasty. Everything starts over: gold, holdings, upgrades, your hero’s gear and spells, relics, materials, crystals and the mine. What you keep is <b>Renown</b>, earned from the gold this reign gathered. Each point adds 5% to all gold, forever, so every new dynasty rises faster.</p>
     <div class="stats">
       <div class="label">Renown<span id="renown">0</span></div>
       <div class="label">Bonus<span id="renownBonus">+0%</span></div>
@@ -389,7 +400,7 @@
       <button class="act" id="ascendBtn"><small>Ascend</small><span id="ascendTxt">Found a new dynasty</span></button>
       <span class="r-desc" id="ascendHint"></span>
     </div>
-    <div class="panel-head sub"><span class="label">Adventurer\u2019s Log</span></div>
+    <div class="panel-head sub"><span class="label">Adventurer’s Log</span></div>
     <p class="r-desc" style="margin:0 0 10px">Everything you have ever found or achieved, across every life. Tap an entry to see when you first found it.</p>
     <div class="r-meta num" id="logCount" style="margin-bottom:10px"></div>
     <div id="logBody"></div>
@@ -616,7 +627,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927203938';
+const BUILD='20260927204910';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -999,12 +1010,6 @@ function tutRender(){
 const QUICK_ARTS=[
   {id:'mend',name:'Mend',text:'Heal 50% of your hero’s health, even on the road.',cost:()=>MEND_COST,can:()=>canMend(),run:()=>mend(),
    why:()=>S.hp>=maxHP()?'Already at full health':''},
-  {id:'stoke',name:'Stoke the Forge',text:'Halve the time left on whatever Brom is forging. Use it as often as you like.',cost:()=>STOKE_COST,can:()=>canStoke(),run:()=>stoke(),
-   why:()=>!S.forging?'Only while Brom is forging':''},
-  {id:'split',name:'Split the Rock',text:'Halve the time left on the gallery your miners are digging. Use it as often as you like.',cost:()=>SPLIT_COST,can:()=>canSplit(),run:()=>splitRock(),
-   why:()=>!S.digging?'Only while the miners are digging':''},
-  {id:'hasten',name:'Hasten',text:'Halve the rest of the current expedition. Once per trip.',cost:()=>HASTE_COST,can:()=>canHasten(),run:()=>hasten(),
-   why:()=>!S.exp?'Only while your hero is away':S.exp.hasted?'Already hastened this trip':''},
 ];
 // Spell icons: a white glyph on an element-coloured orb
 const SPELL_LOOK={
@@ -1397,8 +1402,12 @@ function refresh(){
   else { $('expLine').textContent=S.hp<mhp?'Resting at the keep':'Rested and ready'; $('expTime').textContent=S.hp<mhp?`healed in ${clock((mhp-S.hp)/(mhp/HP_REGEN_FULL)*1000)}`:''; $('expFill').parentNode.hidden=true; }
   setHTML($('hpTxt'),`<span>HEALTH</span><span>${Math.ceil(S.hp)} / ${mhp}</span>`);
   $('hpFill').style.width=(100*S.hp/mhp)+'%'; $('hpFill').classList.toggle('low',S.hp<=LOCS[0].cost);
-  $('bookDot').hidden=!(canMend()&&S.hp<maxHP()*0.5||canHasten());
+  $('bookDot').hidden=!(canMend()&&S.hp<maxHP()*0.5);
   renderBook(); renderQuickbar();
+  { const jb=$('journeyBar'), on=view==='journey'&&!!S.exp; jb.hidden=!on;
+    if(on){ const l=LOC[S.exp.id]; $('jbWhere').textContent=`On the road \u00B7 ${l.name}`; $('jbLeft').textContent=`Back in ${clock(Math.max(0,S.exp.end-now()))}`;
+      $('jbHaste').disabled=!canHasten();
+      setHTML($('jbHasteTxt'), S.exp.hasted?'Hastened':`${ICON('storm')} 1 Storm`); } }
   if(now()-achT>1000){ achT=now(); checkAchievements(); }
   badge('logBadge',$('p-asc').hidden?(S.logNew||0):0); if(!$('p-asc').hidden) S.logNew=0;
   $('lifeNo').textContent=`Life ${S.dynasty||1}`;
@@ -1557,6 +1566,7 @@ function wireUI(){
   $('buildTxt').textContent=`Build ${BUILD}`;
   $('updateBtn').addEventListener('click',()=>reloadFresh(newBuild));
   $('dlgNext').addEventListener('click',dialogNext);
+  $('jbHaste').addEventListener('click',hasten);
   $('logBody').addEventListener('click',e=>{ const b=e.target.closest('[data-log]'); if(b) openLogEntry(b.dataset.log); });
   $('leClose').addEventListener('click',()=>$('logSheet').hidden=true);
   $('logSheet').addEventListener('click',e=>{ if(e.target.id==='logSheet') $('logSheet').hidden=true; });

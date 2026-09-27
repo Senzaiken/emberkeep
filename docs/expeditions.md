@@ -75,7 +75,7 @@ Gold costs and rewards scale with your gold/sec and tap value, so they stay mean
 | Weapon tier | Wood yield × (1 + 0.25 × tier). Better odds in fights. |
 | Pickaxe tier | Stone and ore yield ×1, 1.25, 1.5, 2, 2.5 |
 | Relics | Resource yields, trip speed, crystal drops, relic chance (see [Relics](relics.md)) |
-| Hasten (1 Storm crystal, once per trip) | Halves the remaining trip time |
+| Hasten (1 Storm crystal, once per trip, on the journey bar) | Halves the remaining trip time |
 | Quickened Road (spell) | Ends the trip at once: road events take their default, remaining beats are collected, and foes on the rest of the road do no harm |
 
 ## End of a trip

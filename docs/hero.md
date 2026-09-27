@@ -37,7 +37,7 @@ Health is the brake on endless exploring: trips cost health, resting takes time,
 
 ## Crystal quick actions
 
-These live in the **spellbook**: the book button to the right of the health bar opens a bottom sheet (see [Magic](magic.md#spellbook)).
+**Mend** lives in the **spellbook** (the book button to the right of the health bar). **Hasten** is on the **journey bar**, which appears under the scene while you watch the Journey view, along with the time until the hero returns.
 
 | Button | Cost | Effect |
 |---|---|---|

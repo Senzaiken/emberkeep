@@ -41,7 +41,7 @@ Each gallery is a construction job. Pay the cost, and the miners dig for a while
 | Storm Vault | 5m |
 | The Heartvein | 12m |
 
-**Split the rock** (1 Frost crystal) halves the time left, and you can use it repeatedly. It's on the mine row and in the spellbook. A ⛏ countdown floats over the mine site in the keep view.
+**Split the rock** (1 Frost crystal) halves the time left, and you can use it repeatedly. It's on the mine row. A ⛏ countdown floats over the mine site in the keep view.
 
 ## Arthrex
 
@@ -65,10 +65,12 @@ A timed spell can't be recast while it's active. Quickened Road can only be cast
 
 The **book button** to the right of the hero's health bar opens the spellbook, a bottom sheet with everything you can cast right now:
 
-- **Mend** (1 Verdant: heal 50%), **Hasten** (1 Storm: halve the rest of the trip, once per trip), **Stoke the Forge** (1 Ember: halve Brom's time left) and **Split the Rock** (1 Frost: halve the mine dig time). These are always there and don't need learning. Each crystal element now has an everyday use. See [Hero](hero.md#crystal-quick-actions).
+- **Mend** (1 Verdant: heal 50%). It's always there and doesn't need learning.
+
+The other crystal actions live where they're used, not in the spellbook: **Hasten** (1 Storm) is on the journey bar under the Journey view, **Stoke the Forge** (1 Ember) is on Brom's anvil card, and **Split the Rock** (1 Frost) is on the mine row. Each crystal element has an everyday use. See [Hero](hero.md#crystal-quick-actions).
 - Every spell you've **learned**, with its reagent cost and a Cast button.
 
-Each entry shows why it can't be cast right now, if it can't (for example "Only while your hero is away", or the time left on an active spell). Your crystal counts are shown at the top. A violet dot on the book means something useful is ready: Mend when the hero is below half health, or Hasten during a trip. **Open grimoire** jumps to the Magic tab, where new spells are learned.
+Each entry shows why it can't be cast right now, if it can't (for example "Only while your hero is away", or the time left on an active spell). Your crystal counts are shown at the top. A violet dot on the book means Mend is worth casting: the hero is below half health and you have a Verdant crystal. **Open grimoire** jumps to the Magic tab, where new spells are learned.
 
 ### Starred spells (quick-cast bar)
 
@@ -77,7 +79,7 @@ Tap the **☆** beside any spellbook entry to star it (★). Starred spells appe
 | Icon state | Meaning |
 |---|---|
 | Colored orb | Ready: tap to cast |
-| Greyed out | Can't cast right now: not enough crystals, or not applicable (for example Hasten while the hero is home). Tapping explains why. |
+| Greyed out | Can't cast right now: not enough crystals, or not applicable (for example Quickened Road while the hero is home). Tapping explains why. |
 | Colored, with a dark ring draining and seconds shown | Already active; the ring shows the time left |
 
-Each spell has its own glyph in its element colour: Mend (cross, Verdant), Hasten (bolt, Storm), Stoke the Forge (flame, Ember), Split the Rock (snowflake, Frost), Midas Touch (crown, gold), Summon Familiar (swirl, Storm), Quickened Road (fast-forward, Frost), Bountiful Harvest (wheat, Verdant), Dragon's Tithe (gem, Ember).
+Each spell has its own glyph in its element colour: Mend (cross, Verdant), Midas Touch (crown, gold), Summon Familiar (swirl, Storm), Quickened Road (fast-forward, Frost), Bountiful Harvest (wheat, Verdant), Dragon's Tithe (gem, Ember).

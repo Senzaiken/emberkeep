@@ -17,7 +17,7 @@ Brom works on **one piece at a time**. You pay when you start, and the piece is 
 | 3 | 3m |
 | 4 | 8m |
 
-**Stoke the forge** (1 Ember crystal) halves the time left, and you can use it repeatedly. It's on the anvil card at the top of the Forge tab and in the spellbook. A ⚒ countdown shows near the keep while he works. Anything in progress is lost on ascension, along with the gear.
+**Stoke the forge** (1 Ember crystal) halves the time left, and you can use it repeatedly. It's on the anvil card at the top of the Forge tab. A ⚒ countdown shows near the keep while he works. Anything in progress is lost on ascension, along with the gear.
 
 ## Weapon
 
