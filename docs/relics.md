@@ -4,7 +4,7 @@ Relics are rare finds from expeditions. Each one gives a permanent passive bonus
 
 ## Finding relics
 
-- **End of a trip**: a chance based on the region (6% in Whisperwood up to 15% in Shattered Caldera), multiplied by any relic-chance bonus. There's no roll if the hero was beaten back.
+- **End of each depth**: every depth the hero completes rolls 60% of the region's chance (6% in Whisperwood up to 15% in Shattered Caldera), +10% per depth, multiplied by any relic-chance bonus. Relics are kept at once, even if the hero is later beaten back.
 - **Road events**: searching the Abandoned Camp (30%), and tending the Wounded Traveller (40%).
 - The relic found is random from that region's set.
 

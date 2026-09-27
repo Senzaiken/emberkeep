@@ -11,7 +11,7 @@ Magic in Emberkeep is powered by **elemental crystals**. There is no mana: every
 | Verdant | Earth / life | Green |
 | Storm | Air / lightning | Violet |
 
-Sources: the Crystal Mine (steady, over time) and the deeper [Expeditions](expeditions.md) (random element).
+Sources: the Crystal Mine (steady, over time) and the deeper [Expeditions](expeditions.md) (random element). Verdant crystals can also be packed as **draughts** that the hero drinks on the road.
 
 ## Crystal Mine
 
@@ -55,7 +55,7 @@ Spells must be **learned individually** (a one-time cost in gold and crystals). 
 |---|---|---|---|
 | Midas Touch | 300 gold, 3 Ember | 1 Ember | Taps earn ×10 gold for 20s |
 | Summon Familiar | 2,500 gold, 3 Storm | 1 Storm | A wisp taps the keep 8×/sec for 20s |
-| Quickened Road | 4,000 gold, 3 Frost, 2 Storm | 1 Frost, 1 Storm | Hero returns at once: road events take their default, the rest of the road's loot is collected, and remaining foes do no harm |
+| Quickened Road | 4,000 gold, 3 Frost, 2 Storm | 1 Frost, 1 Storm | Hero is home at once with the whole carried haul, skipping the walk home and its foes. Waiting road events take their default. |
 | Bountiful Harvest | 8,000 gold, 3 Verdant | 1 Verdant, 1 Frost | All holdings produce ×3 for 30s |
 | Dragon's Tithe | 1M gold, 5 of each crystal | 1 of each crystal | Collect 5 minutes of production at once |
 
@@ -67,7 +67,7 @@ The **book button** to the right of the hero's health bar opens the spellbook, a
 
 - **Mend** (1 Verdant: heal 50%). It's always there and doesn't need learning.
 
-The other crystal actions live where they're used, not in the spellbook: **Hasten** (1 Storm) is on the journey bar under the Journey view, **Stoke the Forge** (1 Ember) is on Brom's anvil card, and **Split the Rock** (1 Frost) is on the mine row. Each crystal element has an everyday use. See [Hero](hero.md#crystal-quick-actions).
+The other crystal actions live where they're used, not in the spellbook: **Hasten** (1 Storm, halves the walk home) is on the journey bar under the Journey view, **Stoke the Forge** (1 Ember) is on Brom's anvil card, and **Split the Rock** (1 Frost) is on the mine row. Each crystal element has an everyday use. See [Hero](hero.md#crystal-quick-actions).
 - Every spell you've **learned**, with its reagent cost and a Cast button.
 
 Each entry shows why it can't be cast right now, if it can't (for example "Only while your hero is away", or the time left on an active spell). Your crystal counts are shown at the top. A violet dot on the book means Mend is worth casting: the hero is below half health and you have a Verdant crystal. **Open grimoire** jumps to the Magic tab, where new spells are learned.

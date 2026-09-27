@@ -9,7 +9,7 @@ Tone: medieval fantasy, low-tech. No modern or futuristic technology.
 ## Core loop
 
 1. **Tap the keep** for gold. Build **holdings** that produce gold on their own.
-2. Send your **hero on expeditions** for wood, stone, copper, tin and iron. Watch the journey, tap to help, make choices at road events, and find relics. Foes wear down the hero's health, which has to recover between trips.
+2. Send your **hero on expeditions** for wood, stone, copper, tin and iron. Trips go deeper and richer until you call the hero home (or their health runs low), and the haul is only safe once they're back. Watch the journey, tap to help, make choices at road events, and find relics. Pack Verdant draughts to go further. Foes wear down the hero's health, which has to recover between trips.
 3. **Forge** better equipment from those materials. Better gear means stronger taps, safer and faster expeditions, and better mining.
 4. Dig the **Crystal Mine** for Ember, Frost, Verdant and Storm crystals.
 5. **Learn spells** one at a time, then cast them using crystals as reagents.

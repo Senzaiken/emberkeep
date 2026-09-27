@@ -15,7 +15,7 @@ When the game resumes after more than 10 seconds away, it credits the time misse
 
 - Gold from holdings (temporary spell boosts don't count toward offline time).
 - Crystals from the Crystal Mine.
-- The expedition timeline plays forward: beats are collected, foes deal damage, overdue road events take their default, and a finished trip comes home.
+- The expedition timeline plays forward: new depths are generated, beats are collected into the carried haul, foes deal damage, draughts are drunk, the hero turns back by the turn-back setting, overdue road events take their default, and a hero who reaches home banks the haul. A trip that has run 8 hours turns for home by itself.
 - The hero heals while resting at the keep.
 
 A toast summarises what was earned while away.
@@ -33,13 +33,15 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `mat`, `cry` | Materials and crystals |
 | `gear` | Tier per slot: `weapon`, `armor`, `pick` |
 | `known`, `spells` | Learned spell ids; active spell expiry timestamps |
-| `exp` | Current expedition or `null`: `{id, start, end, beats[], events[], haul{}, blessed, seq}`. Each beat is `{id, t, k, r, n, done, tap, bonus?, foe?}`, and each event is `{id, t, deadline, done, choice}`. Old saves with only `{id, start, end}` are rebuilt into a timeline on load. |
+| `exp` | Current expedition or `null`: `{v:2, id, start, len, pause, gen, rolled, deepest, beats[], events[], used[], carry{}, pack, blessed, seq, returning, retAt, end, hasted}`. `len` is ms per depth, `pause` is time added by road events, `gen` the last depth generated, `carry` the haul not yet banked, `pack` draughts left. Each beat is `{id, t, st, k, r, n, done, tap, bonus?, foe?, cut?, ret?}` (`st` depth, `cut` skipped by turning back, `ret` a foe on the road home), and each event is `{id, t, deadline, done, choice, cut?}`. Saves with an older fixed-length trip bank its remaining loot and clear it on load. |
+| `retreat`, `pack` | Turn-back setting (index into 50% / 30% / 15% / Never, default 1) and the number of Verdant draughts to pack. Kept through ascension. |
+| `wounded` | `true` after a defeat, until the hero is back to full health (halves resting). |
 | `hp` | Hero health |
 | `relics` | Relic levels, by id |
 | `story` | `{intro, met, brom}`: seen the opening, met Arthrex, met Brom |
 | `seen` | Resources the player has discovered (shown in the satchel) |
 | `favs` | Starred spell ids, in order (the quick-cast bar) |
-| `tut`, `tutV`, `tutBase` | Tutorial step index (`null` = not started, past the last step = finished or skipped), tutorial version (2), and an old tap-count field |
+| `tut`, `tutV`, `tutBase` | Tutorial step index (`null` = not started, past the last step = finished or skipped), tutorial version (3; saves on version 2 at step 7 or later move up one for the new Return home step), and an old tap-count field |
 | `quest`, `questNext`, `questSpan` | Arthrex's current errand (or `null`), when the next one is offered, and the length of that wait (for the progress bar) |
 | `stats` | Lifetime counters: `trips{region}`, `foes`, `foeKinds{}`, `tapGold`, `relics`, `quests`, `casts` |
 | `dynasty` | Current life number (1 + ascensions) |

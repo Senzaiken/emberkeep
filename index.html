@@ -224,6 +224,20 @@
   .tabs button.qhint::after{content:'\2726';color:var(--storm);margin-left:5px;text-shadow:0 0 6px var(--storm);}
   .qhint-realm{position:absolute;left:8px;top:8px;z-index:1;font-size:12px;color:#efe6ff;background:rgba(40,28,64,.75);border:1px solid rgba(199,168,240,.6);border-radius:999px;padding:4px 10px;pointer-events:none;font-variant-numeric:tabular-nums;}
   /* journey bar: shown under the scene while watching the hero's journey */
+  .prep{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:10px 12px;margin:4px 0 8px;display:flex;flex-direction:column;gap:8px;}
+  .prep-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .prep .r-desc{margin:0;font-size:13px;}
+  .seg{display:flex;border:1px solid var(--gold-deep);border-radius:7px;overflow:hidden;}
+  .seg button{font:inherit;font-size:14px;padding:5px 9px;border:0;background:transparent;color:var(--ink);cursor:pointer;}
+  .seg button+button{border-left:1px solid var(--gold-deep);}
+  .seg button[aria-pressed="true"]{background:var(--gold);color:#1a1408;}
+  .stepper{display:flex;align-items:center;gap:10px;}
+  .stepper button{font:inherit;font-size:18px;width:34px;height:30px;border-radius:7px;border:1px solid var(--gold-deep);background:transparent;color:var(--gold-hi);cursor:pointer;}
+  .stepper button:disabled{opacity:.35;cursor:default;}
+  .stepper .num{min-width:34px;text-align:center;color:var(--verdant);font-size:17px;}
+  #jbLeft{display:block;font-size:13px;color:var(--muted);line-height:1.3;white-space:normal!important;overflow:visible;}
+  #jbReturn,#jbHaste{min-width:0;flex:none;}
+  .jb-info{min-width:0;}
   .journey-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
   .jb-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
   .jb-info .label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -331,7 +345,8 @@
   </div>
   <div class="journey-bar" id="journeyBar" hidden>
     <div class="jb-info"><span class="label" id="jbWhere">On the road</span><span class="num" id="jbLeft"></span></div>
-    <button class="act" id="jbHaste"><small>Hasten ½</small><span id="jbHasteTxt"></span></button>
+    <button class="act" id="jbReturn"><small>Bank the haul</small><span>Return home</span></button>
+    <button class="act" id="jbHaste" hidden><small>Hasten ½</small><span id="jbHasteTxt"></span></button>
   </div>
   <div class="quickbar" id="quickbar" aria-label="Starred spells"></div>
   <p id="chron" class="chron"></p>
@@ -364,6 +379,11 @@
 
   <section id="p-explore" class="panel" hidden>
     <div class="panel-head"><span class="label">Expeditions</span><span class="label" id="expNote"></span></div>
+    <div class="prep" id="prep">
+      <div class="prep-row"><span class="label">Turn back at</span><div class="seg" id="retreatSeg"></div></div>
+      <div class="prep-row"><span class="label">Verdant draughts</span><div class="stepper"><button id="packDn" aria-label="Fewer">−</button><span class="num" id="packN">0</span><button id="packUp" aria-label="More">+</button></div></div>
+      <p class="r-desc" id="prepNote"></p>
+    </div>
     <div id="lList" class="list"></div>
     <div class="panel-head sub"><span class="label">Relics</span><span class="label num" id="relicCount"></span></div>
     <div class="relics" id="relicGrid"></div>
@@ -574,7 +594,7 @@ const EVENTS=[
   {id:'toll',title:'Goblin Toll Bridge',text:'Three goblins squat on a rickety bridge and demand a toll.',def:2,opts:[
     {label:'Pay the toll',sub:()=>`${fmt(tollCost())} gold`,can:()=>S.gold>=tollCost(),run:()=>{ S.gold-=tollCost(); return 'You pay. The goblins bow mockingly and let you pass.'; }},
     {label:'Fight them',sub:()=>`${Math.round(fightChance()*100)}% to win · risk of wounds`,run:l=>{
-      if(Math.random()<fightChance()){ const g=tollCost()*3, k=primary(l), n=Math.max(2,Math.ceil(tripTotal(k)*0.3)); earn(g); addRes(k,n); tally('gold',g); tally(k,n);
+      if(Math.random()<fightChance()){ const g=tollCost()*3, k=primary(l), n=Math.max(2,Math.ceil(tripTotal(k)*0.3)); gain('gold',g); gain(k,n);
         return `Victory! Their stash holds ${fmt(g)} gold and ${n} ${NAMES[k]}.`; }
       const d=hurt(maxHP()*0.2); if(S.exp) extendTrip(10); return `The goblins drive you off. You lose ${d} health and take the long way round.`; }},
     {label:'Wait them out',sub:()=>'+15s',run:()=>{ extendTrip(15); return 'You wait in the reeds until the goblins wander off.'; }},
@@ -590,14 +610,14 @@ const EVENTS=[
   {id:'camp',title:'Abandoned Camp',text:'A cold fire pit and scattered packs. Someone left in a hurry.',def:1,opts:[
     {label:'Search the packs',sub:()=>'A relic, a purse… or an ambush',run:l=>{ const r=Math.random();
       if(r<0.3){ const rel=findRelic(l.id); if(rel) return `Wrapped in oilcloth: the ${rel.name}!`; }
-      if(r<0.65){ const g=Math.max(40,tapValue()*20+gps(false)*15); earn(g); tally('gold',g); return `A forgotten purse with ${fmt(g)} gold.`; }
+      if(r<0.65){ const g=Math.max(40,tapValue()*20+gps(false)*15); gain('gold',g); return `A forgotten purse with ${fmt(g)} gold.`; }
       const d=hurt(maxHP()*0.15); return `Bandits! You fight your way clear, losing ${d} health.`; }},
     {label:'Leave it',sub:()=>'Safe',run:()=>'You leave the camp to its ghosts.'},
   ]},
   {id:'traveller',title:'Wounded Traveller',text:'A merchant lies by the road, clutching a wounded leg.',def:2,opts:[
-    {label:'Tend the wound',sub:()=>'1 Verdant crystal',can:()=>S.cry.verdant>=1,run:l=>{ S.cry.verdant--; const g=Math.max(100,tapValue()*40+gps(false)*30); earn(g); tally('gold',g);
+    {label:'Tend the wound',sub:()=>'1 Verdant crystal',can:()=>S.cry.verdant>=1,run:l=>{ S.cry.verdant--; const g=Math.max(100,tapValue()*40+gps(false)*30); gain('gold',g);
       const rel=Math.random()<0.4?findRelic(l.id):null; return `The merchant pays you ${fmt(g)} gold${rel?` and presses the ${rel.name} into your hand`:''}.`; }},
-    {label:'Share your rations',sub:()=>'+10s',run:()=>{ extendTrip(10); const g=Math.max(30,tapValue()*10+gps(false)*8); earn(g); tally('gold',g); return `Grateful, the merchant gives you ${fmt(g)} gold.`; }},
+    {label:'Share your rations',sub:()=>'+10s',run:()=>{ extendTrip(10); const g=Math.max(30,tapValue()*10+gps(false)*8); gain('gold',g); return `Grateful, the merchant gives you ${fmt(g)} gold.`; }},
     {label:'Walk on',sub:()=>'Safe',run:()=>'You leave the merchant to the next traveller.'},
   ]},
   {id:'seep',regions:['fen','deep','caldera'],title:'Crystal Seep',text:'Raw elemental crystal bleeds through a crack in the stone.',def:1,opts:[
@@ -622,17 +642,17 @@ const MINE=[
 const SPELLS=[
   {id:'midas',name:'Midas Touch',learn:{gold:300,ember:3},cast:{ember:1},dur:20,text:'Taps earn ×10 gold for 20 seconds.'},
   {id:'familiar',name:'Summon Familiar',learn:{gold:2500,storm:3},cast:{storm:1},dur:20,text:'A wisp taps the keep 8 times a second for 20 seconds.'},
-  {id:'road',name:'Quickened Road',learn:{gold:4000,frost:3,storm:2},cast:{frost:1,storm:1},dur:0,text:'Your hero returns from their expedition at once, haul in hand.'},
+  {id:'road',name:'Quickened Road',learn:{gold:4000,frost:3,storm:2},cast:{frost:1,storm:1},dur:0,text:'Your hero is home at once, haul in hand, skipping the road back.'},
   {id:'harvest',name:'Bountiful Harvest',learn:{gold:8000,verdant:3},cast:{verdant:1,frost:1},dur:30,text:'Every building produces ×3 for 30 seconds.'},
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927215237';
+const BUILD='20260927221706';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],tut:null,tutV:2,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
 function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
@@ -712,19 +732,18 @@ function stoke(){
 const HP_REGEN_FULL=240, MEND_COST={verdant:1}, HASTE_COST={storm:1};
 const maxHP=()=>100+25*S.gear.armor+relicBonus('hp');
 function heal(n){ const before=S.hp; S.hp=Math.min(maxHP(),S.hp+n); return Math.round(S.hp-before); }
-function hurt(n){ n=Math.max(1,Math.round(n)); S.hp=Math.max(0,S.hp-n); journey&&journey.hurtFx(n); if(S.hp<=0&&S.exp) finishExp(true); return n; }
+function hurt(n){ n=Math.max(1,Math.round(n)); S.hp=Math.max(0,S.hp-n); journey&&journey.hurtFx(n);
+  if(S.exp){ autoDrink(); if(S.hp<=0) finishExp(true); else checkRetreat(); } return n; }
 const tripCost=l=>l.cost;
 // Crystal quick actions
 const canMend=()=>S.hp<maxHP()&&canPay(MEND_COST);
 function mend(){ if(!canMend()) return; pay(MEND_COST); const h=heal(maxHP()*0.5); toast(`A Verdant crystal restores ${h} health.`); journey&&journey.healFx(); refresh(); }
-const canHasten=()=>!!S.exp&&!S.exp.hasted&&S.exp.end-now()>2000&&canPay(HASTE_COST);
+// Hasten: halves the walk home (once per trip)
+const canHasten=()=>!!S.exp&&S.exp.returning&&!S.exp.hasted&&S.exp.end-now()>2000&&canPay(HASTE_COST);
 function hasten(){
   if(!canHasten()) return; pay(HASTE_COST); const e=S.exp, t=now(); e.hasted=true;
-  const squeeze=x=>x>t?Math.round(t+(x-t)/2):x;
-  e.beats.forEach(b=>{ if(!b.done) b.t=squeeze(b.t); });
-  e.events.forEach(ev=>{ if(!ev.done&&ev.t>t){ ev.t=squeeze(ev.t); ev.deadline=ev.t+EVENT_WINDOW; } });
-  e.end=squeeze(e.end);
-  toast('A Storm crystal quickens your hero\u2019s stride. The rest of the trip takes half the time.'); journey&&journey.hasteFx(); refresh();
+  e.end=Math.round(t+(e.end-t)/2); e.beats.forEach(b=>{ if(b.ret&&!b.done&&b.t>t) b.t=Math.round(t+(b.t-t)/2); });
+  toast('A Storm crystal quickens your hero\u2019s stride. Home in half the time.'); journey&&journey.hasteFx(); refresh();
 }
 
 // Relics
@@ -738,59 +757,91 @@ function findRelic(region){
   chronicle(`Relic found: ${r.name}${relicLvl(r.id)>1?`, now level ${relicLvl(r.id)}`:''}.`); return r;
 }
 
-// Expeditions: each trip is a timeline of beats (loot, foes, chests) and road events, all timestamped,
-// so it plays out the same whether you watch it, look away, or close the game.
+// Expeditions are open-ended. The hero goes one depth deeper each stage (tougher foes, richer loot)
+// until you call them home, their health falls to the turn-back point, or they are beaten.
+// Loot is carried and only banked on a safe return. Everything is timestamped, so it plays out
+// the same whether you watch it, look away, or close the game.
 const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=rnd(0,i); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const STAGE_GAIN=0.25, STAGE_HARM=0.15, AUTO_DRINK=0.4, MAX_TRIP=8*3600*1000;
+const RETREATS=[{p:0.5,label:'50%'},{p:0.3,label:'30%'},{p:0.15,label:'15%'},{p:0,label:'Never'}];
+const packMax=()=>Math.min(6,2+S.gear.armor);
 function yieldMult(k){ return (k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick])*(1+relicBonus(k)); }
 function lootRange(l,k,[a,b]){ const m=yieldMult(k); return [Math.round(a*m),Math.round(b*m)]; }
-function expDuration(l){ return l.dur*(1-0.08*S.gear.armor)*(1-relicBonus('speed')); }
-function foeDamage(l){ return l.dmg*Math.max(0.35,1-0.12*S.gear.armor-0.06*S.gear.weapon); }
+function expDuration(l){ return l.dur*(1-0.08*S.gear.armor)*(1-relicBonus('speed')); }   // seconds per depth
+function foeDamage(l,st){ return l.dmg*(1+STAGE_HARM*(st||0))*Math.max(0.35,1-0.12*S.gear.armor-0.06*S.gear.weapon); }
 const primary=l=>Object.keys(l.loot)[0];
-const tripTotal=k=>S.exp?S.exp.beats.filter(b=>b.r===k&&b.k!=='chest').reduce((a,b)=>a+b.n,0):0;
+const tripTotal=k=>S.exp?S.exp.beats.filter(b=>b.r===k&&b.k!=='chest'&&!b.done&&!b.cut).reduce((a,b)=>a+b.n,0)||5:0;
 const tollCost=()=>Math.max(20,Math.round(gps(false)*15+tapValue()*10));
 const offerCost=()=>Math.max(30,Math.round(gps(false)*20+tapValue()*12));
 const fightChance=()=>{ const l=S.exp?LOC[S.exp.id]:LOCS[0]; return Math.min(0.95,Math.max(0.1,0.5+0.15*(S.gear.weapon-l.danger))); };
 function splitBeats(k,r,n,parts){ const out=[]; parts=Math.max(1,Math.min(parts,n)); for(let i=0;i<parts;i++) out.push({k,r,n:Math.floor(n/parts)+(i<n%parts?1:0)}); return out; }
 function stamp(e,b,t){ b.t=Math.round(t); b.id=++e.seq; b.v=rnd(0,9); b.done=false; b.tap=false; if(b.k==='foe') b.foe=LOC[e.id].foes[rnd(0,LOC[e.id].foes.length-1)]; return b; }
-function makeExp(id,start,end){
-  const l=LOC[id], dur=end-start, e={id,start,end,beats:[],events:[],haul:{},blessed:false,seq:0};
-  const totals=[]; for(const [k,r] of Object.entries(l.loot)){ const [a,b]=lootRange(l,k,r); const n=rnd(a,b); if(n>0) totals.push([k,n]); }
-  const B=Math.max(3,Math.min(48,Math.round(dur/5000))), sum=totals.reduce((a,[,n])=>a+n,0)||1, list=[];
-  for(const [k,n] of totals){ const c=Math.max(1,Math.min(n,Math.round(B*n/sum)));
-    splitBeats('res',k,n,c).forEach(b=>{ if(Math.random()<0.2) b.k='foe'; list.push(b); }); }
-  if(l.cry){ let c=rnd(...l.cry)*(1+relicBonus('cry')); c=Math.floor(c)+(Math.random()<c%1?1:0); for(let i=0;i<c;i++) list.push({k:'cry',r:CRYS[rnd(0,3)],n:1}); }
-  if(Math.random()<0.15) list.push({k:'chest',r:'gold',n:0});
-  shuffle(list).forEach((b,i)=>{ e.beats.push(stamp(e,b,start+dur*(0.08+0.84*(i+0.5)/list.length))); });
-  const secs=dur/1000, n=secs<40?0:secs<120?1:secs<300?2:3;
-  const pool=shuffle(EVENTS.filter(ev=>!ev.regions||ev.regions.includes(id)));
-  for(let i=0;i<n&&i<pool.length;i++){ const t=Math.round(start+dur*(i+1)/(n+1)); e.events.push({id:pool[i].id,t,deadline:t+EVENT_WINDOW,done:false}); }
-  return e;
+const stageAt=(e,t)=>Math.max(0,Math.floor((t-e.start-(e.pause||0))/e.len));
+function genStage(e,k){
+  const l=LOC[e.id], s0=e.start+(e.pause||0)+k*e.len, m=1+STAGE_GAIN*k, list=[];
+  const totals=[]; for(const [kk,r] of Object.entries(l.loot)){ const [a,b]=lootRange(l,kk,r); const n=Math.round(rnd(a,b)*m); if(n>0) totals.push([kk,n]); }
+  const B=Math.max(3,Math.min(12,Math.round(e.len/5000))), sum=totals.reduce((a,[,n])=>a+n,0)||1;
+  for(const [kk,n] of totals){ const c=Math.max(1,Math.min(n,Math.round(B*n/sum)));
+    splitBeats('res',kk,n,c).forEach(b=>{ if(Math.random()<0.2) b.k='foe'; list.push(b); }); }
+  if(l.cry){ let c=rnd(...l.cry)*(1+relicBonus('cry'))*(1+0.1*k); c=Math.floor(c)+(Math.random()<c%1?1:0); for(let i=0;i<c;i++) list.push({k:'cry',r:CRYS[rnd(0,3)],n:1}); }
+  if(Math.random()<Math.min(0.5,0.15+0.03*k)) list.push({k:'chest',r:'gold',n:0});
+  shuffle(list).forEach((b,i)=>{ const bb=stamp(e,b,s0+e.len*(0.06+0.88*(i+0.5)/list.length)); bb.st=k; e.beats.push(bb); });
+  if(l.dur>=40&&Math.random()<0.5){ const pool=shuffle(EVENTS.filter(ev=>(!ev.regions||ev.regions.includes(e.id))&&!e.used.includes(ev.id)));
+    const ev=pool[0]||shuffle(EVENTS.filter(x=>!x.regions||x.regions.includes(e.id)))[0];
+    if(ev){ e.used.push(ev.id); const t=Math.round(s0+e.len*0.5); e.events.push({id:ev.id,t,deadline:t+EVENT_WINDOW,done:false}); } }
+  e.gen=k;
 }
+function makeExp(id,start){
+  const l=LOC[id], e={v:2,id,start,len:expDuration(l)*1000,pause:0,beats:[],events:[],carry:{},used:[],blessed:false,seq:0,gen:-1,rolled:0,pack:0,
+    returning:false,retAt:0,end:0,hasted:false,deepest:0};
+  ensureStages(e,start); return e;
+}
+function ensureStages(e,t){ if(e.returning) return; const need=stageAt(e,t)+1; while(e.gen<need) genStage(e,e.gen+1); }
 function extendTrip(sec,extra){
-  const e=S.exp; if(!e) return; const t=now(), ms=sec*1000;
+  const e=S.exp; if(!e) return; const t=simT||now(), ms=sec*1000;
   e.beats.forEach(b=>{ if(!b.done&&b.t>t) b.t+=ms; });
   e.events.forEach(ev=>{ if(!ev.done&&ev.t>t){ ev.t+=ms; ev.deadline+=ms; } });
-  e.end=Math.max(e.end,t)+ms;
-  (extra||[]).forEach((b,i,arr)=>e.beats.push(stamp(e,b,t+ms*(i+1)/(arr.length+1))));
+  if(e.returning) e.end+=ms; else e.pause=(e.pause||0)+ms;
+  (extra||[]).forEach((b,i,arr)=>{ const bb=stamp(e,b,t+ms*(i+1)/(arr.length+1)); bb.st=stageAt(e,t); e.beats.push(bb); });
 }
-function tally(k,n){ if(S.exp) S.exp.haul[k]=(S.exp.haul[k]||0)+n; }
+// Loot on the road is carried; it's banked (or half lost) when the trip ends.
+function gain(k,n){ if(!(n>0)) return; if(S.exp){ S.exp.carry[k]=(S.exp.carry[k]||0)+n; } else if(k==='gold') earn(n); else addRes(k,n); }
+function carriedCount(e){ return Object.entries(e.carry).filter(([k])=>k!=='gold').reduce((a,[,n])=>a+n,0); }
 function canDepart(l){ return !S.exp&&S.gear.armor>=l.danger&&S.hp>tripCost(l); }
 function depart(id){
   const l=LOC[id]; if(!l||!canDepart(l)) return;
   S.hp-=tripCost(l); logUnlock('region:'+id);
-  const t=now(); S.exp=makeExp(id,t,t+expDuration(l)*1000); setView('journey'); refresh();
+  const t=now(); S.exp=makeExp(id,t);
+  const pk=Math.max(0,Math.min(S.pack||0,packMax(),S.cry.verdant)); S.cry.verdant-=pk; S.exp.pack=pk;
+  setView('journey'); refresh();
+}
+function autoDrink(){ const e=S.exp; if(!e) return;
+  while(e.pack>0&&S.hp>0&&S.hp<maxHP()*AUTO_DRINK){ e.pack--; const h=heal(maxHP()*0.5); journey&&journey.healFx(); toast(`Your hero drinks a Verdant draught (+${h} health). ${e.pack} left.`); } }
+function checkRetreat(){ const e=S.exp; if(!e||e.returning) return; const th=RETREATS[S.retreat??1].p;
+  if(th>0&&S.hp<=maxHP()*th) startReturn('hurt'); }
+let simT=0;   // the moment being played out (differs from now() while catching up after time away)
+function startReturn(why){
+  const e=S.exp; if(!e||e.returning) return; const t=simT||now(); e.returning=true; e.retAt=t;
+  e.end=t+Math.round(Math.min(30000,Math.max(6000,(t-e.start)*0.15)));
+  e.beats.forEach(b=>{ if(!b.done&&b.t>t) b.cut=true; });
+  e.events.forEach(ev=>{ if(!ev.done&&ev.t>t) ev.cut=true; });
+  // the road home is dangerous too: the deeper the hero went, the more foes stand between them and the keep
+  const l=LOC[e.id], st=stageAt(e,t), rd=roadHome(e.id,st), walk=e.end-t, pr=primary(l);
+  for(let i=0;i<rd.n;i++){ const b=stamp(e,{k:'foe',r:pr,n:Math.max(1,Math.round(rnd(...lootRange(l,pr,l.loot[pr]))*0.2*(1+STAGE_GAIN*st)))},t+walk*(0.2+0.65*(i+0.5)/rd.n)); b.st=st; b.ret=true; e.beats.push(b); }
+  const msg={hurt:'Your hero is hurt and turns for home.',manual:'Your hero turns for home with the haul.',long:'After a long day on the road, your hero heads home.'}[why];
+  if(msg) toast(msg); eventKey=''; refresh();
 }
 function grantBeat(b,l,safe){
   b.done=true; const mult=S.exp.blessed?1.5:1;
-  if(b.k==='chest'){ const g=Math.max(50,tapValue()*25+gps(false)*20)*mult*(b.tap?1.5:1); earn(g); tally('gold',g); journey&&journey.grantFx(b,`+${fmt(g)} gold`,'#f6cf6a'); return; }
+  if(b.k==='chest'){ const g=Math.max(50,tapValue()*25+gps(false)*20)*mult*(b.tap?1.5:1)*(1+STAGE_GAIN*(b.st||0)); gain('gold',g); journey&&journey.grantFx(b,`+${fmt(g)} gold`,'#f6cf6a'); return; }
   const n=Math.round(b.n*mult)+(b.bonus||0);
-  if(n>0){ addRes(b.r,n); tally(b.r,n); }
+  gain(b.r,n);
   journey&&journey.grantFx(b,n>0?`+${n} ${NAMES[b.r]}`:'',CRYS.includes(b.r)?'#'+HEX[b.r].toString(16).padStart(6,'0'):RES_HEX[b.r]);
-  if(b.k==='foe'){ S.stats.foes++; S.stats.foeKinds[b.foe]=1; logUnlock('foe:'+b.foe); if(!safe) hurt(foeDamage(l)*(b.tap?0.5:1)); }
+  if(b.k==='foe'){ S.stats.foes++; S.stats.foeKinds[b.foe]=1; logUnlock('foe:'+b.foe); if(!safe) hurt(foeDamage(l,b.st)*(b.tap?0.5:1)); }
 }
 // Tapping an approaching beat in the journey view: extra loot, half damage from foes
 function helpBeat(id){
-  const e=S.exp; if(!e) return null; const b=e.beats.find(x=>x.id===id); if(!b||b.done||b.tap) return null;
+  const e=S.exp; if(!e) return null; const b=e.beats.find(x=>x.id===id); if(!b||b.done||b.tap||b.cut) return null;
   b.tap=true;
   if(b.k==='cry') b.bonus=Math.random()<0.35?1:0;
   else if(b.k!=='chest') b.bonus=Math.max(1,Math.ceil(b.n*0.5));
@@ -803,19 +854,36 @@ function resolveEvent(ev,i,auto){
   const msg=o.run(l); if(msg) toast((auto?`${def.title}: `:'')+msg);
   eventKey=''; refresh();
 }
-function expTick(t,catchUp){
+function expTick(t){
   const e=S.exp; if(!e) return; const l=LOC[e.id];
-  for(const ev of e.events) if(!ev.done&&t>=ev.deadline){ resolveEvent(ev,EVDEF[ev.id].def,true); if(!S.exp) return; }
-  for(const b of e.beats){ if(!b.done&&b.t<=t){ grantBeat(b,l,false); if(!S.exp) return; } }
-  if(t>=e.end&&e.events.every(ev=>ev.done)) finishExp(false);
+  if(!e.returning&&t-e.start>MAX_TRIP){ simT=e.start+MAX_TRIP; startReturn('long'); simT=0; }
+  ensureStages(e,t);
+  // play out everything due, in time order
+  const due=[...e.beats.filter(b=>!b.done&&!b.cut&&b.t<=t).map(b=>({t:b.t,b})), ...e.events.filter(ev=>!ev.done&&!ev.cut&&ev.deadline<=t).map(ev=>({t:ev.deadline,ev}))].sort((a,b)=>a.t-b.t);
+  for(const x of due){
+    if(!S.exp) break; simT=x.t;
+    if(x.b){ if(!x.b.cut&&!x.b.done) grantBeat(x.b,l,false); }
+    else if(!x.ev.cut&&!x.ev.done) resolveEvent(x.ev,EVDEF[x.ev.id].def,true);
+    if(S.exp&&!e.returning){ const st=stageAt(e,x.t); while(e.rolled<st){ rollStageRelic(e,l,e.rolled); e.rolled++; } }
+  }
+  simT=0; if(!S.exp) return;
+  if(!e.returning){ const st=stageAt(e,t); e.deepest=Math.max(e.deepest,st); while(e.rolled<st){ rollStageRelic(e,l,e.rolled); e.rolled++; } }
+  if(e.returning&&t>=e.end){ e.events.forEach(ev=>{ if(!ev.done&&!ev.cut) resolveEvent(ev,EVDEF[ev.id].def,true); }); if(S.exp) finishExp(false); return; }
+  // keep the save small: drop what's long behind the hero
+  if(e.beats.length>80) e.beats=e.beats.filter(b=>!(b.done||b.cut)||b.t>t-20000);
+  if(e.events.length>20) e.events=e.events.filter(ev=>!(ev.done||ev.cut)||ev.t>t-60000);
 }
+function rollStageRelic(e,l,st){ if(Math.random()<l.relic*0.6*(1+0.1*st)*(1+relicBonus('relic'))){ const r=findRelic(l.id); if(r) toast(`Found a relic at depth ${st+1}: ${r.name}!`); } }
 function finishExp(defeated){
   const e=S.exp; if(!e) return; const l=LOC[e.id]; S.exp=null;
-  const rel=!defeated&&Math.random()<l.relic*(1+relicBonus('relic'))?findRelic(l.id):null;
-  const got=Object.entries(e.haul).filter(([,n])=>n>0).map(([k,n])=>k==='gold'?`${fmt(n)} gold`:`${fmt(n)} ${NAMES[k]}${CRYS.includes(k)?(n>1?' crystals':' crystal'):''}`).join(', ');
-  toast(defeated?`Your hero was beaten back in ${l.name} and limped home with ${got||'nothing'}.`
-                 :`Back from ${l.name}: ${got||'nothing this time'}.${rel?` Found a relic: ${rel.name}!`:''}`);
-  if(defeated) chronicle(`Your hero was beaten back in ${l.name}. They need rest.`);
+  const depth=Math.max(e.deepest,e.returning?stageAt(e,e.retAt):0)+1, got=[];
+  for(const [k,n] of Object.entries(e.carry)){ const keep=defeated?Math.floor(n/2):n; if(keep<=0) continue;
+    if(k==='gold') earn(keep); else addRes(k,keep);
+    got.push(k==='gold'?`${fmt(keep)} gold`:`${fmt(keep)} ${NAMES[k]}${CRYS.includes(k)?(keep>1?' crystals':' crystal'):''}`); }
+  if(!defeated&&e.pack) S.cry.verdant+=e.pack;
+  toast(defeated?`Beaten back at depth ${depth} in ${l.name}. Half the haul and the draughts were lost: ${got.join(', ')||'nothing'} saved. Wounded: resting takes twice as long.`
+                 :`Home from ${l.name} (depth ${depth}): ${got.join(', ')||'nothing this time'}.${e.pack?` ${e.pack} draught${e.pack>1?'s':''} unused.`:''}`);
+  if(defeated){ S.wounded=true; chronicle(`Your hero was beaten back in ${l.name}. Wounded, they heal slowly until fully rested.`); }
   else S.stats.trips[l.id]=(S.stats.trips[l.id]||0)+1;
   if(tutActive()&&S.tut<TUT_ARRIVAL){ S.tut=TUT_ARRIVAL; $('tut').hidden=true; }   // skip ahead: the story takes over on return
   if(!S.story.met) setTimeout(meetArthrex,1800);
@@ -823,13 +891,17 @@ function finishExp(defeated){
   eventKey=''; if(view==='journey') setTimeout(()=>{ if(!S.exp) setView('keep'); },2500);
   refresh();
 }
+// foes waiting on the walk home from a given depth (stage index), and roughly what each hits for
+function roadHome(id,st){ const d=st+1; return {n:d<2?0:Math.min(5,Math.ceil(d/3)), hit:Math.round(foeDamage(LOC[id],st))}; }
+function returnHome(){ if(S.exp&&!S.exp.returning) startReturn('manual'); }
 function quickenRoad(){
-  const e=S.exp; if(!e) return; const l=LOC[e.id];
-  for(const ev of e.events) if(!ev.done) resolveEvent(ev,EVDEF[ev.id].def,true);
-  if(!S.exp) return;
-  for(const b of e.beats) if(!b.done) grantBeat(b,l,true);
-  finishExp(false);
+  const e=S.exp; if(!e) return;
+  e.events.forEach(ev=>{ if(!ev.done&&!ev.cut&&ev.t<=now()) resolveEvent(ev,EVDEF[ev.id].def,true); });
+  if(!S.exp) return; if(!S.exp.returning) startReturn(); S.exp.end=now(); finishExp(false);
 }
+// Saves from before open-ended trips: bring the old fixed trip straight home
+function migrateOldExp(){ const e=S.exp; if(!e||e.v===2) return;
+  (e.beats||[]).forEach(b=>{ if(!b.done&&b.k!=='chest'&&b.n>0) addRes(b.r,b.n); }); S.exp=null; }
 
 // Crystal mine
 function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))*(1+relicBonus('mine'))); }
@@ -956,7 +1028,7 @@ function openSpire(){
 // Tutorial steps. A step with `wait` shows nothing until its condition holds, then runs `go` once
 // (used to hand over to a story dialog); steps with `target` spotlight that element.
 const openTab=k=>{ document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab===k)); ['build','up','explore','forge','magic','asc'].forEach(t=>$('p-'+t).hidden=t!==k); };
-const TUT_ARRIVAL=7;   // index of the step waiting for the first expedition to come home
+const TUT_ARRIVAL=8;   // index of the step waiting for the first expedition to come home
 const TUT=[
   {target:()=>$('realm'),before:()=>{ setView('keep'); openTab('build'); },
    text:()=>`Your treasury is empty. Tap the castle to collect the tithe. You need 15 gold for your first farm: ${Math.min(15,Math.floor(S.gold))} / 15.`,done:()=>S.gold>=15||owned('farm')>0},
@@ -966,6 +1038,9 @@ const TUT=[
   {target:()=>$('tab-explore'),text:()=>'Your hero can bring back wood, stone and ore. Open the Explore tab.',done:()=>!$('p-explore').hidden},
   {target:()=>$('l-wood'),text:()=>'Send your hero into Whisperwood. Each trip costs a little health, and the loot comes home with them.',done:()=>!!S.exp},
   {target:()=>$('realm'),text:()=>'This is your hero on the road. Tap trees, rocks and beasts before your hero reaches them for extra loot, and half the damage from foes.',next:'Got it'},
+  {target:()=>$('jbReturn'),before:()=>{ if(S.exp) setView('journey'); },
+   text:()=>'Your hero keeps going deeper, where loot is richer and foes hit harder, until you call them back or their health runs low. Loot is only safe once they’re home. Tap Return home to bring the haul back.',
+   done:()=>!S.exp||S.exp.returning},
   {wait:()=>S.story.met&&!S.exp&&!dialogOpen(),go:()=>meetBrom()},
   {target:()=>$('tab-forge'),text:()=>'Brom’s forge is in the keep’s yard. Open the Forge tab.',done:()=>!$('p-forge').hidden},
   {target:()=>$('f-weapon'),before:()=>openTab('forge'),text:()=>'Forge an Oak Cudgel. A weapon multiplies every tap, and your hero hits harder on the road.',done:()=>!!S.forging||S.gear.weapon>0},
@@ -1211,7 +1286,7 @@ function ascend(){
   // Full reset: only Renown, lifetime stats, story progress and UI preferences carry over.
   const keep={renown:S.renown+p,life:S.life,taps:S.taps,story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats)),
     dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:1,
-    seen:{...S.seen},favs:S.favs.slice(),tut:S.tut,tutV:S.tutV};
+    seen:{...S.seen},favs:S.favs.slice(),retreat:S.retreat,pack:S.pack,tut:S.tut,tutV:S.tutV};
   S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set();
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
@@ -1231,7 +1306,7 @@ function tick(){
   if(S.digging&&t>=S.digging.end) digDone();
   const wasAway=!!S.exp;
   expTick(t);
-  if(!S.exp&&!wasAway) heal(maxHP()/HP_REGEN_FULL*dt);
+  if(!S.exp&&!wasAway){ heal(maxHP()/HP_REGEN_FULL*dt*(S.wounded?0.5:1)); if(S.wounded&&S.hp>=maxHP()) S.wounded=false; }
 }
 
 /* ================= FORMAT ================= */
@@ -1334,7 +1409,7 @@ function renderUpgrades(){
 function badge(id,n){ const b=$(id); b.hidden=!n; b.textContent=n; }
 
 let eventKey='';
-function pendingEvent(){ return S.exp?S.exp.events.find(ev=>!ev.done&&ev.t<=now()):null; }
+function pendingEvent(){ return S.exp?S.exp.events.find(ev=>!ev.done&&!ev.cut&&ev.t<=now()):null; }
 function renderEvent(){
   const ev=pendingEvent(), card=$('eventCard');
   if(!ev){ card.hidden=true; eventKey=''; return; }
@@ -1414,17 +1489,27 @@ function refresh(){
 
   // hero status
   const mhp=maxHP();
-  if(S.exp){ const l=LOC[S.exp.id], left=(S.exp.end-now())/1000, p=1-(S.exp.end-now())/(S.exp.end-S.exp.start);
-    $('expLine').textContent=`Exploring ${l.name}`; $('expTime').textContent=`back in ${clock(Math.max(0,left)*1000)}`; $('expFill').style.width=Math.min(100,p*100)+'%'; $('expFill').parentNode.hidden=false; }
-  else { $('expLine').textContent=S.hp<mhp?'Resting at the keep':'Rested and ready'; $('expTime').textContent=S.hp<mhp?`healed in ${clock((mhp-S.hp)/(mhp/HP_REGEN_FULL)*1000)}`:''; $('expFill').parentNode.hidden=true; }
+  if(S.exp){ const e=S.exp, l=LOC[e.id], t=now();
+    if(e.returning){ const p=(t-e.retAt)/Math.max(1,e.end-e.retAt);
+      $('expLine').textContent=`Heading home from ${l.name}`; $('expTime').textContent=`home in ${clock(Math.max(0,e.end-t))}`; $('expFill').style.width=Math.min(100,p*100)+'%'; }
+    else { const st=stageAt(e,t), p=(t-e.start-(e.pause||0)-st*e.len)/e.len;
+      $('expLine').textContent=`${l.name} \u00B7 depth ${st+1}`; $('expTime').textContent=`${e.pack?`\u2697 ${e.pack} \u00B7 `:''}${fmt(carriedCount(e))} carried`; $('expFill').style.width=Math.min(100,Math.max(0,p*100))+'%'; }
+    $('expFill').parentNode.hidden=false; }
+  else { $('expLine').textContent=S.hp<mhp?(S.wounded?'Wounded, resting slowly':'Resting at the keep'):'Rested and ready'; $('expTime').textContent=S.hp<mhp?`healed in ${clock((mhp-S.hp)/(mhp/HP_REGEN_FULL*(S.wounded?0.5:1))*1000)}`:''; $('expFill').parentNode.hidden=true; }
   setHTML($('hpTxt'),`<span>HEALTH</span><span>${Math.ceil(S.hp)} / ${mhp}</span>`);
   $('hpFill').style.width=(100*S.hp/mhp)+'%'; $('hpFill').classList.toggle('low',S.hp<=LOCS[0].cost);
   $('bookDot').hidden=!(canMend()&&S.hp<maxHP()*0.5);
   renderBook(); renderQuickbar();
   { const jb=$('journeyBar'), on=view==='journey'&&!!S.exp; jb.hidden=!on;
-    if(on){ const l=LOC[S.exp.id]; $('jbWhere').textContent=`On the road \u00B7 ${l.name}`; $('jbLeft').textContent=`Back in ${clock(Math.max(0,S.exp.end-now()))}`;
-      $('jbHaste').disabled=!canHasten();
-      setHTML($('jbHasteTxt'), S.exp.hasted?'Hastened':`${ICON('storm')} 1 Storm`); } }
+    if(on){ const e=S.exp, l=LOC[e.id], t=now(), ret=e.returning;
+      $('jbReturn').hidden=ret; $('jbHaste').hidden=!ret;
+      if(ret){ const foes=e.beats.filter(b=>b.ret&&!b.done).length;
+        $('jbWhere').textContent=`Heading home \u00B7 ${clock(Math.max(0,e.end-t))}`;
+        $('jbLeft').textContent=foes?`${foes} foe${foes>1?'s':''} on the road back`:'The road home is clear';
+        $('jbHaste').disabled=!canHasten(); setHTML($('jbHasteTxt'), e.hasted?'Hastened':`${ICON('storm')} 1 Storm`); }
+      else { const st=stageAt(e,t), rd=roadHome(e.id,st), th=RETREATS[S.retreat??1];
+        $('jbWhere').textContent=`Depth ${st+1} \u00B7 ${fmt(carriedCount(e))} carried`;
+        $('jbLeft').textContent=`Foes hit ~${rd.hit} \u00B7 road home: ${rd.n?`${rd.n} foe${rd.n>1?'s':''}`:'clear'} \u00B7 ${e.pack?`\u2697 ${e.pack} \u00B7 `:''}turn back at ${th.label}`; } } }
   if(now()-achT>1000){ achT=now(); checkAchievements(); }
   badge('logBadge',$('p-asc').hidden?(S.logNew||0):0); if(!$('p-asc').hidden) S.logNew=0;
   $('lifeNo').textContent=`Life ${S.dynasty||1}`;
@@ -1469,7 +1554,12 @@ function refresh(){
   const qr=$('qRealm'), showRealm=!!aq&&aq.type==='tapgold'&&view==='keep';
   qr.hidden=!showRealm; if(showRealm) qr.textContent=`\u2726 Errand \u00B7 tap the keep \u00B7 ${fmt(aqp)} / ${fmt(aq.need)}`;
   // expeditions
-  $('expNote').textContent=S.gear.armor?`Trips ${Math.round((1-expDuration({dur:1}))*100)}% faster`:'';
+  $('expNote').textContent=S.gear.armor?`Depths ${Math.round((1-expDuration({dur:1}))*100)}% faster`:'';
+  { const ri=S.retreat??1, pm=packMax(), pk=Math.min(S.pack||0,pm,S.cry.verdant);
+    $('retreatSeg').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',i===ri));
+    $('packN').textContent=S.exp?S.exp.pack:pk; $('packDn').disabled=!!S.exp||pk<=0; $('packUp').disabled=!!S.exp||pk>=Math.min(pm,S.cry.verdant);
+    $('prepNote').textContent=(S.exp?'Draughts are packed for this trip. ':'')+`Your hero drinks one below 40% health (+50%). Carry up to ${pm} (2 + armor tier). Unused draughts come home; a beaten hero loses them.`
+      +(RETREATS[ri].p?` They turn home at ${RETREATS[ri].label} health, but the road back has foes too.`:' Never: they fight on until you call them home or they fall.'); }
   LOCS.forEach(l=>{
     const locked=S.gear.armor<l.danger, busy=!!S.exp, here=S.exp&&S.exp.id===l.id;
     $('l-'+l.id).classList.toggle('locked',locked);
@@ -1477,14 +1567,14 @@ function refresh(){
     const helps=!!aq&&!locked&&(aq.type==='trip'?aq.region===l.id:aq.type==='gather'?!!l.loot[aq.mat]:aq.type==='foes'||aq.type==='relic');
     const qt=$('lqt-'+l.id); qt.hidden=!helps;
     if(helps) qt.textContent=aq.type==='gather'?`\u2726 Errand \u00B7 ${NAMES[aq.mat]} ${fmt(S.mat[aq.mat])}/${aq.need}`:`\u2726 Errand \u00B7 ${fmt(aqp)}/${fmt(aq.need)}`;
-    $('lf-'+l.id).textContent=`Costs ${tripCost(l)} health · foes: ${l.foes.map(f=>FOE_NAMES[f]).join(', ')}, about ${Math.round(foeDamage(l))} a hit`;
+    $('lf-'+l.id).textContent=`Costs ${tripCost(l)} health · foes: ${l.foes.map(f=>FOE_NAMES[f]).join(', ')}, about ${Math.round(foeDamage(l))} a hit at depth 1`;
     const tooHurt=S.hp<=tripCost(l);
     const loot=Object.entries(l.loot).map(([k,r])=>{ const [a,b]=lootRange(l,k,r); return `<span class="res">${ICON(k)}${a}–${b} ${NAMES[k]}</span>`; }).join('')
-      + (l.cry?`<span class="res">${ICON('storm')}${l.cry[0]}–${l.cry[1]} random crystals</span>`:'');
+      + (l.cry?`<span class="res">${ICON('storm')}${l.cry[0]}–${l.cry[1]} random crystals</span>`:'')+`<span class="res">per depth, +25% each deeper</span>`;
     setHTML($('ll-'+l.id), locked?`<div class="r-meta" style="color:var(--bad)">Needs ${GEAR.armor.tiers[l.danger].name} or better</div>`:`<div class="cost">${loot}</div>`);
     const btn=$('lb-'+l.id);
-    if(here){ btn.disabled=view==='journey'; btn.dataset.watch='1'; $('lq-'+l.id).textContent=view==='journey'?'Exploring':'Watch'; $('lp-'+l.id).textContent=fmtTime(Math.max(0,(S.exp.end-now())/1000)); }
-    else { delete btn.dataset.watch; btn.disabled=locked||busy||tooHurt; $('lq-'+l.id).textContent=(!locked&&!busy&&tooHurt)?`Needs ${tripCost(l)+1} HP`:'Depart'; $('lp-'+l.id).textContent=fmtTime(expDuration(l)); }
+    if(here){ btn.disabled=view==='journey'; btn.dataset.watch='1'; $('lq-'+l.id).textContent=view==='journey'?'Exploring':'Watch'; $('lp-'+l.id).textContent=S.exp.returning?'Heading home':`Depth ${stageAt(S.exp,now())+1}`; }
+    else { delete btn.dataset.watch; btn.disabled=locked||busy||tooHurt; $('lq-'+l.id).textContent=(!locked&&!busy&&tooHurt)?`Needs ${tripCost(l)+1} HP`:'Depart'; $('lp-'+l.id).textContent=`${fmtTime(expDuration(l))} a depth`; }
   });
   const found=RELICS.filter(r=>relicLvl(r.id)).length;
   $('relicCount').textContent=`${found} / ${RELICS.length} found`;
@@ -1585,6 +1675,11 @@ function wireUI(){
   $('dlgNext').addEventListener('click',dialogNext);
   document.querySelectorAll('.sheet-back').forEach(enableSheetDrag);
   $('jbHaste').addEventListener('click',hasten);
+  $('jbReturn').addEventListener('click',()=>{ returnHome(); refresh(); });
+  $('retreatSeg').innerHTML=RETREATS.map((r,i)=>`<button data-i="${i}">${r.label}</button>`).join('');
+  $('retreatSeg').addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; S.retreat=+b.dataset.i; refresh(); });
+  $('packDn').addEventListener('click',()=>{ S.pack=Math.max(0,Math.min(S.pack,packMax())-1); refresh(); });
+  $('packUp').addEventListener('click',()=>{ S.pack=Math.min(packMax(),S.cry.verdant,S.pack+1); refresh(); });
   $('logBody').addEventListener('click',e=>{ const b=e.target.closest('[data-log]'); if(b) openLogEntry(b.dataset.log); });
   $('leClose').addEventListener('click',()=>$('logSheet').hidden=true);
   $('logSheet').addEventListener('click',e=>{ if(e.target.id==='logSheet') $('logSheet').hidden=true; });
@@ -1900,8 +1995,8 @@ class Realm extends Phaser.Scene{
     const qw=questWait(); this.qTimer.setVisible(qw>0); if(qw>0) this.qTimer.setText('\u231B '+clock(qw));
     if(this.dragon.visible){ const a=t*0.22; this.dragon.setPosition(360+310*Math.sin(a),78+22*Math.sin(t*0.9)); this.dragon.setFlipX(Math.cos(a)>0); }
     // Hero's lantern walks out to the expedition and back
-    if(S.exp){ const l=LOCS.find(x=>x.id===S.exp.id), p=Math.min(1,Math.max(0,(now()-S.exp.start)/(S.exp.end-S.exp.start)));
-      const out=p<0.5?p*2:(1-p)*2, x=360+l.dir*out*330, y=300+5*Math.sin(x/40)+Math.abs(Math.sin(t*6))*-2;
+    if(S.exp){ const e=S.exp, l=LOCS.find(x=>x.id===e.id), n=now();
+      const out=e.returning?Math.max(0,1-(n-e.retAt)/Math.max(1,e.end-e.retAt)):Math.min(1,(n-e.start)/Math.max(1,e.len)), x=360+l.dir*out*330, y=300+5*Math.sin(x/40)+Math.abs(Math.sin(t*6))*-2;
       this.lantern.setVisible(true).setPosition(x,y); this.lanternGlow.setVisible(true).setPosition(x,y).setAlpha(0.2+0.08*Math.sin(t*9)); }
     else { this.lantern.setVisible(false); this.lanternGlow.setVisible(false); }
     if(active('familiar')){
@@ -2103,7 +2198,8 @@ class Journey extends Phaser.Scene{
   onTap(x,y){
     const e=S.exp; if(!e) return; const t=now();
     let best=null, bd=1e9;
-    for(const b of e.beats){ if(b.done||b.tap) continue; const bx=HIT_X+(b.t-t)/1000*SPEED; if(bx<HIT_X-10||bx>W) continue;
+    for(const b of e.beats){ if(b.done||b.tap||b.cut) continue; const bx=this.posX(b,t);
+      if(b.ret?(bx>this.hx-42||bx<0):(bx<HIT_X-10||bx>W)) continue;
       const dx=Math.abs(bx-x); if(dx<40&&y>this.nodeTop(b)-14&&y<GROUND_Y+20&&dx<bd){ best=b; bd=dx; } }
     if(!best){ this.parts.setParticleTint(0xcfc6ad); this.parts.explode(3,x,y); return; }
     helpBeat(best.id);
@@ -2126,6 +2222,10 @@ class Journey extends Phaser.Scene{
   hasteFx(){ if(!this.shown) return; this.parts.setParticleTint(0xc7a8f0); this.parts.explode(20,HERO_X,GROUND_Y-24); this.floatText(HERO_X,GROUND_Y-90,'Hastened!','#e4d4ff',20); this.cameras.main.flash(180,199,168,240); }
   healFx(){ if(!this.shown) return; this.parts.setParticleTint(0x9ff0a0); this.parts.explode(16,HERO_X,GROUND_Y-24); this.floatText(HERO_X,GROUND_Y-90,'Healed','#9ff0a0',20); }
 
+  // screen x of a beat. Heading out, the world scrolls left past the hero; on the walk home the hero
+  // turns round, moves to the right side of the view, and the world scrolls the other way.
+  posX(b,t){ const e=S.exp; if(b.ret) return (this.hx-52)-(b.t-t)/1000*SPEED;
+    return HIT_X+((b.t-e.start)/1000*SPEED-this.dist); }
   update(time){
     if(!this.shown) return;
     const e=S.exp; if(!e) return;
@@ -2135,26 +2235,28 @@ class Journey extends Phaser.Scene{
       this.objs.forEach(o=>o.destroy()); this.objs.clear(); this.title.setText(l.name); }
     if(l.id!=='deep'){ this.stars.setAlpha((1-d.light)*(1-d.warm*0.7)); const x=-30+d.u*780, y=250-200*Math.sin(Math.PI*d.u);
       [this.sun,this.sunGlow].forEach(o=>o.setVisible(d.day).setPosition(x,y)); [this.moon,this.moonGlow].forEach(o=>o.setVisible(!d.day).setPosition(x,y)); }
-    const dist=Math.max(0,(t-e.start)/1000*SPEED);
+    const ret=e.returning, back=ret?Math.max(0,t-e.retAt):0;
+    const dist=this.dist=ret?Math.max(0,(e.retAt-e.start-back)/1000*SPEED):Math.max(0,(t-e.start)/1000*SPEED);
+    this.hx=ret?HERO_X+(W-2*HERO_X)*Math.min(1,back/1200):HERO_X; this.hero.x=this.hx; this.hero.scaleX=ret?-HS:HS; this.bang.scaleX=ret?-1:1;
     this.far.x=-((dist*0.15)%W); this.mid.x=-((dist*0.45)%W); this.near.x=-(dist%W);
     // walk cycle
     const w=Math.sin(secs*9); this.legL.rotation=w*0.5; this.legR.rotation=-w*0.5; this.hero.y=GROUND_Y-Math.abs(w)*2;
     this.glow.setVisible(this.light<0.5).setAlpha(0.18*(1-this.light*2));
     // beats on screen
     const seen=new Set();
-    for(const b of e.beats){ const x=HIT_X+(b.t-t)/1000*SPEED; if(x>W+60||x<-80) continue; seen.add(b.id);
+    for(const b of e.beats){ if(b.cut) continue; const x=this.posX(b,t); if(x>W+60||x<-80) continue; seen.add(b.id);
       let o=this.objs.get(b.id); if(!o){ o=this.makeNode(b,l); this.objs.set(b.id,o); }
       o.x=x; if(b.k==='foe'&&!b.done) o.y=GROUND_Y-6-Math.abs(Math.sin(secs*6+b.id))*4; }
     for(const [id,o] of this.objs) if(!seen.has(id)){ o.destroy(); this.objs.delete(id); }
     // tool + swing for the nearest beat
-    const next=e.beats.filter(b=>b.t>t-400).sort((a,b)=>a.t-b.t)[0];
+    const next=e.beats.filter(b=>!b.cut&&b.t>t-400).sort((a,b)=>a.t-b.t)[0];
     this.drawTool(next&&(next.k==='cry'||(next.k==='res'&&next.r!=='wood'))?'pick':'weapon');
     const dt=next?(next.t-t)/1000:9;
     this.arm.rotation = dt<0.45&&dt>-0.35 ? (dt>0? -1.9*(1-dt/0.45) : -1.9+2.9*Math.min(1,-dt/0.15)) : 0.25+Math.sin(secs*9)*0.2;
     // health bar over the hero, and a "!" when a road event is waiting
     const mhp=maxHP(); this.hpBar.clear(); this.hpBar.fillStyle(0x1a1016,0.8); this.hpBar.fillRect(-14,-52,28,4); this.hpBar.fillStyle(S.hp<mhp*0.25?0xe0453a:0xd0584a); this.hpBar.fillRect(-14,-52,28*S.hp/mhp,4);
     const ev=pendingEvent(); this.bang.setVisible(!!ev).setY(-66-Math.abs(Math.sin(secs*4))*4);
-    this.hint.setVisible(e.beats.some(b=>!b.done&&!b.tap&&b.t>t));
+    this.hint.setVisible(e.beats.some(b=>!b.done&&!b.tap&&!b.cut&&b.t>t));
   }
 }
 
@@ -2163,7 +2265,7 @@ function start(data){
   S=(data&&data.S)?Object.assign(fresh(),data.S):(load()||fresh());
   upSet=new Set(S.up);
   if(S.hp==null) S.hp=maxHP();
-  if(S.exp&&!S.exp.beats) S.exp=makeExp(S.exp.id,S.exp.start,S.exp.end);
+  migrateOldExp();
   buildRows(); wireUI();
   const lastB=S.chron.length&&BUILDINGS.find(b=>b.id===S.chron[S.chron.length-1]);
   chronicle(lastB?lastB.chron:'Your keep stands alone on the hill. Tap it to collect the tithe, and send your hero into Whisperwood.');
@@ -2171,7 +2273,8 @@ function start(data){
   if(!S.logInit){ backfillLog(); S.logInit=1; }
   if(S.tut!=null&&!S.tutV) S.tut=TUT.length;   // saves from the old 4-step tutorial count as done
   if(S.tut==null&&S.life>0) S.tut=TUT.length;
-  S.tutV=2;
+  if(S.tutV===2&&S.tut!=null&&S.tut>=7) S.tut++;   // a Return home step was added at index 7
+  S.tutV=3;
   if(tutActive()) setTimeout(tutEnter,800);
   tick(); refresh();
   if(!S.story.intro) setTimeout(introStory,600);

@@ -4,6 +4,11 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Open-ended expeditions.** Trips no longer have a fixed length. The hero goes one **depth** deeper each stage (a stage lasts the region's old trip time), with +25% loot and +15% foe damage per depth and a relic roll at the end of each. Loot is **carried** and only banked on a safe return. A beaten hero loses half the haul and their draughts, and comes home **wounded** (rests at half speed until full). See [Expeditions](expeditions.md).
+- **Return home and the road back.** The journey bar has a **Return home** button and shows the depth, carried loot, foe damage, and how many foes wait on the road home (more the deeper you go). The walk home takes 15% of the time out (6–30s), the hero turns round for it, and **Hasten** now halves the walk. Quickened Road brings the hero home at once with the haul.
+- **Preparations.** The Explore tab sets a **turn-back point** (50% / 30% / 15% / Never) and how many **Verdant draughts** to pack (up to 2 + armor tier, max 6). The hero drinks one below 40% health to heal 50%. Unused draughts come home.
+- **Tutorial:** a new step after the journey tip spotlights **Return home**. In-progress tutorials move up a step to match. Old fixed-length trips in a save are brought home on load with their loot.
+
 - **Swipe to dismiss.** Bottom sheets (Spellbook, Satchel, Log entries) follow your finger when dragged down from the top, and dismiss past about 100px or on a quick flick. Anything shorter snaps back.
 - **Spellbook tidy-up.** Stoke the Forge and Split the Rock left the spellbook, and stay on the anvil card and the mine row. **Hasten** moved to a new **journey bar** under the scene, shown while watching the Journey view, with the return countdown and a Hasten button. The spellbook now holds Mend and your learned spells.
 - **Active spell chips.** Active spells now sit in one fixed-height row of chips (icon, name, seconds) that scrolls sideways instead of wrapping. It shows "No spells active" when empty, so the screen no longer shifts when a spell starts or ends.
