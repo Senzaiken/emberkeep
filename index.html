@@ -250,6 +250,9 @@
   #sbInfo{display:block;font-size:13px;color:var(--muted);line-height:1.3;white-space:normal!important;font-family:var(--body);}
   #sbAct{min-width:0;flex:none;}
   #vSea[hidden]{display:none;}
+  .jb-carry{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:14px;}
+  .jb-carry:empty{display:none;}
+  .jb-carry .res{display:inline-flex;align-items:center;gap:3px;}
   #jbLeft{display:block;font-size:13px;color:var(--muted);line-height:1.3;white-space:normal!important;overflow:visible;}
   #jbReturn,#jbHaste{min-width:0;flex:none;}
   .jb-info{min-width:0;}
@@ -360,7 +363,7 @@
     </div>
   </div>
   <div class="journey-bar" id="journeyBar" hidden>
-    <div class="jb-info"><span class="label" id="jbWhere">On the road</span><span class="num" id="jbLeft"></span></div>
+    <div class="jb-info"><span class="label" id="jbWhere">On the road</span><div class="jb-carry" id="jbCarry"></div><span class="num" id="jbLeft"></span></div>
     <button class="act" id="jbReturn"><small>Bank the haul</small><span>Return home</span></button>
     <button class="act" id="jbHaste" hidden><small>Hasten ½</small><span id="jbHasteTxt"></span></button>
   </div>
@@ -774,7 +777,7 @@ const COMPASS=['east','south-east','south','south-west','west','north-west','nor
 const compass=a=>COMPASS[((Math.round(a/(Math.PI/4))%8)+8)%8];
 
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927235423';
+const BUILD='20260927235824';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1811,13 +1814,15 @@ function refresh(){
   renderBook(); renderQuickbar();
   { const jb=$('journeyBar'), on=view==='journey'&&!!S.exp; jb.hidden=!on;
     if(on){ const e=S.exp, l=LOC[e.id], t=now(), ret=e.returning;
+      const ck=['gold',...MATS,...CRYS].filter(k=>e.carry[k]>0);
+      setHTML($('jbCarry'), ck.map(k=>miniChip(k,Math.floor(e.carry[k]))).join('')||'<span class="r-desc">Nothing yet</span>');
       $('jbReturn').hidden=ret; $('jbHaste').hidden=!ret;
       if(ret){ const foes=e.beats.filter(b=>b.ret&&!b.done).length;
         $('jbWhere').textContent=`Heading home \u00B7 ${clock(Math.max(0,e.end-t))}`;
         $('jbLeft').textContent=foes?`${foes} foe${foes>1?'s':''} on the road back`:'The road home is clear';
         $('jbHaste').disabled=!canHasten(); setHTML($('jbHasteTxt'), e.hasted?'Hastened':`${ICON('storm')} 1 Storm`); }
       else { const st=stageAt(e,t), rd=roadHome(e.id,st), th=RETREATS[S.retreat??1];
-        $('jbWhere').textContent=`Depth ${st+1} \u00B7 ${fmt(carriedCount(e))} carried`;
+        $('jbWhere').textContent=`Depth ${st+1} \u00B7 carrying`;
         $('jbLeft').textContent=`Foes hit ~${rd.hit} \u00B7 road home: ${rd.n?`${rd.n} foe${rd.n>1?'s':''}`:'clear'} \u00B7 ${e.pack?`\u2697 ${e.pack} \u00B7 `:''}turn back at ${th.label}`; } } }
   renderHarbor();
   if(now()-achT>1000){ achT=now(); checkAchievements(); }

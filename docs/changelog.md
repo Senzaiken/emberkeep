@@ -4,6 +4,8 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **See the haul.** The journey bar now lists what the hero is carrying item by item (gold, wood, stone, ore, crystals) instead of a single total. The hero card still shows the total.
+
 - **Claimed castles (sea phase 3).** Break a castle's fleet and **besiege** it: storm the gate (costs hero health), scale the walls by night (half the cost, night only), or blockade the harbor (8–32 minutes at anchor, no health). A claimed castle is a realm of your own, switchable in the Build tab, with five holdings of its people, its own Keep view, a friendly port that unloads your hold, and a perk: Redtide Hold (double sea gold, bigger hold), Karak Brine (half forging and shipwright times, more ore), Skarholm (faster, tougher ship, +25 hero health), Sylvanreach (faster crystal mine, stronger draughts). New log section: Your realms. See [The Sea](sea.md#claimed-castles-realms).
 - **Sea battles (sea phase 2).** Maren now refits the **hull** and **arms** (crossbow rail up to Ember Ballistae). Corsair raiders roam the sea, and each castle has a guard fleet (galleys, dwarven ironclads, jarl's dragonships, elven swanships). Fight with broadsides: turn your side to the enemy and **Fire!**. Sink a ship for salvage, or **board** a crippled one with your hero for more loot. The hull repairs in harbor, and sinking loses the cargo. New log section (Ships of the sea) and Sea battles medals.
 - **Tab order.** Build · Upgrades · Magic · Explore / Forge · Harbor · Legacy.

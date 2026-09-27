@@ -71,7 +71,7 @@ Departing switches the canvas to the **Journey** view: a side-scrolling scene of
 
 ### Journey bar
 
-Under the scene while you watch: the depth and how much is carried, roughly what foes hit for, how many foes wait on the road home, draughts left, and your turn-back point, with a **Return home** button. On the walk home it shows the time left, the foes still ahead, and **Hasten**.
+Under the scene while you watch: the depth, **everything carried** item by item (gold, each material and crystal, with icons), roughly what foes hit for, how many foes wait on the road home, draughts left, and your turn-back point, with a **Return home** button. On the walk home it shows the time left, the foes still ahead, and **Hasten**.
 - The scene follows the day/night cycle, except Ironroot Deep, which is a torch-lit cave.
 
 ### Tap to help
