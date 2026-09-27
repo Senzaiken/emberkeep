@@ -159,6 +159,17 @@
   #evFill{height:100%;background:var(--gold);}
   .ev-default{font-size:12px;color:var(--muted);margin-top:6px;}
 
+  /* guided tutorial: spotlight + blockers around it */
+  #tut{position:fixed;inset:0;z-index:7;pointer-events:none;}
+  .tut-block{position:fixed;pointer-events:auto;background:transparent;}
+  .tut-ring{position:fixed;border-radius:12px;box-shadow:0 0 0 200vmax rgba(5,6,12,.74);outline:2px solid var(--gold);outline-offset:2px;pointer-events:none;
+    transition:left .25s,top .25s,width .25s,height .25s;animation:tutPulse 1.6s ease-in-out infinite;}
+  @keyframes tutPulse{50%{outline-color:rgba(246,207,106,.35);}}
+  .tut-card{position:fixed;left:50%;transform:translateX(-50%);width:min(480px,calc(100% - 32px));pointer-events:auto;background:var(--panel);border:1px solid var(--gold-deep);border-radius:12px;padding:14px 16px;box-shadow:0 12px 36px rgba(0,0,0,.55);}
+  .tut-card p{margin:4px 0 12px;font-size:16px;line-height:1.45;}
+  .tut-btns{display:flex;gap:8px;justify-content:flex-end;}
+  .tut-btns .act{min-width:0;padding:7px 14px;}
+  @media (prefers-reduced-motion: reduce){ .tut-ring{transition:none;animation:none;} }
   /* story dialog */
   .dialog-back{position:fixed;inset:0;z-index:8;background:rgba(6,7,14,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));}
   .dialog{width:min(520px,100%);background:var(--panel);border:1px solid var(--gold-deep);border-radius:14px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:12px;}
@@ -318,6 +329,15 @@
 <div class="update-bar" id="updateBar" hidden role="status">
   <span>A new version of Emberkeep is ready.</span>
   <button class="act" id="updateBtn"><span>Reload</span></button>
+</div>
+<div id="tut" hidden>
+  <div class="tut-ring" id="tutRing"></div>
+  <div class="tut-block" id="tbT"></div><div class="tut-block" id="tbB"></div><div class="tut-block" id="tbL"></div><div class="tut-block" id="tbR"></div>
+  <div class="tut-card" id="tutCard" role="dialog" aria-live="polite">
+    <div class="label" id="tutStep"></div>
+    <p id="tutText"></p>
+    <div class="tut-btns"><button class="act ghost" id="tutSkip"><span>Skip tutorial</span></button><button class="act" id="tutNext" hidden><span>Got it</span></button></div>
+  </div>
 </div>
 <div class="dialog-back" id="dialog" hidden>
   <div class="dialog" role="dialog" aria-labelledby="dlgName">
@@ -487,12 +507,12 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927184358';
+const BUILD='20260927184815';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},tut:null,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
 function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),stats:Object.assign(f.stats,d.stats)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
@@ -718,7 +738,7 @@ function introStory(){
   showDialog('keep',[
     'The old lord is gone, and the keep on the hill is yours. The coffers are empty and the fields untilled.',
     'Tap the keep to collect what tithe remains, build holdings to bring in more, and send your hero out to Whisperwood for timber. The Explore tab has the road.',
-  ],'Begin',()=>{ S.story.intro=true; refresh(); });
+  ],'Begin',()=>{ S.story.intro=true; if(S.tut==null) tutStart(); refresh(); });
 }
 
 /* ---------- Quests from Arthrex ---------- */
@@ -772,6 +792,43 @@ function openSpire(){
   ['build','up','explore','forge','magic','asc'].forEach(k=>$('p-'+k).hidden=k!=='magic');
   $('spire').scrollIntoView({behavior:'smooth',block:'start'});
   if(!S.story.met) toast('The spire door is shut. Arthrex keeps to himself, for now.');
+}
+
+/* ---------- Guided tutorial ---------- */
+const TUT=[
+  {target:()=>$('realm'),before:()=>setView('keep'),start:()=>{ S.tutBase=S.taps; },
+   text:()=>`Your treasury is empty. Tap the castle to collect the tithe. ${Math.max(0,5-(S.taps-S.tutBase))} more taps.`,done:()=>S.taps>=S.tutBase+5},
+  {target:()=>$('tab-explore'),text:()=>'Your hero can bring back wood, stone and ore for better gear. Open the Explore tab.',done:()=>!$('p-explore').hidden},
+  {target:()=>$('l-wood'),text:()=>'Send your hero into Whisperwood. Each trip costs a little health, and the loot comes home with them.',done:()=>!!S.exp},
+  {target:()=>$('realm'),text:()=>'This is your hero on the road. Tap trees, rocks and beasts before your hero reaches them for extra loot, and half the damage from foes.',next:'Got it'},
+];
+const tutActive=()=>S.tut!=null&&S.tut<TUT.length;
+function tutStart(){ S.tut=0; tutEnter(); }
+function tutEnter(){ const st=TUT[S.tut]; if(!st) return tutEnd(); st.before&&st.before(); st.start&&st.start();
+  $('tutNext').hidden=!st.next; if(st.next) $('tutNext').querySelector('span').textContent=st.next;
+  setTimeout(()=>{ const el=st.target(); el&&el.scrollIntoView({block:'center',behavior:'smooth'}); },60); }
+function tutAdvance(){ S.tut++; if(S.tut>=TUT.length) tutEnd(); else tutEnter(); }
+function tutEnd(skipped){ S.tut=TUT.length; $('tut').hidden=true;
+  if(!skipped) toast('You’re on your way. When your hero returns, someone at the keep will want a word.'); }
+function tutRender(){
+  const box=$('tut');
+  if(!tutActive()||dialogOpen()){ box.hidden=true; return; }
+  const st=TUT[S.tut]; if(st.done&&st.done()){ tutAdvance(); if(!tutActive()) return; }
+  const cur=TUT[S.tut], el=cur.target(); if(!el){ box.hidden=true; return; }
+  box.hidden=false;
+  const r=el.getBoundingClientRect(), pad=6, vw=innerWidth, vh=innerHeight;
+  const L=Math.max(0,r.left-pad), T=Math.max(0,r.top-pad), Rr=Math.min(vw,r.right+pad), B=Math.min(vh,r.bottom+pad);
+  Object.assign($('tutRing').style,{left:L+'px',top:T+'px',width:(Rr-L)+'px',height:(B-T)+'px'});
+  Object.assign($('tbT').style,{left:0,top:0,width:vw+'px',height:T+'px'});
+  Object.assign($('tbB').style,{left:0,top:B+'px',width:vw+'px',height:Math.max(0,vh-B)+'px'});
+  Object.assign($('tbL').style,{left:0,top:T+'px',width:L+'px',height:(B-T)+'px'});
+  Object.assign($('tbR').style,{left:Rr+'px',top:T+'px',width:Math.max(0,vw-Rr)+'px',height:(B-T)+'px'});
+  $('tutStep').textContent=`Step ${S.tut+1} of ${TUT.length}`;
+  const txt=cur.text(); if($('tutText').textContent!==txt) $('tutText').textContent=txt;
+  const card=$('tutCard'), ch=card.offsetHeight;
+  if(vh-B>ch+24){ card.style.top=(B+14)+'px'; card.style.bottom='auto'; }
+  else if(T>ch+24){ card.style.top=(T-14-ch)+'px'; card.style.bottom='auto'; }
+  else { card.style.top='auto'; card.style.bottom='calc(16px + env(safe-area-inset-bottom,0px))'; }
 }
 
 /* ---------- Dialog overlay ---------- */
@@ -982,6 +1039,7 @@ function refresh(){
   $('vJourney').disabled=!S.exp;
 
   renderEvent();
+  tutRender();
   setHTML($('buffs'), SPELLS.filter(s=>s.dur&&active(s.id)).map(s=>`<span class="buff">${s.name} ${Math.ceil((S.spells[s.id]-now())/1000)}s</span>`).join(''));
 
   // buildings
@@ -1114,6 +1172,10 @@ function wireUI(){
   $('buildTxt').textContent=`Build ${BUILD}`;
   $('updateBtn').addEventListener('click',()=>reloadFresh(newBuild));
   $('dlgNext').addEventListener('click',dialogNext);
+  $('tutSkip').addEventListener('click',()=>tutEnd(true));
+  $('tutNext').addEventListener('click',tutAdvance);
+  addEventListener('scroll',()=>{ if(tutActive()) tutRender(); },{passive:true});
+  addEventListener('resize',()=>{ if(tutActive()) tutRender(); });
   $('mendBtn').addEventListener('click',mend); $('hasteBtn').addEventListener('click',hasten);
   $('checkBtn').addEventListener('click',()=>checkForUpdate(true));
   setTimeout(()=>checkForUpdate(false),3000);
@@ -1667,6 +1729,8 @@ function start(data){
   const lastB=S.chron.length&&BUILDINGS.find(b=>b.id===S.chron[S.chron.length-1]);
   chronicle(lastB?lastB.chron:'Your keep stands alone on the hill. Tap it to collect the tithe, and send your hero into Whisperwood.');
   if(!S.story.intro&&S.life>0) S.story.intro=true;
+  if(S.tut==null&&S.life>0) S.tut=TUT.length;
+  if(tutActive()) setTimeout(tutEnter,800);
   tick(); refresh();
   if(!S.story.intro) setTimeout(introStory,600);
   setInterval(()=>{ tick(); refresh(); },100);

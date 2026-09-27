@@ -37,6 +37,7 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `hp` | Hero health |
 | `relics` | Relic levels, by id |
 | `story` | `{intro, met}`: seen the opening, met Arthrex |
+| `tut`, `tutBase` | Tutorial step (`null` = not started, 4 = finished or skipped) and the tap count when step 1 began |
 | `quest`, `questNext` | Arthrex's current errand (or `null`) and when the next one is offered |
 | `stats` | Lifetime counters for errands: `trips{region}`, `foes`, `tapGold`, `relics` |
 | `mine`, `mineAcc` | Crystal Mine depth and progress toward the next crystal |

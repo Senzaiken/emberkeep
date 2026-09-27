@@ -6,6 +6,19 @@ Emberkeep has a light storyline told in dialog cards: a portrait, a name, a line
 
 On a brand-new save, a short card from the keep sets the scene. The old lord is gone, the keep is yours, and the coffers are empty. It points you to tapping the keep, building holdings, and sending your hero to Whisperwood. Existing saves with progress skip this. **Start from nothing** in the Ascend tab shows it again.
 
+## Guided tutorial
+
+Right after the opening card, a spotlight tutorial starts. The whole screen goes into shadow except the one thing to tap, which gets a pulsing gold outline. A card beside it explains the step. Taps anywhere else are blocked until the step is done.
+
+| Step | Spotlight | Advances when |
+|---|---|---|
+| 1 | The keep | You've tapped it 5 times (the card counts down) |
+| 2 | The Explore tab | The Explore tab is open |
+| 3 | Whisperwood | The hero departs |
+| 4 | The Journey view | You tap **Got it** (it explains tapping ahead to help) |
+
+Every card has **Skip tutorial**. The tutorial resumes at the same step if the game is closed partway through, and it hides while a story dialog is open. Existing saves with progress never see it. **Start from nothing** shows it again.
+
 ## Arthrex, Court Sorcerer
 
 Arthrex has served the keep for longer than your father lived. He lives in the **spire on the east grounds**, which is always standing to the right of the castle. Once you've met him, he can be seen at its door, robed in teal with a crystal-topped staff.
