@@ -162,6 +162,10 @@
   .relic.found{border-color:var(--gold-deep);}
   .relic:not(.found) b{color:var(--muted);}
 
+  .update-bar{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(520px,calc(100% - 32px));z-index:7;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 16px;border-radius:10px;
+    background:var(--panel-2);border:1px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:15px;}
+  .update-bar .act{min-width:0;padding:6px 14px;}
   #toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:max-content;max-width:min(480px,calc(100% - 32px));
     background:var(--panel-2);border:1px solid var(--gold-deep);color:var(--ink);padding:10px 16px;border-radius:8px;font-size:15px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.4);}
   @media (max-width:420px){ .gear{grid-template-columns:1fr;} .top{grid-template-columns:1fr;gap:8px;} }
@@ -269,11 +273,19 @@
     </div>
     <div class="reset">
       <span class="r-desc">Lifetime gold <b class="num" id="lifeGold">0</b> · <b class="num" id="taps">0</b> taps</span>
+      <div class="asc-actions">
+        <button class="act" id="checkBtn" style="background:transparent;color:var(--ink);border-color:var(--line)"><small>Updates</small><span id="checkTxt">Check for updates</span></button>
+        <span class="r-desc num" id="buildTxt"></span>
+      </div>
       <button class="act danger" id="wipeBtn"><small>Erase save</small><span id="wipeTxt">Start from nothing</span></button>
     </div>
   </section>
 </div>
 <div id="toast" hidden></div>
+<div class="update-bar" id="updateBar" hidden role="status">
+  <span>A new version of Emberkeep is ready.</span>
+  <button class="act" id="updateBtn"><span>Reload</span></button>
+</div>
 <div class="event" id="eventCard" hidden role="dialog" aria-labelledby="evTitle">
   <div class="label" id="evWhere"></div>
   <div class="ev-title" id="evTitle"></div>
@@ -436,6 +448,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
+const BUILD='20260927181817';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -900,7 +913,23 @@ function confirmButton(btn,txtEl,label,confirmLabel,action){
     clearTimeout(t); armed=false; txtEl.textContent=label; action();
   });
 }
+/* ---------- updates: compare this page's build with version.json, bypassing caches ---------- */
+async function latestBuild(){
+  try{ const r=await fetch(`version.json?t=${Date.now()}`,{cache:'no-store'}); if(!r.ok) return null; return (await r.json()).build||null; }catch(e){ return null; }
+}
+function reloadFresh(build){ save(); location.replace(`${location.pathname}?v=${build||Date.now()}`); }
+let newBuild=null;
+async function checkForUpdate(manual){
+  const b=await latestBuild();
+  if(b&&b!==BUILD){ newBuild=b; $('updateBar').hidden=false; if(manual) reloadFresh(b); return; }
+  if(manual){ $('checkTxt').textContent=b?'You\u2019re up to date':'Couldn\u2019t reach the server'; setTimeout(()=>$('checkTxt').textContent='Check for updates',3000); }
+}
 function wireUI(){
+  $('buildTxt').textContent=`Build ${BUILD}`;
+  $('updateBtn').addEventListener('click',()=>reloadFresh(newBuild));
+  $('checkBtn').addEventListener('click',()=>checkForUpdate(true));
+  setTimeout(()=>checkForUpdate(false),3000);
+  setInterval(()=>{ if(!document.hidden) checkForUpdate(false); },120000);
   document.querySelector('.tabs').addEventListener('click',e=>{
     const b=e.target.closest('button[data-tab]'); if(!b) return;
     document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
@@ -928,7 +957,7 @@ function wireUI(){
     document.documentElement.style.setProperty('--mini-h',(mb.querySelector('.minibar-in').offsetHeight)+'px'); },{threshold:0}).observe($('topHeader'));
   confirmButton($('ascendBtn'),$('ascendTxt'),'Found a new dynasty','Tap again to abdicate',ascend);
   confirmButton($('wipeBtn'),$('wipeTxt'),'Start from nothing','Tap again to erase everything',wipe);
-  document.addEventListener('visibilitychange',()=>{ if(document.hidden) save(true); else { tick(); refresh(); } });
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden) save(true); else { tick(); refresh(); checkForUpdate(false); } });
   window.addEventListener('pagehide',()=>save(true));
 }
 

@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Update banner and cache busting.** The game checks `version.json` (uncached) and shows a "new version is ready, Reload" banner when there's a new build. There's also a **Check for updates** button in the Ascend tab. Reloads save first and use a unique URL to get past the cache. See [Saving](saving.md#updates-and-caching).
 - **Expeditions reworked.** Each trip is now a timeline of beats (trees, ore rocks, crystals, foes, treasure chests) with loot arriving as it happens. There's a new **Journey** view (a side-scrolling scene per region, with the hero drawn from their gear) and a Keep/Journey switch on the canvas. Tap what lies ahead to help: extra loot, and half damage from foes. See [Expeditions](expeditions.md).
 - **Road events.** Seven choice cards (Goblin Toll Bridge, A Glinting Vein, A Fallen Giant, Abandoned Camp, Wounded Traveller, Crystal Seep, Wayside Shrine). Each has a 20-second timer and a safe default if you don't choose.
 - **Hero health.** Foes and some events hurt the hero. At 0 health the trip ends early, and the hero needs 25% health to depart. They heal while resting at the keep. New spell: **Mending Light**. See [Hero](hero.md).

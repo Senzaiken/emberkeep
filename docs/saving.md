@@ -41,6 +41,15 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 
 If the save shape changes in a way old saves can't load, bump the key (for example `-v3`) and note it in the [Changelog](changelog.md).
 
+## Updates and caching
+
+GitHub Pages lets browsers cache the page for about 10 minutes, and home-screen apps hold on to it longer. To get around that:
+
+- Every commit that touches the game stamps a new build id into `index.html` (`const BUILD`) and `version.json`, using the `tools/pre-commit` hook.
+- The game fetches `version.json` with caching disabled 3 seconds after opening, whenever it comes back to the foreground, and every 2 minutes. If the build differs, a **"A new version of Emberkeep is ready"** banner appears.
+- **Reload** saves the game, then reopens the page as `?v=<build>`. The unique URL forces fresh files.
+- Ascend tab → **Check for updates** does the same check on demand and reloads right away if there's a new build. The current build id is shown next to it.
+
 ## Resetting
 
 Ascend tab → **Start from nothing** (tap twice to confirm) wipes everything, including Renown.
