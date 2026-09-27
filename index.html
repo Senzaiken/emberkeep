@@ -683,6 +683,7 @@ class Realm extends Phaser.Scene{
     this.sun=this.add.container(0,0,[this.add.circle(0,0,70,0xfff1c2,0.08),this.add.circle(0,0,44,0xfff1c2,0.14),this.add.circle(0,0,24,0xfff4d6)]);
     this.moon=this.add.container(0,0,[this.add.circle(0,0,64,0xf1e6c8,0.05),this.add.circle(0,0,42,0xf1e6c8,0.08),this.add.circle(0,0,26,0xf1e6c8),
       this.add.circle(-8,-6,5,0xdcd0ad),this.add.circle(8,8,4,0xdcd0ad),this.add.circle(6,-10,3,0xdcd0ad)]);
+    this.mountG=this.add.graphics();
     this.dragon=this.add.image(0,0,'dragon').setScale(0.5).setVisible(false);
 
     this.hillsG=this.add.graphics();
@@ -722,16 +723,48 @@ class Realm extends Phaser.Scene{
     this.skyG.clear(); this.skyG.fillGradientStyle(top,top,bot,bot,1); this.skyG.fillRect(0,0,W,H);
   }
   drawLand(){
-    const h=this.hillsG, w=this.woodsG, g=this.groundG; h.clear(); w.clear(); g.clear();
-    h.fillStyle(this.L(0x1a1d31,0x5d7f5a));
-    const pts=[{x:0,y:H}]; for(let x=0;x<=W;x+=12) pts.push({x,y:238+18*Math.sin(x/70)+10*Math.sin(x/23+1)}); pts.push({x:W,y:H});
-    h.fillPoints(pts,true);
-    // Whisperwood, always at the western edge
-    for(let i=0;i<11;i++){ const x=14+i*14+(i%3)*4, y=266+(i%2)*10+5*Math.sin(x/40), ht=30+(i*7)%16;
-      w.fillStyle(i%2?this.L(0x172a2a,0x2d5534):this.L(0x1c3130,0x3a6a3e)); w.fillTriangle(x-10,y,x,y-ht,x+10,y); }
-    g.fillStyle(this.L(0x131627,0x486b40));
+    const m=this.mountG, h=this.hillsG, w=this.woodsG, g=this.groundG; m.clear(); h.clear(); w.clear(); g.clear();
+    // Far mountains with a lit and a shaded face, snow on the tall peaks
+    const peaks=[[-10,222],[40,192],[92,168],[140,198],[196,158],[250,196],[300,176],[352,204],[420,166],[478,192],[532,150],[592,186],[642,170],[694,198],[730,186]];
+    const mLit=this.L(0x151829,0x93a9c6), mShade=this.L(0x10121f,0x7489a8), snow=this.L(0x2b2f46,0xeef2f7), snowShade=this.L(0x22263a,0xc9d4e2);
+    m.fillStyle(mLit); m.fillPoints([{x:0,y:H},...peaks.map(([x,y])=>({x,y})),{x:W,y:H}],true);
+    for(let i=1;i<peaks.length-1;i++){ const [x,y]=peaks[i], [nx,ny]=peaks[i+1];
+      if(y<ny){ m.fillStyle(mShade); m.fillTriangle(x,y,nx,ny,x+(nx-x)*0.35,250); }
+      if(y<182){ const [px,py]=peaks[i-1], d=(182-y)*0.9, t1=d/(py-y||1), t2=d/(ny-y||1);
+        m.fillStyle(snow); m.fillTriangle(x,y,x+(px-x)*t1,y+d,x,y+d*0.8);
+        m.fillStyle(snowShade); m.fillTriangle(x,y,x,y+d*0.8,x+(nx-x)*t2,y+d); } }
+    // Rolling hills with a lit crest
+    const crest=x=>238+18*Math.sin(x/70)+10*Math.sin(x/23+1);
+    const pts=[{x:0,y:H}]; for(let x=0;x<=W;x+=8) pts.push({x,y:crest(x)}); pts.push({x:W,y:H});
+    h.fillStyle(this.L(0x1a1d31,0x5d7f5a)); h.fillPoints(pts,true);
+    h.lineStyle(2,this.L(0x24283f,0x7fa06d),1); h.beginPath(); h.moveTo(0,crest(0)); for(let x=8;x<=W;x+=8) h.lineTo(x,crest(x)); h.strokePath();
+    h.fillStyle(this.L(0x171a2c,0x52734f)); for(let x=0;x<W;x+=46) h.fillEllipse(x+20,crest(x+20)+22,60,10);
+    // Whisperwood: layered pines and a few oaks at the western edge
+    const trees=[['p',16,270,40],['o',34,276,13],['p',50,268,46],['p',70,280,36],['o',88,274,15],['p',104,270,42],['p',122,282,34],['o',140,280,12],['p',150,274,38],['p',30,288,30],['p',94,290,28]];
+    for(const [k,x,y,s2] of trees) k==='p'?this.pine(w,x,y,s2):this.oak(w,x,y,s2);
+    // Near ground, the road from the gate, grass and stones
     const gp=[{x:0,y:H}]; for(let x=0;x<=W;x+=12) gp.push({x,y:290+5*Math.sin(x/40)}); gp.push({x:W,y:H});
-    g.fillPoints(gp,true);
+    g.fillStyle(this.L(0x131627,0x486b40)); g.fillPoints(gp,true);
+    g.fillStyle(this.L(0x1b1d2c,0xa08b64)); g.fillPoints([{x:346,y:292},{x:374,y:292},{x:386,y:312},{x:414,y:338},{x:436,y:H},{x:340,y:H},{x:350,y:336},{x:340,y:312}],true);
+    g.fillStyle(this.L(0x171927,0x8a7654)); g.fillPoints([{x:362,y:300},{x:370,y:300},{x:392,y:330},{x:410,y:H},{x:396,y:H},{x:380,y:332}],true);
+    const tuft=this.L(0x1a1e33,0x3c5c35), tuft2=this.L(0x1e2338,0x5f8a4d);
+    const tufts=[[262,312],[284,330],[300,318],[318,346],[452,318],[470,340],[520,346],[560,312],[598,334],[634,316],[662,344],[700,322],[246,348],[610,352],[448,352]];
+    tufts.forEach(([x,y],i)=>{ g.fillStyle(i%2?tuft:tuft2); g.fillTriangle(x-5,y,x-2,y-7,x,y); g.fillTriangle(x-1,y,x+2,y-9,x+4,y); g.fillTriangle(x+3,y,x+6,y-6,x+8,y); });
+    const rock=this.L(0x22263a,0x8e8c94), rockS=this.L(0x191c2c,0x6e6c76);
+    for(const [x,y,r] of [[330,340,5],[440,326,4],[676,336,6],[290,356,4]]){ g.fillStyle(rockS); g.fillEllipse(x+1,y+1,r*2.4,r*1.6); g.fillStyle(rock); g.fillEllipse(x-1,y-1,r*2,r*1.3); }
+  }
+  pine(g,x,y,h){
+    g.fillStyle(this.L(0x1a1716,0x5a4030)); g.fillRect(x-1.5,y-4,3,6);
+    const lit=this.L(0x1c3130,0x3d7040), shade=this.L(0x142424,0x2b5431);
+    for(let t=0;t<3;t++){ const ty=y-4-t*h*0.26, tw=11-t*2.6, th=h*0.46;
+      g.fillStyle(lit); g.fillTriangle(x-tw,ty,x,ty-th,x+tw,ty);
+      g.fillStyle(shade); g.fillTriangle(x,ty-th,x+tw,ty,x+1,ty); }
+  }
+  oak(g,x,y,r){
+    g.fillStyle(this.L(0x1a1716,0x5a4030)); g.fillRect(x-2,y-r*0.6,4,r*0.8);
+    g.fillStyle(this.L(0x172a26,0x4b7a3c)); g.fillCircle(x-r*0.45,y-r*1.1,r*0.75); g.fillCircle(x+r*0.4,y-r*1.15,r*0.8); g.fillCircle(x,y-r*1.6,r*0.8);
+    g.fillStyle(this.L(0x13221f,0x3a6331)); g.fillCircle(x+r*0.55,y-r*0.95,r*0.55);
+    g.fillStyle(this.L(0x1f3632,0x64954c)); g.fillCircle(x-r*0.3,y-r*1.75,r*0.35);
   }
   drawScenery(){
     const o=id=>owned(id), b=this.back, f=this.front, c=this.castleG;
@@ -759,18 +792,43 @@ class Realm extends Phaser.Scene{
     if(tw){ b.fillStyle(this.L(0x22263b,0x7d7f95)); b.fillRect(678,128,24,166); b.fillStyle(this.L(0x1a1d2f,0x4d3f66)); b.fillTriangle(672,128,690,92,708,128);
       b.fillStyle(0xc7a8f0); b.fillRect(686,160,8,12); b.fillRect(686,210,8,12); }
     this.orb.setVisible(tw); this.orbGlow.setVisible(tw);
-    // Castle
-    c.fillStyle(this.L(0x252a3f,0x8b8a93));
-    c.fillRect(-70,-110,140,110);
-    for(let x=-70;x<70;x+=20) c.fillRect(x,-122,12,12);
-    c.fillRect(-104,-150,40,150); c.fillRect(64,-150,40,150);
-    for(const tx of [-104,64]) for(let x=tx;x<tx+40;x+=14) c.fillRect(x,-160,9,10);
-    c.fillRect(-30,-168,60,58);
-    c.fillStyle(this.L(0x1b1f31,0x58495e)); c.fillTriangle(-36,-168,0,-212,36,-168);
-    c.fillStyle(this.L(0x2d334b,0xa7a6ae)); c.fillRect(-70,-110,140,3); c.fillRect(-104,-150,40,3); c.fillRect(64,-150,40,3);
-    c.fillStyle(0x0b0d19); c.fillRect(-16,-38,32,38); c.fillCircle(0,-38,16);
-    c.lineStyle(2,0x4a4f66); c.lineBetween(0,-212,0,-232);
-    c.fillStyle(0xd06a45); c.fillTriangle(0,-232,20,-227,0,-222);
+    // Castle: lit faces on the left, shade on the right, brick courses, conical roofs
+    const stone=this.L(0x2a2f46,0x9d9ba4), shade=this.L(0x1f2335,0x7a7883), mortar=this.L(0x232840,0x87858f),
+          trim=this.L(0x353b56,0xb8b6bf), roof=this.L(0x1d2034,0x6a4a5a), roofS=this.L(0x151827,0x523846), dark=this.L(0x090b15,0x1d1b22);
+    const bricks=(x0,y0,w,h)=>{ c.lineStyle(1,mortar,0.9); for(let y=y0+8,r=0;y<y0+h;y+=8,r++){ c.lineBetween(x0,y,x0+w,y);
+      for(let x=x0+(r%2?6:12);x<x0+w;x+=14) c.lineBetween(x,y,x,y+8); } };
+    // curtain wall
+    c.fillStyle(stone); c.fillRect(-70,-108,140,108); bricks(-70,-108,140,108);
+    c.fillStyle(shade); c.fillRect(-70,-108,140,6);
+    for(let x=-70;x<70;x+=20){ c.fillStyle(stone); c.fillRect(x,-120,12,12); c.fillStyle(shade); c.fillRect(x+8,-120,4,12); }
+    c.fillStyle(trim); c.fillRect(-70,-109,140,2);
+    // central keep
+    c.fillStyle(stone); c.fillRect(-32,-170,64,62); bricks(-32,-170,64,62);
+    c.fillStyle(shade); c.fillRect(14,-170,18,62);
+    c.fillStyle(roof); c.fillTriangle(-40,-168,0,-218,40,-168); c.fillStyle(roofS); c.fillTriangle(0,-218,40,-168,6,-168);
+    c.lineStyle(1,roofS,0.7); for(let i=1;i<4;i++){ const yy=-168-i*12, hw=40*(1-i*12/50); c.lineBetween(-hw,yy,hw,yy); }
+    // corner towers
+    for(const tx of [-104,64]){
+      c.fillStyle(stone); c.fillRect(tx,-150,40,150); bricks(tx,-150,40,150);
+      c.fillStyle(shade); c.fillRect(tx+27,-150,13,150);
+      c.fillStyle(trim); c.fillRect(tx-4,-156,48,8); c.fillStyle(shade); c.fillRect(tx+30,-156,14,8);
+      c.fillStyle(roof); c.fillTriangle(tx-8,-156,tx+20,-206,tx+48,-156); c.fillStyle(roofS); c.fillTriangle(tx+20,-206,tx+48,-156,tx+24,-156);
+      c.lineStyle(1,roofS,0.7); for(let i=1;i<4;i++){ const yy=-156-i*12, hw=28*(1-i*12/50); c.lineBetween(tx+20-hw,yy,tx+20+hw,yy); }
+      c.lineStyle(1.5,this.L(0x4a4f66,0x5a5560)); c.lineBetween(tx+20,-206,tx+20,-220);
+      c.fillStyle(0xd06a45); c.fillTriangle(tx+20,-220,tx+32,-217,tx+20,-214);
+      c.fillStyle(dark); c.fillRect(tx+18,-44,4,12); c.fillRect(tx+18,-140,4,10);
+      c.fillStyle(shade); c.fillRect(tx,-8,40,8);
+    }
+    // gate with stone arch and portcullis
+    c.fillStyle(trim); c.fillRect(-21,-40,42,40); c.fillCircle(0,-40,21);
+    c.fillStyle(dark); c.fillRect(-15,-40,30,40); c.fillCircle(0,-40,15);
+    c.lineStyle(1.5,this.L(0x3b3526,0x4e4232),1);
+    for(let x=-12;x<=12;x+=6) c.lineBetween(x,-52+Math.abs(x)*0.5,x,-14);
+    for(let y=-48;y<=-16;y+=8) c.lineBetween(-14,y,14,y);
+    c.fillStyle(shade); c.fillRect(-70,-6,140,6);
+    // main flag
+    c.lineStyle(2,this.L(0x4a4f66,0x5a5560)); c.lineBetween(0,-218,0,-238);
+    c.fillStyle(0xd06a45); c.fillTriangle(0,-238,20,-233,0,-228);
     if(o('guild')){ for(const x of [-92,-76,76,92]){ c.fillStyle(0x8a2f2a); c.fillRect(x-5,-146,10,34); c.fillTriangle(x-5,-112,x,-104,x+5,-112); c.fillStyle(0xe3ad45); c.fillRect(x-2,-136,4,4);} }
     // Farm fields
     if(o('farm')){ const rows=Math.min(7,2+Math.floor(o('farm')/5));
@@ -780,7 +838,10 @@ class Realm extends Phaser.Scene{
       for(let i=0;i<n;i++){ const x=484+i*24, y=320+(i%2)*8; f.fillStyle(cols[i]); f.fillTriangle(x-12,y,x,y-18,x+12,y); f.fillStyle(0x0b0d19); f.fillRect(x-2,y-6,4,6); } }
     this.dragon.setVisible(o('dragon')>0);
   }
-  drawWindows(n){ const w=this.winG; w.clear(); WINDOWS.forEach(([x,y],i)=>{ w.fillStyle(i<n?this.L(0xf0b44a,0x3b3a45):this.L(0x131626,0x3b3a45)); w.fillRect(x,y,8,12); }); }
+  drawWindows(n){ const w=this.winG; w.clear(); WINDOWS.forEach(([x,y],i)=>{ const on=i<n;
+    if(on&&this.light<0.6){ w.fillStyle(0xf0b44a,0.18*(1-this.light)); w.fillCircle(x+4,y+6,9); }
+    w.fillStyle(on?this.L(0xf0b44a,0x3b3a45):this.L(0x0f1120,0x3b3a45)); w.fillRect(x,y+4,8,8); w.fillCircle(x+4,y+4,4);
+    w.fillStyle(this.L(0x353b56,0xb8b6bf)); w.fillRect(x-1,y+12,10,2); }); }
   fx(x,y,v,auto){
     if(this.floaters<36){
       this.floaters++;
