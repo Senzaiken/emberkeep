@@ -72,7 +72,7 @@ Each entry shows why it can't be cast right now, if it can't (for example "Only 
 
 ### Starred spells (quick-cast bar)
 
-Tap the **☆** beside any spellbook entry to star it (★). Starred spells appear as round icons along the bottom-right of the castle scene, in both the Keep and Journey views, in the order you starred them. You can star as many as you like.
+Tap the **☆** beside any spellbook entry to star it (★). Starred spells appear as round icons with short labels in a row **just below** the castle scene (outside the tap area, so they can't be hit by accident when tapping the keep), in the order you starred them. The row scrolls sideways if it gets long. You can star as many as you like.
 
 | Icon state | Meaning |
 |---|---|

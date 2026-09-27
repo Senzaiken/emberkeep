@@ -217,8 +217,12 @@
   .tabs button.qhint::after{content:'\2726';color:var(--storm);margin-left:5px;text-shadow:0 0 6px var(--storm);}
   .qhint-realm{position:absolute;left:8px;top:8px;z-index:1;font-size:12px;color:#efe6ff;background:rgba(40,28,64,.75);border:1px solid rgba(199,168,240,.6);border-radius:999px;padding:4px 10px;pointer-events:none;font-variant-numeric:tabular-nums;}
   /* quick-cast bar: starred spells over the bottom-right of the scene */
-  .quickbar{position:absolute;right:8px;bottom:8px;z-index:1;display:flex;gap:6px;flex-wrap:wrap-reverse;justify-content:flex-end;max-width:calc(100% - 16px);}
-  .qspell{position:relative;width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0;cursor:pointer;
+  .quickbar{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px;margin-top:-2px;}
+  .quickbar::-webkit-scrollbar{display:none;}
+  .quickbar:empty{display:none;}
+  .qs-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex:none;width:58px;}
+  .qs-wrap span.qs-name{font-size:10.5px;line-height:1.1;color:var(--muted);text-align:center;}
+  .qspell{position:relative;width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0;cursor:pointer;
     background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--c) 70%,#fff),var(--c) 55%,color-mix(in srgb,var(--c) 60%,#000));box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 10px color-mix(in srgb,var(--c) 50%,transparent);}
   .qspell svg{width:22px;height:22px;display:block;margin:auto;}
   .qspell.off{filter:grayscale(1) brightness(.6);box-shadow:0 2px 6px rgba(0,0,0,.4);cursor:default;}
@@ -288,12 +292,12 @@
   <div class="realm-wrap">
     <div id="realm" role="button" aria-label="Your keep. Tap to collect gold."></div>
     <div class="qhint-realm" id="qRealm" hidden></div>
-    <div class="quickbar" id="quickbar" aria-label="Starred spells"></div>
     <div class="view-toggle" id="viewToggle">
       <button id="vKeep" data-view="keep" aria-pressed="true">Keep</button>
       <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
     </div>
   </div>
+  <div class="quickbar" id="quickbar" aria-label="Starred spells"></div>
   <p id="chron" class="chron"></p>
 
   <nav class="tabs" role="tablist">
@@ -572,7 +576,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927202618';
+const BUILD='20260927203023';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -983,7 +987,7 @@ function renderQuickbar(){
   const all=bookEntries(), favs=S.favs.map(id=>all.find(e=>e.id===id)).filter(Boolean), bar=$('quickbar');
   const key=favs.map(e=>e.id).join();
   if(key!==qbKey){ qbKey=key;
-    bar.innerHTML=favs.map(e=>`<button class="qspell" id="qs-${e.id}" data-qs="${e.id}" style="--c:${SPELL_LOOK[e.id]?SPELL_LOOK[e.id][0]:'var(--storm)'}" aria-label="${e.name}" title="${e.name}">${spellGlyph(e.id)}<span class="cd" id="qsc-${e.id}"></span></button>`).join(''); }
+    bar.innerHTML=favs.map(e=>`<div class="qs-wrap"><button class="qspell" id="qs-${e.id}" data-qs="${e.id}" style="--c:${SPELL_LOOK[e.id]?SPELL_LOOK[e.id][0]:'var(--storm)'}" aria-label="${e.name}" title="${e.name}">${spellGlyph(e.id)}<span class="cd" id="qsc-${e.id}"></span></button><span class="qs-name">${e.name.replace(/^(Summon|Split the|Stoke the|Bountiful|Quickened|Dragon\u2019s)\s+/,'')}</span></div>`).join(''); }
   favs.forEach(e=>{ const b=$('qs-'+e.id), cd=$('qsc-'+e.id), tm=spellTimer(e.id), ok=e.can();
     b.classList.toggle('off',!ok&&!tm); b.classList.toggle('busy',!!tm); b.setAttribute('aria-disabled',!ok);
     if(tm){ cd.style.setProperty('--p',1-tm.left/tm.total); cd.textContent=Math.ceil(tm.left/1000); } else { cd.textContent=''; }

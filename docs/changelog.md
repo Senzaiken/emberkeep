@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Starred spells moved below the scene.** They're now in their own row under the castle scene, bigger and labelled, so tapping the keep can't cast them by accident.
 - **Starred spells.** Star (☆) any spellbook entry to pin it as a round icon on the castle scene. Icons are colored when castable, greyed when you lack crystals (tapping explains why), and show a draining ring with seconds left while active. You can star several. The errand pill moved to the top-left of the scene.
 - **Canvas follows the tabs.** Switching to Build (or any tab other than Explore) returns the canvas to the keep for tapping. Opening Explore during a trip shows the journey.
 - **Forging and mining take time.** Brom forges one piece at a time (15s / 1m / 3m / 8m by tier), and **Stoke the forge** with an Ember halves what's left. Crystal Mine galleries are dug as construction jobs (30s / 2m / 5m / 12m) while the current level keeps producing, and **Split the rock** with a Frost halves what's left. Both show countdowns over the keep scene and appear in the spellbook. The tutorial now teaches stoking.
