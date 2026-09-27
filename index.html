@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Emberkeep">
 <meta name="theme-color" content="#101320">
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
@@ -31,7 +31,7 @@
   :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
   img{max-width:100%;}
   body{color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-  .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:10px 40px;display:flex;flex-direction:column;gap:12px;}
+  .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:18px 40px;display:flex;flex-direction:column;gap:12px;}
   .label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
   .num{font-variant-numeric:tabular-nums;}
 
@@ -124,6 +124,8 @@
   .view-toggle button[aria-pressed="true"]{background:rgba(227,173,69,.9);color:#1a1408;}
   .view-toggle button:disabled{opacity:.4;cursor:default;}
 
+  /* solid strip under the iPhone status bar so nothing scrolls beneath it */
+  .safe-top{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--night);z-index:9;pointer-events:none;}
   /* compact bar shown once the header scrolls away */
   .minibar{position:fixed;left:0;right:0;top:0;z-index:4;background:rgba(16,19,32,.94);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
     border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);transform:translateY(-110%);transition:transform .2s ease;}
@@ -174,6 +176,7 @@
 </head>
 <body>
 
+<div class="safe-top" aria-hidden="true"></div>
 <div class="minibar" id="minibar" aria-hidden="true">
   <div class="minibar-in">
     <img src="icons/icon-180.png" alt="">
@@ -448,7 +451,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927181817';
+const BUILD='20260927182252';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
