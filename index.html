@@ -117,6 +117,10 @@
   #hpFill{height:100%;width:100%;background:#d0584a;transition:width .3s;}
   #hpFill.low{background:#e0453a;}
 
+  .quick{display:flex;gap:6px;flex-wrap:wrap;}
+  .pill{font:inherit;font-size:12px;display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);cursor:pointer;}
+  .pill i{width:8px;height:8px;background:var(--c);transform:rotate(45deg);box-shadow:0 0 6px var(--c);}
+  .pill:disabled{opacity:.4;cursor:default;}
   /* realm canvas + view switch */
   .realm-wrap{position:relative;}
   .view-toggle{position:absolute;top:8px;right:8px;display:flex;border:1px solid rgba(236,226,200,.25);border-radius:6px;overflow:hidden;background:rgba(10,12,25,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:1;}
@@ -199,6 +203,10 @@
       <div class="exp-bar"><div id="expFill"></div></div>
       <div class="hp-row"><span class="label">Health</span><span id="hpTxt" class="num"></span></div>
       <div class="hp-bar"><div id="hpFill"></div></div>
+      <div class="quick">
+        <button class="pill" id="mendBtn"><i style="--c:var(--verdant)"></i>Mend +50%</button>
+        <button class="pill" id="hasteBtn"><i style="--c:var(--storm)"></i>Hasten ×½</button>
+      </div>
       <div id="buffs" class="buffs"></div>
     </div>
   </header>
@@ -360,11 +368,11 @@ const RES_HEX={wood:'#c89a6a',stone:'#c3c3cc',copper:'#e39a66',tin:'#dfe4ea',iro
 const WEAPON_TAP=[1,2,4,8,16], PICK_ORE=[1,1.25,1.5,2,2.5], PICK_CRY=[1,1.5,2.25,3.5,5];
 
 const LOCS=[
-  {id:'wood',name:'Whisperwood',dur:20,danger:0,dir:-1,dmg:6,relic:0.06,foes:['boar','wolf'],desc:'Old oaks at the western edge of the realm.',loot:{wood:[4,7],stone:[0,2]}},
-  {id:'quarry',name:'Greystone Quarry',dur:45,danger:0,dir:-1,dmg:8,relic:0.08,foes:['wolf','bandit'],desc:'Abandoned cuttings above the river.',loot:{stone:[5,8],copper:[1,3]}},
-  {id:'fen',name:'Copperfen Hills',dur:90,danger:1,dir:1,dmg:12,relic:0.10,foes:['lurker','goblin'],desc:'Green-streaked rock and sucking bog.',loot:{copper:[5,9],tin:[2,5],stone:[2,4]}},
-  {id:'deep',name:'Ironroot Deep',dur:180,danger:2,dir:1,dmg:16,relic:0.12,foes:['goblin','bat'],desc:'Goblin tunnels thick with ore. Crystals glint in the dark.',loot:{iron:[5,9],tin:[1,3]},cry:[1,2]},
-  {id:'caldera',name:'Shattered Caldera',dur:360,danger:3,dir:1,dmg:22,relic:0.15,foes:['imp','salamander'],desc:'A dead volcano veined with raw elemental crystal.',loot:{iron:[8,14],copper:[4,8]},cry:[3,5]},
+  {id:'wood',cost:10,name:'Whisperwood',dur:20,danger:0,dir:-1,dmg:6,relic:0.06,foes:['boar','wolf'],desc:'Old oaks at the western edge of the realm.',loot:{wood:[4,7],stone:[0,2]}},
+  {id:'quarry',cost:15,name:'Greystone Quarry',dur:45,danger:0,dir:-1,dmg:8,relic:0.08,foes:['wolf','bandit'],desc:'Abandoned cuttings above the river.',loot:{stone:[5,8],copper:[1,3]}},
+  {id:'fen',cost:22,name:'Copperfen Hills',dur:90,danger:1,dir:1,dmg:12,relic:0.10,foes:['lurker','goblin'],desc:'Green-streaked rock and sucking bog.',loot:{copper:[5,9],tin:[2,5],stone:[2,4]}},
+  {id:'deep',cost:30,name:'Ironroot Deep',dur:180,danger:2,dir:1,dmg:16,relic:0.12,foes:['goblin','bat'],desc:'Goblin tunnels thick with ore. Crystals glint in the dark.',loot:{iron:[5,9],tin:[1,3]},cry:[1,2]},
+  {id:'caldera',cost:45,name:'Shattered Caldera',dur:360,danger:3,dir:1,dmg:22,relic:0.15,foes:['imp','salamander'],desc:'A dead volcano veined with raw elemental crystal.',loot:{iron:[8,14],copper:[4,8]},cry:[3,5]},
 ];
 const LOC=Object.fromEntries(LOCS.map(l=>[l.id,l]));
 const FOE_NAMES={boar:'Wild Boar',wolf:'Grey Wolf',bandit:'Bandit',lurker:'Bog Lurker',goblin:'Goblin',bat:'Cave Bat',imp:'Fire Imp',salamander:'Salamander'};
@@ -445,13 +453,12 @@ const MINE=[
 const SPELLS=[
   {id:'midas',name:'Midas Touch',learn:{gold:300,ember:3},cast:{ember:1},dur:20,text:'Taps earn ×10 gold for 20 seconds.'},
   {id:'familiar',name:'Summon Familiar',learn:{gold:2500,storm:3},cast:{storm:1},dur:20,text:'A wisp taps the keep 8 times a second for 20 seconds.'},
-  {id:'mend',name:'Mending Light',learn:{gold:1500,verdant:3},cast:{verdant:1},dur:0,text:'Heals your hero for half their health, even on the road.'},
   {id:'road',name:'Quickened Road',learn:{gold:4000,frost:3,storm:2},cast:{frost:1,storm:1},dur:0,text:'Your hero returns from their expedition at once, haul in hand.'},
   {id:'harvest',name:'Bountiful Harvest',learn:{gold:8000,verdant:3},cast:{verdant:1,frost:1},dur:30,text:'Every building produces ×3 for 30 seconds.'},
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927182252';
+const BUILD='20260927183213';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -518,11 +525,23 @@ function forge(slot){
 }
 
 // Hero health
-const HP_REGEN_FULL=240, DEPART_MIN=0.25;
+const HP_REGEN_FULL=240, MEND_COST={verdant:1}, HASTE_COST={storm:1};
 const maxHP=()=>100+25*S.gear.armor+relicBonus('hp');
 function heal(n){ const before=S.hp; S.hp=Math.min(maxHP(),S.hp+n); return Math.round(S.hp-before); }
 function hurt(n){ n=Math.max(1,Math.round(n)); S.hp=Math.max(0,S.hp-n); journey&&journey.hurtFx(n); if(S.hp<=0&&S.exp) finishExp(true); return n; }
-const canTravel=()=>S.hp>=maxHP()*DEPART_MIN;
+const tripCost=l=>l.cost;
+// Crystal quick actions
+const canMend=()=>S.hp<maxHP()&&canPay(MEND_COST);
+function mend(){ if(!canMend()) return; pay(MEND_COST); const h=heal(maxHP()*0.5); toast(`A Verdant crystal restores ${h} health.`); journey&&journey.healFx(); refresh(); }
+const canHasten=()=>!!S.exp&&!S.exp.hasted&&S.exp.end-now()>2000&&canPay(HASTE_COST);
+function hasten(){
+  if(!canHasten()) return; pay(HASTE_COST); const e=S.exp, t=now(); e.hasted=true;
+  const squeeze=x=>x>t?Math.round(t+(x-t)/2):x;
+  e.beats.forEach(b=>{ if(!b.done) b.t=squeeze(b.t); });
+  e.events.forEach(ev=>{ if(!ev.done&&ev.t>t){ ev.t=squeeze(ev.t); ev.deadline=ev.t+EVENT_WINDOW; } });
+  e.end=squeeze(e.end);
+  toast('A Storm crystal quickens your hero\u2019s stride. The rest of the trip takes half the time.'); journey&&journey.hasteFx(); refresh();
+}
 
 // Relics
 const relicLvl=id=>S.relics[id]||0;
@@ -570,9 +589,10 @@ function extendTrip(sec,extra){
   (extra||[]).forEach((b,i,arr)=>e.beats.push(stamp(e,b,t+ms*(i+1)/(arr.length+1))));
 }
 function tally(k,n){ if(S.exp) S.exp.haul[k]=(S.exp.haul[k]||0)+n; }
-function canDepart(l){ return !S.exp&&S.gear.armor>=l.danger&&canTravel(); }
+function canDepart(l){ return !S.exp&&S.gear.armor>=l.danger&&S.hp>tripCost(l); }
 function depart(id){
   const l=LOC[id]; if(!l||!canDepart(l)) return;
+  S.hp-=tripCost(l);
   const t=now(); S.exp=makeExp(id,t,t+expDuration(l)*1000); setView('journey'); refresh();
 }
 function grantBeat(b,l,safe){
@@ -636,13 +656,12 @@ function mineCrystals(dt){
 
 // Spells
 function learn(id){ const s=SPELLS.find(x=>x.id===id); if(!s||knows(id)||!canPay(s.learn)) return; pay(s.learn); S.known.push(id); chronicle(`You have learned ${s.name}.`); refresh(); }
-function castable(s){ return knows(s.id) && canPay(s.cast) && !(s.dur&&active(s.id)) && !(s.id==='road'&&!S.exp) && !(s.id==='mend'&&S.hp>=maxHP()); }
+function castable(s){ return knows(s.id) && canPay(s.cast) && !(s.dur&&active(s.id)) && !(s.id==='road'&&!S.exp); }
 function cast(id){
   const s=SPELLS.find(x=>x.id===id); if(!s||!castable(s)) return;
   pay(s.cast);
   if(s.dur) S.spells[id]=now()+s.dur*1000;
   else if(id==='road') quickenRoad();
-  else if(id==='mend'){ const h=heal(maxHP()*0.5); toast(`Mending Light restores ${h} health.`); journey&&journey.healFx(); }
   else if(id==='tithe'){ const g=Math.max(gps()*300,tapValue()*60); earn(g); toast(`The dragon brings you ${fmt(g)} gold.`); scene&&scene.burst(360,200,40); }
   refresh();
 }
@@ -794,7 +813,9 @@ function refresh(){
     $('expLine').textContent=`${l.name} · back in ${fmtTime(Math.max(0,left))}`; $('expFill').style.width=Math.min(100,p*100)+'%'; }
   else { $('expLine').textContent=S.hp<mhp?`Resting · healed in ${fmtTime((mhp-S.hp)/(mhp/HP_REGEN_FULL))}`:'Rested and ready'; $('expFill').style.width='0%'; }
   $('hpTxt').textContent=`${Math.ceil(S.hp)} / ${mhp}`;
-  $('hpFill').style.width=(100*S.hp/mhp)+'%'; $('hpFill').classList.toggle('low',S.hp<mhp*DEPART_MIN);
+  $('hpFill').style.width=(100*S.hp/mhp)+'%'; $('hpFill').classList.toggle('low',S.hp<=LOCS[0].cost);
+  $('mendBtn').disabled=!canMend(); $('mendBtn').title=`1 Verdant crystal (you have ${S.cry.verdant})`;
+  $('hasteBtn').hidden=!S.exp; $('hasteBtn').disabled=!canHasten(); $('hasteBtn').title=`1 Storm crystal (you have ${S.cry.storm})`;
 
   // compact bar + clock
   { const d=dayInfo(), txt=`${d.day?'☀':'☾'} ${d.day?'Dusk':'Dawn'} in ${fmtTime(d.left)}`;
@@ -833,18 +854,18 @@ function refresh(){
 
   // expeditions
   $('expNote').textContent=S.gear.armor?`Trips ${Math.round((1-expDuration({dur:1}))*100)}% faster`:'';
-  const tooHurt=!canTravel();
   LOCS.forEach(l=>{
     const locked=S.gear.armor<l.danger, busy=!!S.exp, here=S.exp&&S.exp.id===l.id;
     $('l-'+l.id).classList.toggle('locked',locked);
     $('lt-'+l.id).textContent=l.danger?`Danger ${l.danger}`:'Safe';
-    $('lf-'+l.id).textContent=`Foes: ${l.foes.map(f=>FOE_NAMES[f]).join(', ')} · about ${Math.round(foeDamage(l))} damage a hit`;
+    $('lf-'+l.id).textContent=`Costs ${tripCost(l)} health · foes: ${l.foes.map(f=>FOE_NAMES[f]).join(', ')}, about ${Math.round(foeDamage(l))} a hit`;
+    const tooHurt=S.hp<=tripCost(l);
     const loot=Object.entries(l.loot).map(([k,r])=>{ const [a,b]=lootRange(l,k,r); return `<span class="res" style="--c:var(--${k})"><i></i>${a}–${b} ${NAMES[k]}</span>`; }).join('')
       + (l.cry?`<span class="res cry" style="--c:var(--storm)"><i></i>${l.cry[0]}–${l.cry[1]} random crystals</span>`:'');
     setHTML($('ll-'+l.id), locked?`<div class="r-meta" style="color:var(--bad)">Needs ${GEAR.armor.tiers[l.danger].name} or better</div>`:`<div class="cost">${loot}</div>`);
     const btn=$('lb-'+l.id);
     if(here){ btn.disabled=view==='journey'; btn.dataset.watch='1'; $('lq-'+l.id).textContent=view==='journey'?'Exploring':'Watch'; $('lp-'+l.id).textContent=fmtTime(Math.max(0,(S.exp.end-now())/1000)); }
-    else { delete btn.dataset.watch; btn.disabled=locked||busy||tooHurt; $('lq-'+l.id).textContent=(!locked&&!busy&&tooHurt)?'Too wounded':'Depart'; $('lp-'+l.id).textContent=fmtTime(expDuration(l)); }
+    else { delete btn.dataset.watch; btn.disabled=locked||busy||tooHurt; $('lq-'+l.id).textContent=(!locked&&!busy&&tooHurt)?`Needs ${tripCost(l)+1} HP`:'Depart'; $('lp-'+l.id).textContent=fmtTime(expDuration(l)); }
   });
   const found=RELICS.filter(r=>relicLvl(r.id)).length;
   $('relicCount').textContent=`${found} / ${RELICS.length} found`;
@@ -930,6 +951,7 @@ async function checkForUpdate(manual){
 function wireUI(){
   $('buildTxt').textContent=`Build ${BUILD}`;
   $('updateBtn').addEventListener('click',()=>reloadFresh(newBuild));
+  $('mendBtn').addEventListener('click',mend); $('hasteBtn').addEventListener('click',hasten);
   $('checkBtn').addEventListener('click',()=>checkForUpdate(true));
   setTimeout(()=>checkForUpdate(false),3000);
   setInterval(()=>{ if(!document.hidden) checkForUpdate(false); },120000);
@@ -1421,6 +1443,7 @@ class Journey extends Phaser.Scene{
   }
   hurtFx(n){ if(!this.shown) return; this.floatText(HERO_X-6,GROUND_Y-86,`-${n}`,'#ff7a66',22); this.cameras.main.shake(120,0.004);
     this.body.setAlpha(0.4); this.time.delayedCall(90,()=>this.body.setAlpha(1)); }
+  hasteFx(){ if(!this.shown) return; this.parts.setParticleTint(0xc7a8f0); this.parts.explode(20,HERO_X,GROUND_Y-24); this.floatText(HERO_X,GROUND_Y-90,'Hastened!','#e4d4ff',20); this.cameras.main.flash(180,199,168,240); }
   healFx(){ if(!this.shown) return; this.parts.setParticleTint(0x9ff0a0); this.parts.explode(16,HERO_X,GROUND_Y-24); this.floatText(HERO_X,GROUND_Y-90,'Healed','#9ff0a0',20); }
 
   update(time){
@@ -1449,7 +1472,7 @@ class Journey extends Phaser.Scene{
     const dt=next?(next.t-t)/1000:9;
     this.arm.rotation = dt<0.45&&dt>-0.35 ? (dt>0? -1.9*(1-dt/0.45) : -1.9+2.9*Math.min(1,-dt/0.15)) : 0.25+Math.sin(secs*9)*0.2;
     // health bar over the hero, and a "!" when a road event is waiting
-    const mhp=maxHP(); this.hpBar.clear(); this.hpBar.fillStyle(0x1a1016,0.8); this.hpBar.fillRect(-14,-52,28,4); this.hpBar.fillStyle(S.hp<mhp*DEPART_MIN?0xe0453a:0xd0584a); this.hpBar.fillRect(-14,-52,28*S.hp/mhp,4);
+    const mhp=maxHP(); this.hpBar.clear(); this.hpBar.fillStyle(0x1a1016,0.8); this.hpBar.fillRect(-14,-52,28,4); this.hpBar.fillStyle(S.hp<mhp*0.25?0xe0453a:0xd0584a); this.hpBar.fillRect(-14,-52,28*S.hp/mhp,4);
     const ev=pendingEvent(); this.bang.setVisible(!!ev).setY(-66-Math.abs(Math.sin(secs*4))*4);
     this.hint.setVisible(e.beats.some(b=>!b.done&&!b.tap&&b.t>t));
   }

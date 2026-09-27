@@ -39,15 +39,15 @@ Each beat can be helped once, and it gets a ✦ marker when you do.
 
 ## Regions
 
-| Region | Base time | Danger | Foes | Hit damage | Relic chance | Loot (before bonuses) |
-|---|---:|---:|---|---:|---:|---|
-| Whisperwood | 20s | 0 | Wild Boar, Grey Wolf | 6 | 6% | 4–7 wood, 0–2 stone |
-| Greystone Quarry | 45s | 0 | Grey Wolf, Bandit | 8 | 8% | 5–8 stone, 1–3 copper |
-| Copperfen Hills | 90s | 1 | Bog Lurker, Goblin | 12 | 10% | 5–9 copper, 2–5 tin, 2–4 stone |
-| Ironroot Deep | 3m | 2 | Goblin, Cave Bat | 16 | 12% | 5–9 iron, 1–3 tin, 1–2 crystals |
-| Shattered Caldera | 6m | 3 | Fire Imp, Salamander | 22 | 15% | 8–14 iron, 4–8 copper, 3–5 crystals |
+| Region | Health cost | Base time | Danger | Foes | Hit damage | Relic chance | Loot (before bonuses) |
+|---|---:|---:|---:|---|---:|---:|---|
+| Whisperwood | 10 | 20s | 0 | Wild Boar, Grey Wolf | 6 | 6% | 4–7 wood, 0–2 stone |
+| Greystone Quarry | 15 | 45s | 0 | Grey Wolf, Bandit | 8 | 8% | 5–8 stone, 1–3 copper |
+| Copperfen Hills | 22 | 90s | 1 | Bog Lurker, Goblin | 12 | 10% | 5–9 copper, 2–5 tin, 2–4 stone |
+| Ironroot Deep | 30 | 3m | 2 | Goblin, Cave Bat | 16 | 12% | 5–9 iron, 1–3 tin, 1–2 crystals |
+| Shattered Caldera | 45 | 6m | 3 | Fire Imp, Salamander | 22 | 15% | 8–14 iron, 4–8 copper, 3–5 crystals |
 
-**Danger** is the armor tier needed to enter. Expedition crystals are a random element.
+**Health cost** is paid when the hero sets out ([Hero](hero.md)). **Danger** is the armor tier needed to enter. Expedition crystals are a random element.
 
 ## Road events
 
@@ -75,6 +75,7 @@ Gold costs and rewards scale with your gold/sec and tap value, so they stay mean
 | Weapon tier | Wood yield × (1 + 0.25 × tier). Better odds in fights. |
 | Pickaxe tier | Stone and ore yield ×1, 1.25, 1.5, 2, 2.5 |
 | Relics | Resource yields, trip speed, crystal drops, relic chance (see [Relics](relics.md)) |
+| Hasten (1 Storm crystal, once per trip) | Halves the remaining trip time |
 | Quickened Road (spell) | Ends the trip at once: road events take their default, remaining beats are collected, and foes on the rest of the road do no harm |
 
 ## End of a trip
