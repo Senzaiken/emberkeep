@@ -42,8 +42,15 @@
   .label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
   .num{font-variant-numeric:tabular-nums;}
 
-  .buffs{display:flex;flex-wrap:wrap;gap:6px;}
-  .buff{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--gold-deep);color:var(--gold-hi);}
+  /* active spells: one fixed-height row that never wraps; scrolls sideways when full */
+  .buffs{display:flex;flex-wrap:nowrap;gap:6px;height:24px;align-items:center;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;}
+  .buffs::-webkit-scrollbar{display:none;}
+  .buff{flex:none;display:inline-flex;align-items:center;gap:5px;height:22px;font-size:12px;padding:0 9px 0 3px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 60%,transparent);
+    color:var(--ink);background:color-mix(in srgb,var(--c) 14%,transparent);white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .buff i{width:16px;height:16px;border-radius:50%;background:var(--c);display:flex;align-items:center;justify-content:center;}
+  .buff i svg{width:11px;height:11px;}
+  .buff b{font-weight:700;color:var(--gold-hi);}
+  .buffs .none{font-size:12px;color:var(--muted);opacity:.7;}
 
   .res{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;}
   .res em{font-style:normal;color:var(--muted);font-size:12px;}
@@ -174,7 +181,7 @@
   .exp-bar{width:100%;height:3px;border-radius:2px;background:var(--panel-2);overflow:hidden;}
   #expFill{height:100%;width:0;background:var(--gold);}
   #expTime{margin-left:auto;color:var(--gold-hi);white-space:nowrap;}
-  #buffs:empty{display:none;}
+
 
   /* satchel: one scrollable line of what you carry */
   .satchel{display:flex;align-items:center;gap:8px;width:100%;font:inherit;color:var(--ink);background:transparent;border:0;border-block:1px solid var(--line);padding:8px 0;cursor:pointer;text-align:left;}
@@ -609,7 +616,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927203736';
+const BUILD='20260927203938';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1401,7 +1408,8 @@ function refresh(){
 
   renderEvent();
   tutRender();
-  setHTML($('buffs'), SPELLS.filter(s=>s.dur&&active(s.id)).map(s=>`<span class="buff">${s.name} ${Math.ceil((S.spells[s.id]-now())/1000)}s</span>`).join(''));
+  { const act=SPELLS.filter(s=>s.dur&&active(s.id));
+    setHTML($('buffs'), act.length?act.map(s=>`<span class="buff" style="--c:${(SPELL_LOOK[s.id]||[])[0]||'var(--storm)'}"><i>${spellGlyph(s.id)}</i>${s.name} <b>${Math.ceil((S.spells[s.id]-now())/1000)}s</b></span>`).join(''):'<span class="none">No spells active</span>'); }
 
   // buildings
   let shownMystery=false;
