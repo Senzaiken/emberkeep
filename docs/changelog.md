@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Header redesign.** There's now one slim top bar, always pinned, with gold and rates on the left and day/night on the right. Below it: a compact hero card (health bar with numbers inside, status and countdown, buffs only when active, and the spellbook), and a one-line **satchel** strip that opens a Satchel sheet with everything grouped. New icons for every resource are used in costs, loot and the satchel. The "Emberkeep" title and the scroll-only compact bar are gone. See [Overview](overview.md#screen-layout).
 - **Spellbook.** A book button next to the health bar opens a bottom sheet with Mend, Hasten and every learned spell, ready to cast. It replaces the Mend/Hasten pills under the health bar. Learning stays in the Magic tab's grimoire.
 - **Errand hints.** While an errand is active, a violet ✦ marks what advances it: the Explore tab, tags with progress on the right region rows, or a pill on the castle for tap-gold errands.
 - **Errand timer.** A countdown to Arthrex's next errand floats over him in the keep view, and appears in the spire section with a progress bar.
