@@ -126,6 +126,7 @@
       <div class="rates"><b id="gps" class="num">0</b> gold/sec · <b id="tapv" class="num">1</b> per tap</div>
     </div>
     <div class="status">
+      <span class="label num" id="clock"></span>
       <span class="label">Your hero</span>
       <span class="exp-line" id="expLine">Resting at the keep</span>
       <div class="exp-bar"><div id="expFill"></div></div>
@@ -400,7 +401,7 @@ function ascend(){
   S=Object.assign(fresh(),keep); upSet=new Set();
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
-function wipe(){ S=fresh(); upSet=new Set(); save(true); chronicle('Your keep stands alone in the moonlight. Tap it to collect the tithe.'); refresh(); }
+function wipe(){ S=fresh(); upSet=new Set(); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); }
 
 function tick(){
   const t=now(); let dt=(t-S.last)/1000; S.last=t;
@@ -500,6 +501,7 @@ function refresh(){
   $('gold').textContent=fmt(S.gold);
   $('gps').textContent=fmt(gps());
   $('tapv').textContent=fmt(tapValue());
+  { const d=dayInfo(); $('clock').textContent=`${d.day?'☀ Day':'☾ Night'} · ${d.day?'dusk':'dawn'} in ${fmtTime(d.left)}`; }
 
   // stockpile
   setHTML($('stock'), MATS.map(k=>chip(k,S.mat[k])).join('') + '<span class="sep"></span>' + CRYS.map(k=>chip(k,S.cry[k])).join(''));
@@ -641,6 +643,20 @@ function wireUI(){
 /* ================= PHASER REALM ================= */
 const W=720,H=360,Z=2;
 const WINDOWS=[[-86,-128],[74,-128],[-14,-150],[6,-150],[-86,-98],[74,-98],[-54,-90],[46,-90],[-36,-90],[28,-90],[-86,-68],[74,-68],[-54,-60],[46,-60]];
+// Day/night: a 10-minute cycle anchored to the real clock (5 min day, 5 min night)
+const CYCLE_MS=10*60*1000, TWILIGHT=0.1;
+function dayInfo(){
+  const p=(Date.now()%CYCLE_MS)/CYCLE_MS, day=p<0.5, u=day?p/0.5:(p-0.5)/0.5;
+  const edge=Math.min(u,1-u);
+  const ramp=x=>x*x*(3-2*x);
+  const light=day?ramp(Math.min(1,edge/TWILIGHT)):0;
+  const warm=day?Math.max(0,1-edge/(TWILIGHT*1.2)):Math.max(0,1-edge/(TWILIGHT*0.5))*0.6;
+  return {day,u,light,warm,left:(day?0.5-p:1-p)*CYCLE_MS/1000};
+}
+function mixColor(a,b,t){
+  const r=((a>>16)&255)+(((b>>16)&255)-((a>>16)&255))*t, g=((a>>8)&255)+(((b>>8)&255)-((a>>8)&255))*t, bl=(a&255)+((b&255)-(a&255))*t;
+  return (Math.round(r)<<16)|(Math.round(g)<<8)|Math.round(bl);
+}
 const DISPLAY_FONT='"IM Fell English SC", Georgia, serif';
 const CRYSTAL_SPOTS=[[528,282,'ember'],[540,276,'frost'],[552,284,'verdant'],[562,279,'storm'],[546,288,'ember'],[534,290,'frost']];
 
@@ -659,20 +675,18 @@ class Realm extends Phaser.Scene{
     g.fillTriangle(90,32,126,46,90,38); g.fillTriangle(52,30,28,0,72,30); g.fillTriangle(62,30,92,2,80,34);
     g.generateTexture('dragon',128,56); g.destroy();
 
-    const sky=this.add.graphics(); sky.fillGradientStyle(0x0a0c19,0x0a0c19,0x2c2640,0x2c2640,1); sky.fillRect(0,0,W,H);
+    this.light=dayInfo().light; this.warm=0;
+    this.skyG=this.add.graphics();
+    this.stars=this.add.container(0,0);
     for(let i=0;i<70;i++){ const s=this.add.circle(Math.random()*W,Math.random()*210,0.5+Math.random()*1.2,0xeadfc4,0.3+Math.random()*0.7);
-      this.tweens.add({targets:s,alpha:0.1,duration:1200+Math.random()*2400,yoyo:true,repeat:-1,delay:Math.random()*2000}); }
-    this.add.circle(612,70,64,0xf1e6c8,0.05); this.add.circle(612,70,42,0xf1e6c8,0.08);
-    this.add.circle(612,70,26,0xf1e6c8); this.add.circle(604,64,5,0xdcd0ad); this.add.circle(620,78,4,0xdcd0ad); this.add.circle(618,60,3,0xdcd0ad);
+      this.stars.add(s); this.tweens.add({targets:s,alpha:0.1,duration:1200+Math.random()*2400,yoyo:true,repeat:-1,delay:Math.random()*2000}); }
+    this.sun=this.add.container(0,0,[this.add.circle(0,0,70,0xfff1c2,0.08),this.add.circle(0,0,44,0xfff1c2,0.14),this.add.circle(0,0,24,0xfff4d6)]);
+    this.moon=this.add.container(0,0,[this.add.circle(0,0,64,0xf1e6c8,0.05),this.add.circle(0,0,42,0xf1e6c8,0.08),this.add.circle(0,0,26,0xf1e6c8),
+      this.add.circle(-8,-6,5,0xdcd0ad),this.add.circle(8,8,4,0xdcd0ad),this.add.circle(6,-10,3,0xdcd0ad)]);
     this.dragon=this.add.image(0,0,'dragon').setScale(0.5).setVisible(false);
 
-    const hills=this.add.graphics(); hills.fillStyle(0x1a1d31);
-    const pts=[{x:0,y:H}]; for(let x=0;x<=W;x+=12) pts.push({x,y:238+18*Math.sin(x/70)+10*Math.sin(x/23+1)}); pts.push({x:W,y:H});
-    hills.fillPoints(pts,true);
-    // Whisperwood is always there, at the western edge
-    const woods=this.add.graphics();
-    for(let i=0;i<11;i++){ const x=14+i*14+(i%3)*4, y=266+(i%2)*10+5*Math.sin(x/40), h=30+(i*7)%16;
-      woods.fillStyle(i%2?0x172a2a:0x1c3130); woods.fillTriangle(x-10,y,x,y-h,x+10,y); }
+    this.hillsG=this.add.graphics();
+    this.woodsG=this.add.graphics();
 
     this.back=this.add.graphics();
     this.crystals=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
@@ -683,9 +697,7 @@ class Realm extends Phaser.Scene{
     this.wheel.lineStyle(2,0x5a4630); this.wheel.strokeCircle(0,0,12);
     for(let a=0;a<6;a++){ const r=a*Math.PI/3; this.wheel.lineBetween(-12*Math.cos(r),-12*Math.sin(r),12*Math.cos(r),12*Math.sin(r)); }
 
-    const ground=this.add.graphics(); ground.fillStyle(0x131627);
-    const gp=[{x:0,y:H}]; for(let x=0;x<=W;x+=12) gp.push({x,y:290+5*Math.sin(x/40)}); gp.push({x:W,y:H});
-    ground.fillPoints(gp,true);
+    this.groundG=this.add.graphics();
 
     this.glow=this.add.ellipse(360,210,340,230,0xf6cf6a,0).setBlendMode(Phaser.BlendModes.ADD);
     this.castle=this.add.container(360,294);
@@ -700,18 +712,36 @@ class Realm extends Phaser.Scene{
     this.wisp=this.add.circle(0,0,4,0xf6f0ff).setVisible(false);
     this.coins=this.add.particles(0,0,'coin',{speed:{min:120,max:260},angle:{min:210,max:330},gravityY:520,lifespan:900,scale:{start:0.55,end:0.2},alpha:{start:1,end:0},emitting:false});
     this.sparks=this.add.particles(0,0,'spark',{speed:{min:30,max:90},lifespan:600,scale:{start:0.4,end:0},alpha:{start:0.9,end:0},blendMode:'ADD',emitting:false});
-    this.floaters=0; this.famAcc=0; this.sig=''; this.lit=-1;
+    this.floaters=0; this.famAcc=0; this.sig=''; this.lit=-1; this.lightKey='';
     this.input.on('pointerdown',p=>tap(p.worldX,p.worldY,false));
+  }
+  L(night,day){ return mixColor(night,day,this.light); }
+  drawSky(){
+    const top=mixColor(mixColor(0x0a0c19,0x3d7cc4,this.light),0x33345f,this.warm*0.7);
+    const bot=mixColor(mixColor(0x2c2640,0xa9d3ee,this.light),0xe58a5e,this.warm*0.8);
+    this.skyG.clear(); this.skyG.fillGradientStyle(top,top,bot,bot,1); this.skyG.fillRect(0,0,W,H);
+  }
+  drawLand(){
+    const h=this.hillsG, w=this.woodsG, g=this.groundG; h.clear(); w.clear(); g.clear();
+    h.fillStyle(this.L(0x1a1d31,0x5d7f5a));
+    const pts=[{x:0,y:H}]; for(let x=0;x<=W;x+=12) pts.push({x,y:238+18*Math.sin(x/70)+10*Math.sin(x/23+1)}); pts.push({x:W,y:H});
+    h.fillPoints(pts,true);
+    // Whisperwood, always at the western edge
+    for(let i=0;i<11;i++){ const x=14+i*14+(i%3)*4, y=266+(i%2)*10+5*Math.sin(x/40), ht=30+(i*7)%16;
+      w.fillStyle(i%2?this.L(0x172a2a,0x2d5534):this.L(0x1c3130,0x3a6a3e)); w.fillTriangle(x-10,y,x,y-ht,x+10,y); }
+    g.fillStyle(this.L(0x131627,0x486b40));
+    const gp=[{x:0,y:H}]; for(let x=0;x<=W;x+=12) gp.push({x,y:290+5*Math.sin(x/40)}); gp.push({x:W,y:H});
+    g.fillPoints(gp,true);
   }
   drawScenery(){
     const o=id=>owned(id), b=this.back, f=this.front, c=this.castleG;
     b.clear(); f.clear(); c.clear();
     // Watermill
     this.wheel.setVisible(o('mill')>0);
-    if(o('mill')){ b.fillStyle(0x2a2536); b.fillRect(160,268,26,24); b.fillStyle(0x1d1a27); b.fillTriangle(156,268,173,254,190,268); }
+    if(o('mill')){ b.fillStyle(this.L(0x2a2536,0x9a7f62)); b.fillRect(160,268,26,24); b.fillStyle(this.L(0x1d1a27,0x6b3f33)); b.fillTriangle(156,268,173,254,190,268); }
     // Tavern with chimney
-    if(o('tavern')){ b.fillStyle(0x2a2536); b.fillRect(198,262,40,28); b.fillStyle(0x1d1a27); b.fillTriangle(194,262,218,244,242,262);
-      b.fillStyle(0x3a3346); b.fillRect(224,240,8,16); b.fillStyle(0xf0b44a); b.fillRect(204,272,7,7); b.fillRect(224,272,7,7); }
+    if(o('tavern')){ b.fillStyle(this.L(0x2a2536,0x9a7f62)); b.fillRect(198,262,40,28); b.fillStyle(this.L(0x1d1a27,0x6b3f33)); b.fillTriangle(194,262,218,244,242,262);
+      b.fillStyle(this.L(0x3a3346,0x7a6a66)); b.fillRect(224,240,8,16); b.fillStyle(0xf0b44a); b.fillRect(204,272,7,7); b.fillRect(224,272,7,7); }
     if(o('tavern')&&!this.smoke.emitting) this.smoke.start(); if(!o('tavern')&&this.smoke.emitting) this.smoke.stop();
     // Silver mine
     if(o('silver')){ b.fillStyle(0x07080f); b.fillRect(604,272,30,20); b.fillCircle(619,272,15);
@@ -726,31 +756,31 @@ class Realm extends Phaser.Scene{
         this.crystals.fillStyle(HEX[e],0.18); this.crystals.fillCircle(x,y-h/2,h); }); }
     // Wizard tower
     const tw=o('tower')>0;
-    if(tw){ b.fillStyle(0x22263b); b.fillRect(678,128,24,166); b.fillStyle(0x1a1d2f); b.fillTriangle(672,128,690,92,708,128);
+    if(tw){ b.fillStyle(this.L(0x22263b,0x7d7f95)); b.fillRect(678,128,24,166); b.fillStyle(this.L(0x1a1d2f,0x4d3f66)); b.fillTriangle(672,128,690,92,708,128);
       b.fillStyle(0xc7a8f0); b.fillRect(686,160,8,12); b.fillRect(686,210,8,12); }
     this.orb.setVisible(tw); this.orbGlow.setVisible(tw);
     // Castle
-    c.fillStyle(0x252a3f);
+    c.fillStyle(this.L(0x252a3f,0x8b8a93));
     c.fillRect(-70,-110,140,110);
     for(let x=-70;x<70;x+=20) c.fillRect(x,-122,12,12);
     c.fillRect(-104,-150,40,150); c.fillRect(64,-150,40,150);
     for(const tx of [-104,64]) for(let x=tx;x<tx+40;x+=14) c.fillRect(x,-160,9,10);
     c.fillRect(-30,-168,60,58);
-    c.fillStyle(0x1b1f31); c.fillTriangle(-36,-168,0,-212,36,-168);
-    c.fillStyle(0x2d334b); c.fillRect(-70,-110,140,3); c.fillRect(-104,-150,40,3); c.fillRect(64,-150,40,3);
+    c.fillStyle(this.L(0x1b1f31,0x58495e)); c.fillTriangle(-36,-168,0,-212,36,-168);
+    c.fillStyle(this.L(0x2d334b,0xa7a6ae)); c.fillRect(-70,-110,140,3); c.fillRect(-104,-150,40,3); c.fillRect(64,-150,40,3);
     c.fillStyle(0x0b0d19); c.fillRect(-16,-38,32,38); c.fillCircle(0,-38,16);
     c.lineStyle(2,0x4a4f66); c.lineBetween(0,-212,0,-232);
     c.fillStyle(0xd06a45); c.fillTriangle(0,-232,20,-227,0,-222);
     if(o('guild')){ for(const x of [-92,-76,76,92]){ c.fillStyle(0x8a2f2a); c.fillRect(x-5,-146,10,34); c.fillTriangle(x-5,-112,x,-104,x+5,-112); c.fillStyle(0xe3ad45); c.fillRect(x-2,-136,4,4);} }
     // Farm fields
     if(o('farm')){ const rows=Math.min(7,2+Math.floor(o('farm')/5));
-      for(let i=0;i<rows;i++){ f.fillStyle(i%2?0x2a2818:0x353120); const y=306+i*7; f.fillPoints([{x:24+i*6,y},{x:236-i*4,y},{x:232-i*4,y:y+5},{x:20+i*6,y:y+5}],true); } }
+      for(let i=0;i<rows;i++){ f.fillStyle(i%2?this.L(0x2a2818,0x9a8a3e):this.L(0x353120,0xb3a14c)); const y=306+i*7; f.fillPoints([{x:24+i*6,y},{x:236-i*4,y},{x:232-i*4,y:y+5},{x:20+i*6,y:y+5}],true); } }
     // Market tents
     if(o('market')){ const n=Math.min(5,1+Math.floor(o('market')/10)), cols=[0x7a3a2e,0x2f5d62,0x8a6a2a,0x5b3a5e,0x7a3a2e];
       for(let i=0;i<n;i++){ const x=484+i*24, y=320+(i%2)*8; f.fillStyle(cols[i]); f.fillTriangle(x-12,y,x,y-18,x+12,y); f.fillStyle(0x0b0d19); f.fillRect(x-2,y-6,4,6); } }
     this.dragon.setVisible(o('dragon')>0);
   }
-  drawWindows(n){ const w=this.winG; w.clear(); WINDOWS.forEach(([x,y],i)=>{ w.fillStyle(i<n?0xf0b44a:0x131626); w.fillRect(x,y,8,12); }); }
+  drawWindows(n){ const w=this.winG; w.clear(); WINDOWS.forEach(([x,y],i)=>{ w.fillStyle(i<n?this.L(0xf0b44a,0x3b3a45):this.L(0x131626,0x3b3a45)); w.fillRect(x,y,8,12); }); }
   fx(x,y,v,auto){
     if(this.floaters<36){
       this.floaters++;
@@ -764,6 +794,13 @@ class Realm extends Phaser.Scene{
   crystalPing(e){ this.sparks.setParticleTint(HEX[e]); this.sparks.explode(6,546,280); }
   update(time,delta){
     const t=time/1000;
+    const d=dayInfo();
+    const lk=Math.round(d.light*48)+':'+Math.round(d.warm*24);
+    if(lk!==this.lightKey){ this.lightKey=lk; this.light=d.light; this.warm=d.warm; this.drawSky(); this.drawLand(); this.sig=''; this.lit=-1; }
+    this.stars.setAlpha((1-d.light)*(1-d.warm*0.7));
+    const arc=(u)=>({x:-30+u*780+0*u, y:285-245*Math.sin(Math.PI*u)});
+    if(d.day){ const a=arc(d.u); this.sun.setVisible(true).setPosition(a.x,a.y); this.moon.setVisible(false); }
+    else { const a=arc(d.u); this.moon.setVisible(true).setPosition(a.x,a.y); this.sun.setVisible(false); }
     const sig=BUILDINGS.map(b=>Math.min(owned(b.id),100)).join()+'|'+S.mine;
     if(sig!==this.sig){ this.sig=sig; this.drawScenery(); }
     const total=BUILDINGS.reduce((a,b)=>a+owned(b.id),0), lit=Math.min(WINDOWS.length,1+Math.floor(total/4));
@@ -793,7 +830,7 @@ function start(data){
   upSet=new Set(S.up);
   buildRows(); wireUI();
   const lastB=S.chron.length&&BUILDINGS.find(b=>b.id===S.chron[S.chron.length-1]);
-  chronicle(lastB?lastB.chron:'Your keep stands alone in the moonlight. Tap it to collect the tithe, and send your hero into Whisperwood.');
+  chronicle(lastB?lastB.chron:'Your keep stands alone on the hill. Tap it to collect the tithe, and send your hero into Whisperwood.');
   tick(); refresh();
   setInterval(()=>{ tick(); refresh(); },100);
   setInterval(save,3000);

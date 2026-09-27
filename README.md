@@ -7,3 +7,7 @@ A medieval fantasy idle game. Tap the keep for gold, send your hero on expeditio
 Built with [Phaser 3](https://phaser.io). Currently a single static page (`index.html`), hosted on GitHub Pages. The plan is to move to Vite + Capacitor for a native iOS build.
 
 Progress saves in the browser (localStorage) every few seconds and when the app is closed. On iPhone, open the Pages URL in Safari and use Share → Add to Home Screen to play it full-screen.
+
+**Play:** https://senzaiken.github.io/emberkeep/
+
+**Wiki:** design and technical docs live in [`docs/`](docs/README.md).
