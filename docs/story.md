@@ -72,7 +72,7 @@ While an errand is active (and not yet finished), the game marks what moves it f
 | Restless Roads | ✦ on the Explore tab, and an "✦ Errand 1/3" tag on that region's row |
 | Supplies for the Spire | ✦ on the Explore tab, and a tag showing held / needed on every open region that drops the material |
 | Thin the Herds, Old Things Waking | ✦ on the Explore tab, and a tag on every open region |
-| A Leaking Roof | A "✦ Errand · tap the keep" pill with progress on the castle scene |
+| A Leaking Roof | A "✦ Errand · tap the keep" pill with progress in the top-left of the castle scene |
 
 Once the errand is done, the Magic tab's badge and the **!** over Arthrex take over.
 

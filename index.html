@@ -215,7 +215,21 @@
   /* errand hints: point at whatever moves Arthrex's errand forward */
   .qtag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--storm);border:1px solid rgba(199,168,240,.5);border-radius:999px;padding:1px 7px;white-space:nowrap;font-variant-numeric:tabular-nums;}
   .tabs button.qhint::after{content:'\2726';color:var(--storm);margin-left:5px;text-shadow:0 0 6px var(--storm);}
-  .qhint-realm{position:absolute;left:8px;bottom:8px;z-index:1;font-size:12px;color:#efe6ff;background:rgba(40,28,64,.75);border:1px solid rgba(199,168,240,.6);border-radius:999px;padding:4px 10px;pointer-events:none;font-variant-numeric:tabular-nums;}
+  .qhint-realm{position:absolute;left:8px;top:8px;z-index:1;font-size:12px;color:#efe6ff;background:rgba(40,28,64,.75);border:1px solid rgba(199,168,240,.6);border-radius:999px;padding:4px 10px;pointer-events:none;font-variant-numeric:tabular-nums;}
+  /* quick-cast bar: starred spells over the bottom-right of the scene */
+  .quickbar{position:absolute;right:8px;bottom:8px;z-index:1;display:flex;gap:6px;flex-wrap:wrap-reverse;justify-content:flex-end;max-width:calc(100% - 16px);}
+  .qspell{position:relative;width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.35);padding:0;cursor:pointer;
+    background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--c) 70%,#fff),var(--c) 55%,color-mix(in srgb,var(--c) 60%,#000));box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 10px color-mix(in srgb,var(--c) 50%,transparent);}
+  .qspell svg{width:22px;height:22px;display:block;margin:auto;}
+  .qspell.off{filter:grayscale(1) brightness(.6);box-shadow:0 2px 6px rgba(0,0,0,.4);cursor:default;}
+  .qspell .cd{position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(rgba(10,12,25,.72) calc(var(--p,0)*1turn),transparent 0);display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 2px #000;font-variant-numeric:tabular-nums;}
+  .qspell .cd:empty{display:none;}
+  .qspell.busy{cursor:default;}
+  .qspell:not(.off):active{transform:scale(.94);}
+  .qspell:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px;}
+  .fav{font:inherit;background:transparent;border:0;color:var(--muted);font-size:20px;line-height:1;padding:4px 6px;cursor:pointer;}
+  .fav[aria-pressed="true"]{color:var(--gold-hi);text-shadow:0 0 8px rgba(246,207,106,.6);}
   /* Arthrex's spire */
   #sList,#spire{scroll-margin-top:110px;}
   .spire{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;}
@@ -274,6 +288,7 @@
   <div class="realm-wrap">
     <div id="realm" role="button" aria-label="Your keep. Tap to collect gold."></div>
     <div class="qhint-realm" id="qRealm" hidden></div>
+    <div class="quickbar" id="quickbar" aria-label="Starred spells"></div>
     <div class="view-toggle" id="viewToggle">
       <button id="vKeep" data-view="keep" aria-pressed="true">Keep</button>
       <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
@@ -557,12 +572,12 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927195911';
+const BUILD='20260927202618';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},tut:null,tutV:2,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],tut:null,tutV:2,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0},last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, game=null, view='keep';
 function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
@@ -947,6 +962,33 @@ const QUICK_ARTS=[
   {id:'hasten',name:'Hasten',text:'Halve the rest of the current expedition. Once per trip.',cost:()=>HASTE_COST,can:()=>canHasten(),run:()=>hasten(),
    why:()=>!S.exp?'Only while your hero is away':S.exp.hasted?'Already hastened this trip':''},
 ];
+// Spell icons: a white glyph on an element-coloured orb
+const SPELL_LOOK={
+  mend:['var(--verdant)','<path d="M10 3.5h4v6.5h6.5v4H14v6.5h-4V14H3.5v-4H10z" fill="#fff"/>'],
+  hasten:['var(--storm)','<path d="M13.5 2 4.5 13.5H11l-1.5 8.5 9-11.5H12z" fill="#fff"/>'],
+  stoke:['var(--ember)','<path d="M12 2.5c.8 3.6 6 5.7 6 11.3a6 6 0 0 1-12 0c0-2.8 1.6-4.6 2.7-6.3.2 1.9 1 2.9 2.1 3.2-.2-3 .1-5.6 1.2-8.2z" fill="#fff"/>'],
+  split:['var(--frost)','<g stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/><path d="M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/></g>'],
+  midas:['var(--gold)','<path d="M3.5 18.5h17l-1.6-10-4.6 4.4L12 5.5l-2.3 7.4-4.6-4.4z" fill="#fff"/><rect x="3.5" y="19.5" width="17" height="2" rx="1" fill="#fff"/>'],
+  familiar:['var(--storm)','<path d="M12 4a8 8 0 1 0 8 8 5 5 0 1 1-5-5 2.4 2.4 0 1 0 2.4 2.4" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/>'],
+  road:['var(--frost)','<path d="M3.5 5.5 11 12l-7.5 6.5zM12 5.5l7.5 6.5-7.5 6.5z" fill="#fff"/>'],
+  harvest:['var(--verdant)','<path d="M12 21.5V7" stroke="#fff" stroke-width="2" stroke-linecap="round"/><g fill="#fff"><ellipse cx="12" cy="5" rx="2" ry="3"/><ellipse cx="8.6" cy="9.5" rx="1.8" ry="3" transform="rotate(-35 8.6 9.5)"/><ellipse cx="15.4" cy="9.5" rx="1.8" ry="3" transform="rotate(35 15.4 9.5)"/><ellipse cx="8.8" cy="14.6" rx="1.8" ry="3" transform="rotate(-35 8.8 14.6)"/><ellipse cx="15.2" cy="14.6" rx="1.8" ry="3" transform="rotate(35 15.2 14.6)"/></g>'],
+  tithe:['var(--ember)','<path d="M12 2.5l7.5 7.5L12 21.5 4.5 10z" fill="#fff"/><path d="M4.5 10h15M12 2.5 9 10l3 11.5L15 10z" stroke="rgba(0,0,0,.25)" stroke-width="1" fill="none"/>'],
+};
+const spellGlyph=id=>`<svg viewBox="0 0 24 24" aria-hidden="true">${(SPELL_LOOK[id]||SPELL_LOOK.tithe)[1]}</svg>`;
+const isFav=id=>S.favs.includes(id);
+function toggleFav(id){ S.favs=isFav(id)?S.favs.filter(x=>x!==id):[...S.favs,id]; bookSig=''; qbKey=''; refresh(); }
+function spellTimer(id){ const sp=SPELLS.find(x=>x.id===id); if(sp&&sp.dur&&active(id)) return {left:S.spells[id]-now(),total:sp.dur*1000}; return null; }
+let qbKey='';
+function renderQuickbar(){
+  const all=bookEntries(), favs=S.favs.map(id=>all.find(e=>e.id===id)).filter(Boolean), bar=$('quickbar');
+  const key=favs.map(e=>e.id).join();
+  if(key!==qbKey){ qbKey=key;
+    bar.innerHTML=favs.map(e=>`<button class="qspell" id="qs-${e.id}" data-qs="${e.id}" style="--c:${SPELL_LOOK[e.id]?SPELL_LOOK[e.id][0]:'var(--storm)'}" aria-label="${e.name}" title="${e.name}">${spellGlyph(e.id)}<span class="cd" id="qsc-${e.id}"></span></button>`).join(''); }
+  favs.forEach(e=>{ const b=$('qs-'+e.id), cd=$('qsc-'+e.id), tm=spellTimer(e.id), ok=e.can();
+    b.classList.toggle('off',!ok&&!tm); b.classList.toggle('busy',!!tm); b.setAttribute('aria-disabled',!ok);
+    if(tm){ cd.style.setProperty('--p',1-tm.left/tm.total); cd.textContent=Math.ceil(tm.left/1000); } else { cd.textContent=''; }
+    const why=e.why(); b.title=why?`${e.name}: ${why}`:e.name; });
+}
 function bookEntries(){
   return [...QUICK_ARTS, ...SPELLS.filter(sp=>knows(sp.id)).map(sp=>({id:sp.id,name:sp.name,text:sp.text,cost:()=>sp.cast,can:()=>castable(sp),run:()=>cast(sp.id),
     why:()=>sp.dur&&active(sp.id)?`Active · ${Math.ceil((S.spells[sp.id]-now())/1000)}s left`:sp.id==='road'&&!S.exp?'Only while your hero is away':''}))];
@@ -965,13 +1007,13 @@ function renderBook(){
   if($('bookSheet').hidden) return;
   const list=bookEntries(), sig=list.map(e=>e.id).join();
   if(sig!==bookSig){ bookSig=sig;
-    $('bookList').innerHTML=list.map(e=>`<div class="row"><div><div class="r-head"><span class="r-name">${e.name}</span><span class="r-tag" id="bkw-${e.id}"></span></div>
+    $('bookList').innerHTML=list.map(e=>`<div class="row"><div><div class="r-head"><button class="fav" id="bkf-${e.id}" data-fav="${e.id}" aria-pressed="${isFav(e.id)}" aria-label="Star ${e.name} for the keep screen">${isFav(e.id)?'\u2605':'\u2606'}</button><span class="r-name">${e.name}</span><span class="r-tag" id="bkw-${e.id}"></span></div>
       <div class="r-desc">${e.text}</div><div id="bkc-${e.id}"></div></div>
       <button class="act arcane" id="bkb-${e.id}" data-book="${e.id}"><small>Cast</small><span>Invoke</span></button></div>`).join(''); }
   list.forEach(e=>{ setHTML($('bkc-'+e.id),costHTML(e.cost())); $('bkb-'+e.id).disabled=!e.can(); $('bkw-'+e.id).textContent=e.why(); });
   setHTML($('bookStock'),CRYS.map(c=>chip(c,S.cry[c])).join(' '));
   const unlearned=SPELLS.filter(sp=>!knows(sp.id)).length;
-  $('bookMore').textContent=unlearned?`${unlearned} more spell${unlearned>1?'s':''} can be learned from the grimoire.`:'You know every spell in the grimoire.';
+  $('bookMore').textContent=(S.favs.length?'':'Tap \u2606 to pin a spell to your keep screen. ')+(unlearned?`${unlearned} more spell${unlearned>1?'s':''} can be learned from the grimoire.`:'You know every spell in the grimoire.');
 }
 
 /* ---------- Dialog overlay ---------- */
@@ -1222,7 +1264,7 @@ function refresh(){
   setHTML($('hpTxt'),`<span>HEALTH</span><span>${Math.ceil(S.hp)} / ${mhp}</span>`);
   $('hpFill').style.width=(100*S.hp/mhp)+'%'; $('hpFill').classList.toggle('low',S.hp<=LOCS[0].cost);
   $('bookDot').hidden=!(canMend()&&S.hp<maxHP()*0.5||canHasten());
-  renderBook();
+  renderBook(); renderQuickbar();
 
   $('vJourney').disabled=!S.exp;
 
@@ -1383,7 +1425,11 @@ function wireUI(){
   $('bookBtn').addEventListener('click',openBook);
   $('bookClose').addEventListener('click',closeBook);
   $('bookSheet').addEventListener('click',e=>{ if(e.target.id==='bookSheet') closeBook();
+    const f=e.target.closest('button[data-fav]'); if(f){ toggleFav(f.dataset.fav); return; }
     const b=e.target.closest('button[data-book]'); if(b&&!b.disabled){ const en=bookEntries().find(x=>x.id===b.dataset.book); en&&en.run(); renderBook(); } });
+  $('quickbar').addEventListener('click',e=>{ const b=e.target.closest('button[data-qs]'); if(!b) return; e.stopPropagation();
+    const en=bookEntries().find(x=>x.id===b.dataset.qs); if(!en) return;
+    if(en.can()) en.run(); else toast(`${en.name}: ${en.why()||'you need more crystals'}.`); });
   $('bookGrimoire').addEventListener('click',()=>{ closeBook();
     document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab==='magic'));
     ['build','up','explore','forge','magic','asc'].forEach(k=>$('p-'+k).hidden=k!=='magic');

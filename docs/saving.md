@@ -38,6 +38,7 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `relics` | Relic levels, by id |
 | `story` | `{intro, met, brom}`: seen the opening, met Arthrex, met Brom |
 | `seen` | Resources the player has discovered (shown in the satchel) |
+| `favs` | Starred spell ids, in order (the quick-cast bar) |
 | `tut`, `tutV`, `tutBase` | Tutorial step index (`null` = not started, past the last step = finished or skipped), tutorial version (2), and an old tap-count field |
 | `quest`, `questNext`, `questSpan` | Arthrex's current errand (or `null`), when the next one is offered, and the length of that wait (for the progress bar) |
 | `stats` | Lifetime counters for errands: `trips{region}`, `foes`, `tapGold`, `relics` |

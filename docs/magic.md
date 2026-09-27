@@ -69,3 +69,15 @@ The **book button** to the right of the hero's health bar opens the spellbook, a
 - Every spell you've **learned**, with its reagent cost and a Cast button.
 
 Each entry shows why it can't be cast right now, if it can't (for example "Only while your hero is away", or the time left on an active spell). Your crystal counts are shown at the top. A violet dot on the book means something useful is ready: Mend when the hero is below half health, or Hasten during a trip. **Open grimoire** jumps to the Magic tab, where new spells are learned.
+
+### Starred spells (quick-cast bar)
+
+Tap the **☆** beside any spellbook entry to star it (★). Starred spells appear as round icons along the bottom-right of the castle scene, in both the Keep and Journey views, in the order you starred them. You can star as many as you like.
+
+| Icon state | Meaning |
+|---|---|
+| Colored orb | Ready: tap to cast |
+| Greyed out | Can't cast right now: not enough crystals, or not applicable (for example Hasten while the hero is home). Tapping explains why. |
+| Colored, with a dark ring draining and seconds shown | Already active; the ring shows the time left |
+
+Each spell has its own glyph in its element colour: Mend (cross, Verdant), Hasten (bolt, Storm), Stoke the Forge (flame, Ember), Split the Rock (snowflake, Frost), Midas Touch (crown, gold), Summon Familiar (swirl, Storm), Quickened Road (fast-forward, Frost), Bountiful Harvest (wheat, Verdant), Dragon's Tithe (gem, Ember).
