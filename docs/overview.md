@@ -24,7 +24,7 @@ From top to bottom:
 1. **Top bar**, fixed in place (only the area below it scrolls, which also keeps iOS from blurring it under the clock): app icon, gold, gold/sec · gold/tap on the left; the sun or moon with "dusk in …" / "dawn in …" on the right.
 2. **Hero card**: the health bar (numbers inside), what the hero is doing with a countdown on the right (trip return or time to full health), a thin trip-progress line, active spell buffs (only while one is running), and the **spellbook** button on the right.
 3. **Satchel strip**: one line of icons and counts for every resource you've **discovered**. A resource joins the first time you hold any of it, and stays (dimmed at 0) after that. It scrolls sideways if it gets long, so it never grows taller. Tap it for the **Satchel** sheet, with discovered materials and crystals grouped and named. A group only appears once its first resource is found, so a new game starts nearly empty and the satchel grows as you explore.
-4. The **realm canvas** (Keep / Journey), the chronicle line, then the **tabs**, which pin just under the top bar when you scroll.
+4. The **realm canvas** (Keep / Journey). It follows the tabs: opening **Explore** during a trip shows the Journey, and every other tab switches back to the Keep so you can tap for gold. The Keep/Journey switch still flips it by hand. Below it are the chronicle line and the **tabs**, which pin just under the top bar when you scroll.
 
 Every resource has its own icon (coin, log, rock, ingots for copper/tin/iron, cut crystals in their element colour), used everywhere costs and loot appear. New resource types get an icon, a row in the satchel sheet, and appear in the strip automatically.
 

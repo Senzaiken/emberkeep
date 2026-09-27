@@ -4,6 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Canvas follows the tabs.** Switching to Build (or any tab other than Explore) returns the canvas to the keep for tapping. Opening Explore during a trip shows the journey.
 - **Forging and mining take time.** Brom forges one piece at a time (15s / 1m / 3m / 8m by tier), and **Stoke the forge** with an Ember halves what's left. Crystal Mine galleries are dug as construction jobs (30s / 2m / 5m / 12m) while the current level keeps producing, and **Split the rock** with a Frost halves what's left. Both show countdowns over the keep scene and appear in the spellbook. The tutorial now teaches stoking.
 - **Longer tutorial, and Brom the smith.** The tutorial now covers earning your first 15 gold, building a Peasant Farm, a look at Upgrades, the first expedition, then Arthrex, then **Brom, Master Smith**, who explains gear and gives enough for an Oak Cudgel, and finally forging it. See [Story](story.md#guided-tutorial).
 - **Extra top space in the home-screen app.** iOS 26 draws a blur band along the top of installed web apps that can't be turned off, so the top bar gets 25px of extra padding there (home-screen app only, not Safari).
