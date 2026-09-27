@@ -508,7 +508,7 @@ const SPELLS=[
   {id:'tithe',name:'Dragon’s Tithe',learn:{gold:1e6,ember:5,frost:5,verdant:5,storm:5},cast:{ember:1,frost:1,verdant:1,storm:1},dur:0,text:'Collect 5 minutes of production at once.'},
 ];
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927185248';
+const BUILD='20260927190217';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -733,7 +733,7 @@ function meetArthrex(){
     'So. You are the new lord of this keep. I am Arthrex. I have served as court sorcerer here for longer than your father lived, and I keep the spire on the east grounds.',
     ...CRYSTAL_LESSON,
     'Here. Ten of each, to get you started. Spend them wisely. And come and see me at the spire now and then. I will have errands, and I pay in kind.',
-  ],'Thank you, Arthrex',()=>{ S.story.met=true; CRYS.forEach(c=>S.cry[c]+=10); S.questNext=now()+15000;
+  ],'Thank you, Arthrex',()=>{ S.story.met=true; CRYS.forEach(c=>S.cry[c]+=10); S.questNext=now()+15000; S.questSpan=15000;
     toast('Arthrex gives you 10 Ember, 10 Frost, 10 Verdant and 10 Storm crystals.'); chronicle('Arthrex, the court sorcerer, has taken an interest in you.'); refresh(); });
 }
 function introStory(){
@@ -745,6 +745,8 @@ function introStory(){
 
 /* ---------- Quests from Arthrex ---------- */
 const QUEST_COOLDOWN=90000;
+const clock=ms=>{ const t=Math.ceil(ms/1000); return `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`; };
+const questWait=()=>S.story.met&&!S.quest?Math.max(0,S.questNext-now()):0;
 const regionsOpen=()=>LOCS.filter(l=>l.danger<=S.gear.armor);
 function questTier(){ return Math.max(0,regionsOpen().length-1); }
 function questReward(tier,type){
@@ -779,12 +781,12 @@ function acceptQuest(){
   q.state='active'; q.base={trip:S.stats.trips[q.region]||0,foes:S.stats.foes,tapgold:S.stats.tapGold,relic:S.stats.relics,gather:0}[q.type]; refresh();
 }
 function rerollQuest(){ const q=S.quest; if(!q||q.state!=='offered'||q.rerolled) return; S.quest=makeQuest(); S.quest.rerolled=true; refresh(); }
-function abandonQuest(){ if(!S.quest) return; S.quest=null; S.questNext=now()+QUEST_COOLDOWN/2; refresh(); }
+function abandonQuest(){ if(!S.quest) return; S.quest=null; S.questNext=now()+QUEST_COOLDOWN/2; S.questSpan=QUEST_COOLDOWN/2; refresh(); }
 function claimQuest(){
   const q=S.quest; if(!questDone(q)) return;
   if(q.type==='gather') S.mat[q.mat]-=q.need;
   const got=[]; for(const [k,v] of Object.entries(q.reward)){ addRes(k,v); got.push(k==='gold'?`${fmt(v)} gold`:`${v} ${NAMES[k]}`); }
-  S.quest=null; S.questNext=now()+QUEST_COOLDOWN;
+  S.quest=null; S.questNext=now()+QUEST_COOLDOWN; S.questSpan=QUEST_COOLDOWN;
   const lines=['Well done. This will keep my furnaces lit a while longer.','Hm. Better than I hoped, if I am honest.','You have your father’s stubbornness. That is a compliment.','Good. Rest now. I will have more for you soon.'];
   showDialog('arthrex',[`${lines[rnd(0,lines.length-1)]} Take these: ${got.join(', ')}.`],'Farewell',()=>refresh());
   chronicle(`Quest complete: ${q.title}.`); refresh();
@@ -998,9 +1000,12 @@ function renderSpire(){
   const q=S.quest; let key, html;
   const head=(sub)=>`<div class="spire-head"><div class="portrait">${ARTHREX_SVG}</div><div><div class="quest-title">Arthrex</div><div class="r-desc">${sub}</div></div></div>`;
   if(!S.story.met){ key='closed'; html=head('The spire door is shut. Perhaps after your first expedition…'); $('questNote').textContent=''; }
-  else if(!q){ const left=Math.max(0,S.questNext-now()); key='wait'+Math.ceil(left/1000);
-    html=head(left?`Deep in his studies. He will have an errand in ${fmtTime(left/1000)}.`:'Arthrex is looking for you.')+`<div class="row-btns"><button class="act ghost" data-spire="lesson"><span>Ask about crystals</span></button></div>`;
-    $('questNote').textContent=''; }
+  else if(!q){ const left=questWait(); key='wait'+Math.ceil(left/1000);
+    const span=S.questSpan||QUEST_COOLDOWN, pct=Math.min(100,100*(1-left/span));
+    html=head(left?'Deep in his studies. He will have an errand for you soon.':'Arthrex is looking for you.')
+      +(left?`<div class="r-meta num">Next errand in ${fmtTime(left/1000)}</div><div class="qbar"><div style="width:${pct}%"></div></div>`:'')
+      +`<div class="row-btns"><button class="act ghost" data-spire="lesson"><span>Ask about crystals</span></button></div>`;
+    $('questNote').textContent=left?`Next errand ${clock(left)}`:''; }
   else { const prog=questProgress(q), done=questDone(q);
     const reward=`<div class="cost">${Object.entries(q.reward).map(([k,v])=>chip(k,v,false)).join('')}</div>`;
     key=[q.title,q.state,prog,done,q.type==='gather'?S.mat[q.mat]:0].join('|');
@@ -1269,6 +1274,7 @@ class Realm extends Phaser.Scene{
     this.smoke=this.add.particles(0,0,'smoke',{x:228,y:246,speedY:{min:-28,max:-16},speedX:{min:-3,max:9},lifespan:2800,scale:{start:0.25,end:0.9},alpha:{start:0.3,end:0},frequency:280,emitting:false});
     this.orbGlow=this.add.circle(690,86,16,0xc7a8f0,0.25).setVisible(false);
     this.halls=this.add.graphics().setPosition(690,110).setBlendMode(Phaser.BlendModes.ADD);
+    this.qTimer=this.add.text(660,244,'',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'17px',fontStyle:'bold',color:'#e4d4ff',stroke:'#0b0d19',strokeThickness:4,resolution:Z}).setOrigin(0.5).setVisible(false);
     this.qMark=this.add.text(666,246,'!',{fontFamily:DISPLAY_FONT,fontSize:'26px',color:'#e4d4ff',stroke:'#0b0d19',strokeThickness:5,resolution:Z}).setOrigin(0.5).setVisible(false);
     this.orb=this.add.circle(690,86,6,0xf0e6ff).setVisible(false);
     this.wheel=this.add.graphics().setPosition(186,282).setVisible(false);
@@ -1461,6 +1467,7 @@ class Realm extends Phaser.Scene{
     if(this.orb.visible){ const p=0.5+0.5*Math.sin(t*2.4); this.orbGlow.setScale(1+0.4*p).setAlpha(0.18+0.2*p); }
     this.halls.rotation=t*0.6;
     const qm=S.story.met&&S.quest&&(S.quest.state==='offered'||questDone(S.quest)); this.qMark.setVisible(!!qm).setY(246-Math.abs(Math.sin(t*3))*5);
+    const qw=questWait(); this.qTimer.setVisible(qw>0); if(qw>0) this.qTimer.setText('\u231B '+clock(qw));
     if(this.dragon.visible){ const a=t*0.22; this.dragon.setPosition(360+310*Math.sin(a),78+22*Math.sin(t*0.9)); this.dragon.setFlipX(Math.cos(a)>0); }
     // Hero's lantern walks out to the expedition and back
     if(S.exp){ const l=LOCS.find(x=>x.id===S.exp.id), p=Math.min(1,Math.max(0,(now()-S.exp.start)/(S.exp.end-S.exp.start)));

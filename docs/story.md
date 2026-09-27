@@ -37,7 +37,7 @@ Afterwards, **Ask about crystals** at the spire replays the explanation.
 
 ## The spire
 
-The spire section sits at the top of the **Magic** tab. Tapping the spire in the keep view jumps straight there. A violet **!** floats over Arthrex when he has a new errand or a finished one to hand in, and the Magic tab's badge counts it too.
+The spire section sits at the top of the **Magic** tab. Tapping the spire in the keep view jumps straight there. A violet **!** floats over Arthrex when he has a new errand or a finished one to hand in, and the Magic tab's badge counts it too. While he's busy between errands, a **⌛ countdown** floats over him instead. The spire section shows "Next errand in …" with a filling bar, and the countdown also appears next to the section heading.
 
 ## Errands (quests)
 
