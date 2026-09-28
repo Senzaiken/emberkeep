@@ -140,7 +140,7 @@ Defense: Redtide Hold 1, Karak Brine 2, Skarholm 3, Sylvanreach 4. Power is weap
 
 ## Claimed castles (realms)
 
-A claimed castle is a **realm of your own**. Switch realms with the gold **⇄** button in the bottom-left of the castle view (it cycles through Emberkeep and every castle you hold), or with the switcher at the top of the Build tab. Choosing a realm shows its five holdings in the Build tab and its castle in the Keep view, where tapping earns gold as usual. All realms pay into one treasury, so gold/sec counts every holding everywhere. Each realm's holdings have three techniques each in the Upgrades tab (at 1, 10 and 25 owned).
+A claimed castle is a **realm of your own**. Switch realms with the **⇄ realm** button in the top bar (it cycles through Emberkeep and every castle you hold, and shows the one you're in), or with the switcher at the top of the Build tab. Choosing a realm shows its five holdings in the Build tab and its castle in the Keep view, where tapping earns gold as usual. All realms pay into one treasury, so gold/sec counts every holding everywhere. Each realm's holdings have three techniques each in the Upgrades tab (at 1, 10 and 25 owned).
 
 Its port also becomes yours: sailing up to it unloads the hold there, and no fleet guards it.
 

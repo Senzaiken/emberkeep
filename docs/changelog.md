@@ -4,7 +4,7 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
-- **Rule your claimed castles.** A gold **⇄** button on the castle view switches between Emberkeep and your claimed realms. Each castle now has **Works** making a treasure unique to it (Pearl Beds, Mithril Deeps, Frostglass Caves, Moonsilk Canopy) and three **Royal charters** that spend it: doubling and tripling that realm's holdings, boosting expedition wood/stone or ore, the crystal mine, crystals found, sea gold, hull or all gold. See [The Sea](sea.md#works-treasures-and-royal-charters).
+- **Rule your claimed castles.** A **⇄ realm** button in the top bar switches between Emberkeep and your claimed realms. Each castle now has **Works** making a treasure unique to it (Pearl Beds, Mithril Deeps, Frostglass Caves, Moonsilk Canopy) and three **Royal charters** that spend it: doubling and tripling that realm's holdings, boosting expedition wood/stone or ore, the crystal mine, crystals found, sea gold, hull or all gold. See [The Sea](sea.md#works-treasures-and-royal-charters).
 
 - **Boarding fixed up.** Boarding no longer fails when the hero is on an expedition: the crew boards alone for normal loot, while a hero at home still leads for 150% (at a health cost). The button says which. Ships count as crippled at 35% hull (was 30%), limp at under half speed so they can't run off, and can be boarded from 75 yards (was 55).
 

@@ -59,7 +59,11 @@
     user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;}
   #realm canvas{display:block;}
   #realm.tall{aspect-ratio:2/2.5;}
-  .realm-chip{position:absolute;left:8px;bottom:8px;z-index:1;font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#1a1408;background:rgba(227,173,69,.9);border:1px solid var(--gold-deep);border-radius:6px;padding:3px 8px;cursor:pointer;}
+  .tb-realm{flex:0 1 auto;min-width:0;margin-left:auto;font:inherit;font-size:13px;color:var(--gold-hi);background:var(--panel-2);border:1px solid var(--gold-deep);border-radius:8px;padding:6px 8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tb-realm:not([hidden])+.tb-clock{margin-left:0;gap:6px;}
+  .tb-realm:not([hidden])+.tb-clock b{font-size:14px;}
+  .tb-realm{flex-shrink:0;}
+  .tb-gold{flex:none;}
   .sea-tall{position:absolute;top:44px;right:8px;z-index:1;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#cfc6ad;background:rgba(10,12,25,.55);border:1px solid rgba(236,226,200,.25);border-radius:6px;padding:5px 10px;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
   .chron{margin:0;font-family:var(--display);font-size:16px;color:var(--muted);min-height:1.4em;text-align:center;transition:opacity .4s;text-wrap:balance;}
 
@@ -341,6 +345,7 @@
   <div class="tb-in">
     <img class="tb-logo" src="icons/icon-180.png" alt="Emberkeep">
     <div class="tb-gold"><span id="gold" class="gold">0</span><span class="tb-rates"><b id="gps">0</b>/sec · <b id="tapv">1</b>/tap</span></div>
+    <button class="tb-realm" id="realmChip" hidden aria-label="Switch realm"></button>
     <div class="tb-clock" id="clockBox" aria-live="off"><div><b id="clockPhase">Day</b><span id="clockLeft"></span></div><span id="clockIcon"></span></div>
   </div>
 </header>
@@ -367,7 +372,6 @@
       <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
       <button id="vSea" data-view="sea" aria-pressed="false" hidden>Sea</button>
     </div>
-    <button class="realm-chip" id="realmChip" hidden></button>
     <button class="sea-tall" id="seaTall" hidden>↕ Taller</button>
   </div>
   <div class="journey-bar" id="journeyBar" hidden>
@@ -854,7 +858,7 @@ const CHARTERS={
   sylvan:[{name:'The Elder Council',text:'Sylvanreach holdings produce ×2.'},{name:'Moonsilk Satchels',text:'Expeditions find twice as many crystals.'},{name:'Starsong',text:'Sylvanreach holdings ×3 more, and +10% to all gold.'}],
 };
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928015537';
+const BUILD='20260928015728';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1653,7 +1657,7 @@ function claimCastle(id,how){
   const is=ISLE[id], R=REALMS[id]; S.claimed[id]={t:now(),how:how||'blockade'}; S.siege=null; S.sea.fleets[id]=0;
   S.stats.castles=(S.stats.castles||0)+1; logUnlock('realm:'+id);
   chronicle(`${is.name} flies your banner.`);
-  toast(`${R.name} is yours! ${how==='storm'?'Your hero storms the gate.':how==='night'?'Your hero’s men are over the walls before dawn.':'Starved and cut off, the castle opens its gates.'} Use the gold ⇄ button on the castle view, or the Build tab, to switch realms and rule it. ${R.perk}`);
+  toast(`${R.name} is yours! ${how==='storm'?'Your hero storms the gate.':how==='night'?'Your hero’s men are over the walls before dawn.':'Starved and cut off, the castle opens its gates.'} Use the ⇄ Realm button in the top bar, or the Build tab, to switch realms and rule it. ${R.perk}`);
   if(sea) sea.key=''; refresh(); }
 function shipSunk(){
   S.sea.cargo={}; S.sea.hp=Math.round(maxHull()*0.25); S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true;
@@ -1836,7 +1840,8 @@ function setTall(on){ $('realm').classList.toggle('tall',on); $('seaTall').hidde
 function renderRealmExtra(){
   const r=S.realm, on=r!=='home'&&!!WORKS[r]; $('realmExtra').hidden=!on;
   const chip=$('realmChip'), rs=['home',...Object.keys(REALMS).filter(claimed)];
-  chip.hidden=!(view==='keep'&&rs.length>1); chip.textContent=`\u21C4 ${r==='home'?'Emberkeep':REALMS[r].name}`;
+  chip.hidden=rs.length<2; const nm=`\u21C4 ${r==='home'?'Emberkeep':{redtide:'Redtide',karak:'Karak',skar:'Skarholm',sylvan:'Sylvan'}[r]}`;
+  if(chip.dataset.n!==nm){ chip.dataset.n=nm; chip.textContent=nm; }
   if(!on) return; const w=WORKS[r], l=S.works[r]||0, nx=w.lv[l], res=w.res;
   $('wkName').textContent=w.name; $('wkLv').textContent=l?`Level ${l} / 3`:'Not built';
   $('wkDesc').textContent=`${w.desc} ${l?`One ${ONE[res]} every ${w.lv[l-1].every}s.`:''}${nx?` Next: one every ${nx.every}s.`:''}`;
@@ -1933,7 +1938,7 @@ function refresh(){
   $('gold').textContent=fmt(S.gold);
   $('gps').textContent=fmt(gps());
   $('tapv').textContent=fmt(tapValue());
-  { const d=dayInfo(); $('clockPhase').textContent=d.day?'Day':'Night'; $('clockLeft').textContent=`${d.day?'dusk':'dawn'} in ${fmtTime(d.left)}`;
+  { const d=dayInfo(); $('clockPhase').textContent=d.day?'Day':'Night'; const tight=!$('realmChip').hidden; $('clockLeft').textContent=tight?`${d.day?'dusk':'dawn'} ${clock(d.left*1000)}`:`${d.day?'dusk':'dawn'} in ${fmtTime(d.left)}`;
     setHTML($('clockIcon'),d.day?SUN_SVG:MOON_SVG); }
 
   // stockpile
