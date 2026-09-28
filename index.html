@@ -858,7 +858,7 @@ const CHARTERS={
   sylvan:[{name:'The Elder Council',text:'Sylvanreach holdings produce ×2.'},{name:'Moonsilk Satchels',text:'Expeditions find twice as many crystals.'},{name:'Starsong',text:'Sylvanreach holdings ×3 more, and +10% to all gold.'}],
 };
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928015728';
+const BUILD='20260928020154';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -926,7 +926,7 @@ function nextGear(slot){ return GEAR[slot].tiers[S.gear[slot]+1]; }
 const transRate=()=>(1+0.5*Math.max(0,S.mine-1))*matMult();
 const transOut=(el,n)=>Object.entries(TRANSMUTE[el]).map(([k,v])=>[k,Math.floor(v*n*transRate())]);
 function transmute(el,n){ n=n==='all'?S.cry[el]:Math.min(+n,S.cry[el]); if(!(n>0)||!S.story.met) return;
-  S.cry[el]-=n; const got=transOut(el,n); got.forEach(([k,v])=>addRes(k,v));
+  S.cry[el]-=n; S.stats.transmuted=(S.stats.transmuted||0)+n; const got=transOut(el,n); got.forEach(([k,v])=>addRes(k,v));
   toast(`Arthrex transmutes ${n} ${NAMES[el]} crystal${n>1?'s':''} into ${got.map(([k,v])=>`${fmt(v)} ${NAMES[k]}`).join(', ')}.`); refresh(); }
 function enchant(k){ const e=ENCH[k], c=enchCost(S.ench[k]); if(!e||!e.need()||!e.top()||S.cry[e.el]<c) return;
   S.cry[e.el]-=c; S.ench[k]++; toast(`${e.label} enchanted to level ${S.ench[k]}: ${e.fx(S.ench[k])}.`); refresh(); }
@@ -1152,10 +1152,10 @@ const canSplit=()=>!!S.digging&&canPay(SPLIT_COST);
 function splitRock(){ if(!canSplit()) return; pay(SPLIT_COST); const g=S.digging, n=now();
   g.end=n+(g.end-n)/2; if(g.end-n<1500) digDone(); else toast('Frost creeps into the rock and splits it. The miners dig twice as fast.'); refresh(); }
 function runWorks(dt){ for(const [r,w] of Object.entries(WORKS)){ const l=S.works[r]||0; if(!l||!claimed(r)) continue;
-  S.worksAcc[r]=(S.worksAcc[r]||0)+dt; const iv=w.lv[l-1].every, n=Math.floor(S.worksAcc[r]/iv); if(n){ S.worksAcc[r]-=n*iv; S.mat[w.res]+=n; } } }
-function buildWorks(r){ const w=WORKS[r], l=S.works[r]||0, nx=w&&w.lv[l]; if(!nx||!claimed(r)||!canPay(nx.cost)) return; pay(nx.cost); S.works[r]=l+1;
+  S.worksAcc[r]=(S.worksAcc[r]||0)+dt; const iv=w.lv[l-1].every, n=Math.floor(S.worksAcc[r]/iv); if(n){ S.worksAcc[r]-=n*iv; S.mat[w.res]+=n; S.stats.treasures=(S.stats.treasures||0)+n; } } }
+function buildWorks(r){ const w=WORKS[r], l=S.works[r]||0, nx=w&&w.lv[l]; if(!nx||!claimed(r)||!canPay(nx.cost)) return; pay(nx.cost); S.works[r]=l+1; logUnlock('works:'+r);
   toast(l?`${w.name} expanded: one ${ONE[w.res]} every ${nx.every}s.`:`${w.name} opened. They yield ${NAMES[w.res]}, a treasure only ${REALMS[r].name} makes.`); refresh(); }
-function buyCharter(r){ const i=charter(r), c=CHARTER_COST[i], w=WORKS[r]; if(c==null||S.mat[w.res]<c) return; S.mat[w.res]-=c; S.charters[r]=i+1;
+function buyCharter(r){ const i=charter(r), c=CHARTER_COST[i], w=WORKS[r]; if(c==null||S.mat[w.res]<c) return; S.mat[w.res]-=c; S.charters[r]=i+1; logUnlock(`charter:${r}:${i}`);
   const ch=CHARTERS[r][i]; chronicle(`${REALMS[r].name} is granted the ${ch.name}.`); toast(`${ch.name}: ${ch.text}`); refresh(); }
 function mineCrystals(dt){
   if(!S.mine) return;
@@ -1417,6 +1417,9 @@ function logCatalog(){
     {id:'spell',title:'Spells',items:SPELLS.map(sp=>({id:'spell:'+sp.id,name:sp.name,desc:sp.text,hint:'Written in the grimoire.',icon:()=>`<span class="log-orb" style="--c:${(SPELL_LOOK[sp.id]||[])[0]||'var(--storm)'}">${spellGlyph(sp.id)}</span>`}))},
     {id:'isle',title:'Seas & isles',items:ISLES.filter(is=>is.id!=='home').map(is=>({id:'isle:'+is.id,name:is.name,desc:is.kind==='castle'?`${is.culture}. ${is.desc}`:is.desc,hint:`Across the sea, to the ${compass(Math.atan2(is.y-ISLE.home.y,is.x-ISLE.home.x))}.`,icon:()=>glyphSvg(is.kind==='castle'?LOG_GLYPH.castle:LOG_GLYPH.isle)}))},
     {id:'realm',title:'Your realms',items:Object.entries(REALMS).map(([k,r])=>({id:'realm:'+k,name:r.name,desc:`${ISLE[k].culture}, claimed. ${r.perk}`,hint:'Break its fleet, then take it.',icon:()=>glyphSvg(LOG_GLYPH.castle)}))},
+    {id:'refit',title:'Shipwright’s work',items:Object.entries(SHIP).flatMap(([k,g])=>g.tiers.slice(1).map((t,i)=>({id:`refit:${k}:${i+1}`,name:t.name,desc:`${g.label}, tier ${i+1}. ${g.effect(i+1)}.`,hint:`Built by Maren (${g.label.toLowerCase()}).`,icon:()=>glyphSvg(LOG_GLYPH.ship)})))},
+    {id:'works',title:'Works & charters',items:Object.entries(WORKS).flatMap(([r,w])=>[{id:'works:'+r,name:w.name,desc:`${w.desc} Makes ${NAMES[w.res]} in ${REALMS[r].name}.`,hint:`Built in a castle across the sea.`,icon:()=>ICON(w.res)},
+      ...CHARTERS[r].map((c,i)=>({id:`charter:${r}:${i}`,name:c.name,desc:`${REALMS[r].name}’s royal charter. ${c.text}`,hint:`Granted for ${CHARTER_COST[i]} of a realm’s treasure.`,icon:()=>ICON(w.res)}))])},
     {id:'ship',title:'Ships of the sea',items:Object.entries(FLEET).map(([k,f])=>({id:'ship:'+k,name:f.name,desc:f.desc,hint:'Met under sail on the Ember Sea.',icon:()=>glyphSvg(LOG_GLYPH.ship)}))},
     {id:'mine',title:'Crystal Mine',items:MINE.map((m,i)=>({id:'mine:'+i,name:m.done,desc:`Yields ${m.els.map(e=>NAMES[e]).join(', ')}.`,hint:'Beneath the keep.',icon:()=>glyphSvg(LOG_GLYPH.mine)}))},
   ];
@@ -1432,6 +1435,10 @@ function logCatalog(){
     {title:'Spellcraft',goals:[10,100,1000,5000,25000].map(n=>({id:'ach:casts:'+n,name:`${fmt(n)} spells cast`,need:`Cast ${fmt(n)} spells from the grimoire.`,test:()=>S.stats.casts>=n}))},
     {title:'Treasure hunting',goals:[1,10,50,250,1000].map(n=>({id:'ach:caches:'+n,name:`${fmt(n)} ${n===1?'treasure':'treasures'} dug`,need:`Dig up ${fmt(n)} island treasures.`,test:()=>(S.stats.caches||0)>=n}))},
     {title:'Sea battles',goals:[1,10,50,250,1000].map(n=>({id:'ach:ships:'+n,name:`${fmt(n)} ${n===1?'ship':'ships'} taken`,need:`Sink or board ${fmt(n)} ships.`,test:()=>(S.stats.ships||0)>=n}))},
+    {title:'Castles claimed',goals:[1,2,3,4].map(n=>({id:'ach:castles:'+n,name:n===4?'Lord of the Ember Sea':`${n} ${n===1?'castle':'castles'} claimed`,need:n===4?'Hold all four foreign castles at once.':`Hold ${n} foreign ${n===1?'castle':'castles'} at once.`,test:()=>Object.keys(REALMS).filter(claimed).length>=n}))},
+    {title:'Realm treasures',goals:[10,100,1000,10000,100000].map(n=>({id:'ach:treasure:'+n,name:`${fmt(n)} treasures`,need:`Gather ${fmt(n)} pearls, mithril, frostglass or moonsilk across all your lives.`,test:()=>(S.stats.treasures||0)>=n}))},
+    {title:'Transmutation',goals:[10,100,1000,5000,25000].map(n=>({id:'ach:trans:'+n,name:`${fmt(n)} crystals transmuted`,need:`Have Arthrex transmute ${fmt(n)} crystals.`,test:()=>(S.stats.transmuted||0)>=n}))},
+    {title:'Enchanting',goals:[1,5,10,15,20].map(n=>({id:'ach:ench:'+n,name:`Enchanted to level ${n}`,need:`Enchant any item to level ${n}.`,test:()=>Math.max(...Object.values(S.ench))>=n}))},
     {title:'Dynasties',goals:[2,5,10,25,100].map(n=>({id:'ach:life:'+n,name:`Life ${n}`,need:`Reach your ${n}${n===2?'nd':'th'} life by ascending.`,test:()=>(S.dynasty||1)>=n}))},
   ];
   const byId={}; cats.forEach(c=>c.items.forEach(it=>byId[it.id]=it)); ach.forEach(g=>g.goals.forEach((it,i)=>{ it.tier=i; it.group=g.title; byId[it.id]=it; }));
@@ -1545,7 +1552,7 @@ function ascend(){
   const p=pendingRenown(); if(p<1) return;
   // Full reset: only Renown, lifetime stats, story progress and UI preferences carry over.
   const keep={renown:S.renown+p,life:S.life,taps:S.taps,story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats)),
-    dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:1,
+    dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:S.logInit||1,
     seen:{...S.seen},favs:S.favs.slice(),retreat:S.retreat,pack:S.pack,tut:S.tut,tutV:S.tutV,tree:{...S.tree},renownV:2};
   S=Object.assign(fresh(),keep); applyTree(true); S.hp=maxHP(); upSet=new Set(); setView('keep');
   $('legIntro').textContent=`Life ${S.dynasty} begins with ${S.renown} Renown (+${S.renown*2}% gold). Spend it on your family’s legacy: head starts take effect at once, and in every life to come.`;
@@ -1669,7 +1676,7 @@ function upgradeShip(k){ const t=nextShip(k); if(!S.sea.yard||S.sea.job||!t||!ca
 function shipJobDone(){ const j=S.sea.job; if(!j) return; S.sea.job=null;
   if(j.part==='yard'){ S.sea.yard=1; S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true; logUnlock('npc:maren');
     const msg='The shipyard is finished, and your cog, the Ember Gull, rides at anchor. Open the Harbor and set sail.'; chronicle('The Ember Gull is launched.'); toast(msg); }
-  else { S.sea[j.part]++; const t=SHIP[j.part].tiers[S.sea[j.part]]; toast(`Maren’s crew fits the ${t.name}.`); if(sea) sea.key=''; }
+  else { S.sea[j.part]++; logUnlock(`refit:${j.part}:${S.sea[j.part]}`); const t=SHIP[j.part].tiers[S.sea[j.part]]; toast(`Maren’s crew fits the ${t.name}.`); if(sea) sea.key=''; }
   refresh(); }
 
 /* ================= FORMAT ================= */
@@ -3095,6 +3102,10 @@ function start(data){
   chronicle(lastB?lastB.chron:'Your keep stands alone on the hill. Tap it to collect the tithe, and send your hero into Whisperwood.');
   if(!S.story.intro&&S.life>0) S.story.intro=true;
   if(!S.logInit){ backfillLog(); S.logInit=1; }
+  if(S.logInit<2){ const q=[]; if(S.sea.yard) q.push('npc:maren'); Object.keys(SHIP).forEach(k=>{ for(let t=1;t<=S.sea[k];t++) q.push(`refit:${k}:${t}`); });
+    Object.keys(REALMS).filter(claimed).forEach(r=>{ q.push('realm:'+r); if(S.works[r]) q.push('works:'+r); for(let i=0;i<charter(r);i++) q.push(`charter:${r}:${i}`); });
+    Object.entries(S.sea.isles||{}).forEach(([id,st])=>{ if(st.found) q.push('isle:'+id); });
+    q.forEach(id=>{ if(!S.log[id]) S.log[id]={t:now(),life:S.dynasty||1}; }); S.logInit=2; }
   if(S.tut!=null&&!S.tutV) S.tut=TUT.length;   // saves from the old 4-step tutorial count as done
   if(S.tut==null&&S.life>0) S.tut=TUT.length;
   if(S.tutV===2&&S.tut!=null&&S.tut>=7) S.tut++;   // a Return home step was added at index 7

@@ -24,6 +24,10 @@ Undiscovered entries are blacked-out silhouettes labelled **???**. Tapping one s
 | Seas & isles | 10 | You sail within sight of the island or castle |
 | Your realms | 4 | You claim the castle |
 | Ships of the sea | 5 | You sink or board that kind of ship |
+| Shipwright's work | 12 | Maren finishes that sails, hold, hull or arms refit |
+| Works & charters | 16 | You open a castle's works (4), or grant one of its royal charters (12) |
+
+119 collectibles in all.
 
 ## Achievements
 
@@ -41,7 +45,13 @@ Medals in five tiers: bronze, silver, gold, frost and mythic. Locked medals are 
 | Spells cast (grimoire spells) | 10 / 100 / 1K / 5K / 25K |
 | Treasure hunting (island treasures dug) | 1 / 10 / 50 / 250 / 1,000 |
 | Sea battles (ships sunk or boarded) | 1 / 10 / 50 / 250 / 1,000 |
+| Castles claimed (held at once) | 1 / 2 / 3 / 4 (Lord of the Ember Sea) |
+| Realm treasures gathered (all lives) | 10 / 100 / 1K / 10K / 100K |
+| Crystals transmuted | 10 / 100 / 1K / 5K / 25K |
+| Enchanting (highest level on any item) | 1 / 5 / 10 / 15 / 20 |
 | Dynasties (reach life N) | 2 / 5 / 10 / 25 / 100 |
+
+109 achievements in all. Saves from before an entry existed are backfilled on load with what they already have (for example your shipyard, refits, claimed castles, works and charters).
 
 Achievements are checked about once a second.
 
