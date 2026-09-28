@@ -59,6 +59,7 @@
     user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;}
   #realm canvas{display:block;}
   #realm.tall{aspect-ratio:2/2.5;}
+  .realm-chip{position:absolute;left:8px;bottom:8px;z-index:1;font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#1a1408;background:rgba(227,173,69,.9);border:1px solid var(--gold-deep);border-radius:6px;padding:3px 8px;cursor:pointer;}
   .sea-tall{position:absolute;top:44px;right:8px;z-index:1;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#cfc6ad;background:rgba(10,12,25,.55);border:1px solid rgba(236,226,200,.25);border-radius:6px;padding:5px 10px;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
   .chron{margin:0;font-family:var(--display);font-size:16px;color:var(--muted);min-height:1.4em;text-align:center;transition:opacity .4s;text-wrap:balance;}
 
@@ -366,6 +367,7 @@
       <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
       <button id="vSea" data-view="sea" aria-pressed="false" hidden>Sea</button>
     </div>
+    <button class="realm-chip" id="realmChip" hidden></button>
     <button class="sea-tall" id="seaTall" hidden>↕ Taller</button>
   </div>
   <div class="journey-bar" id="journeyBar" hidden>
@@ -401,6 +403,14 @@
     </div>
     <div class="realm-pick" id="realmPick" hidden><div class="seg" id="realmSeg"></div><p class="r-desc" id="realmPerk"></p></div>
     <div id="bList" class="list"></div>
+    <div id="realmExtra" hidden>
+      <div class="panel-head sub"><span class="label">Works</span><span class="label num" id="wkRate"></span></div>
+      <div class="row"><div><div class="r-head"><span class="r-name" id="wkName"></span><span class="r-tag" id="wkLv"></span></div><div class="r-desc" id="wkDesc"></div><div id="wkCost"></div></div>
+        <button class="act" id="wkBtn" data-works="1"><small id="wkBs">Build</small><span id="wkBt"></span></button></div>
+      <div class="panel-head sub"><span class="label">Royal charters</span><span class="label num" id="chHeld"></span></div>
+      <p class="r-desc" style="margin:0 0 6px">Granted in order, paid in this realm’s treasure. They last until you ascend.</p>
+      <div id="chList" class="list"></div>
+    </div>
   </section>
 
   <section id="p-up" class="panel" hidden>
@@ -561,7 +571,8 @@
 /* ================= DATA ================= */
 const MATS=['wood','stone','copper','tin','iron'];
 const CRYS=['ember','frost','verdant','storm'];
-const NAMES={gold:'gold',wood:'Wood',stone:'Stone',copper:'Copper',tin:'Tin',iron:'Iron',ember:'Ember',frost:'Frost',verdant:'Verdant',storm:'Storm'};
+const RARE=['pearl','mithril','frostglass','moonsilk'];   // treasures made only in claimed castles
+const NAMES={pearl:'Pearls',mithril:'Mithril',frostglass:'Frostglass',moonsilk:'Moonsilk',gold:'gold',wood:'Wood',stone:'Stone',copper:'Copper',tin:'Tin',iron:'Iron',ember:'Ember',frost:'Frost',verdant:'Verdant',storm:'Storm'};
 const HEX={ember:0xe8744a,frost:0x8fd0f0,verdant:0x7cc97a,storm:0xc7a8f0};
 
 const BUILDINGS=[
@@ -827,15 +838,30 @@ const ENCH={
 };
 // Only the finest piece of each kind can hold an enchantment
 const enchCost=l=>Math.ceil(10*Math.pow(1.35,l));
+// Each claimed castle has works that make its own treasure, and royal charters that spend it
+const WORKS={
+  redtide:{res:'pearl',name:'Pearl Beds',desc:'Divers work the warm shallows of the lagoon.',lv:[{cost:{gold:5e4,wood:150,stone:80},every:20},{cost:{gold:5e5,wood:300,iron:60},every:12},{cost:{gold:5e6,iron:200,tin:80},every:6}]},
+  karak:{res:'mithril',name:'Mithril Deeps',desc:'A vein of true-silver, far below the sea-stack.',lv:[{cost:{gold:1.5e5,stone:250,iron:60},every:20},{cost:{gold:1.5e6,stone:400,iron:150},every:12},{cost:{gold:1.5e7,iron:400,tin:150},every:6}]},
+  skar:{res:'frostglass',name:'Frostglass Caves',desc:'Ice that never melts, cut and polished like glass.',lv:[{cost:{gold:5e5,wood:300,stone:200},every:20},{cost:{gold:5e6,stone:500,tin:120},every:12},{cost:{gold:5e7,iron:500,tin:250},every:6}]},
+  sylvan:{res:'moonsilk',name:'Moonsilk Canopy',desc:'Moths high in the elder trees spin silk by moonlight.',lv:[{cost:{gold:1.5e6,wood:600,copper:150},every:20},{cost:{gold:1.5e7,wood:1000,tin:250},every:12},{cost:{gold:1.5e8,wood:2000,iron:500},every:6}]},
+};
+const CHARTER_COST=[25,100,350];
+const ONE={pearl:'pearl',mithril:'bar of mithril',frostglass:'shard of frostglass',moonsilk:'bolt of moonsilk'};
+const CHARTERS={
+  redtide:[{name:'Pearl Exchange',text:'Redtide holdings produce ×2.'},{name:'Smugglers’ Routes',text:'Expeditions bring back ×1.5 wood and stone.'},{name:'Admiralty Prize Law',text:'Redtide holdings ×3 more, and gold at sea ×1.5.'}],
+  karak:[{name:'Guild Seal of Karak',text:'Karak holdings produce ×2.'},{name:'Mithril Tools',text:'Expeditions bring back ×1.5 copper, tin and iron.'},{name:'Deepforge Pact',text:'Karak holdings ×3 more, and forging and shipwright work twice as fast again.'}],
+  skar:[{name:'The Jarl’s Oath',text:'Skarholm holdings produce ×2.'},{name:'Frostglass Lanterns',text:'The crystal mine works 50% faster.'},{name:'Saga of the Sea-King',text:'Skarholm holdings ×3 more, and your ship’s hull +25%.'}],
+  sylvan:[{name:'The Elder Council',text:'Sylvanreach holdings produce ×2.'},{name:'Moonsilk Satchels',text:'Expeditions find twice as many crystals.'},{name:'Starsong',text:'Sylvanreach holdings ×3 more, and +10% to all gold.'}],
+};
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928015021';
+const BUILD='20260928015537';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
-  mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,ench:{weapon:0,armor:0,pick:0,hull:0,arms:0},tree:{},renownV:2,sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
+  mat:{wood:0,stone:0,copper:0,tin:0,iron:0,pearl:0,mithril:0,frostglass:0,moonsilk:0},cry:{ember:0,frost:0,verdant:0,storm:0},
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,ench:{weapon:0,armor:0,pick:0,hull:0,arms:0},works:{},worksAcc:{},charters:{},tree:{},renownV:2,sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, sea=null, fief=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed),ench:Object.assign(f.ench,d.ench),tree:Object.assign(f.tree,d.tree),renownV:d.renownV||1}); }
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed),ench:Object.assign(f.ench,d.ench),tree:Object.assign(f.tree,d.tree),works:Object.assign(f.works,d.works),worksAcc:Object.assign(f.worksAcc,d.worksAcc),charters:Object.assign(f.charters,d.charters),renownV:d.renownV||1}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -856,7 +882,9 @@ function canPay(c){ return Object.entries(c).every(([k,v])=>res(k)>=v); }
 function pay(c){ for(const [k,v] of Object.entries(c)){ if(k==='gold') S.gold-=v; else addRes(k,-v); } }
 
 function bMult(b){ let m=1; for(let i=0;i<5;i++) if(has(b.id+i)) m*=2; return m; }
-function bRate(b){ return b.rate*bMult(b)*goldMult(); }
+const charter=r=>(S.charters&&S.charters[r])||0;
+const realmMult=r=>(charter(r)>=1?2:1)*(charter(r)>=3?3:1);
+function bRate(b){ return b.rate*bMult(b)*goldMult()*(b.realm?realmMult(b.realm):1); }
 function gps(withSpells=true){ let g=0; for(const b of BUILDINGS) g+=owned(b.id)*bRate(b); if(withSpells&&active('harvest')) g*=3; return g; }
 function tapValue(){
   let flat=1,mult=1,pct=0;
@@ -914,7 +942,7 @@ function buyTree(k){ const n=TREE_K[k], l=treeLvl(k), c=n&&n.costs[l]; if(!c||re
 const FORGE_TIME=[0,15,60,180,480], STOKE_COST={ember:1};
 function forge(slot){
   const t=nextGear(slot); if(!t||S.forging||!canPay(t.cost)) return;
-  pay(t.cost); const secs=FORGE_TIME[S.gear[slot]+1]*(claimed('karak')?0.5:1), n=now();
+  pay(t.cost); const secs=FORGE_TIME[S.gear[slot]+1]*(claimed('karak')?0.5:1)*(charter('karak')>=3?0.5:1), n=now();
   S.forging={slot,start:n,end:n+secs*1000};
   chronicle(`Brom fires up the forge for your ${t.name}.`); refresh();
 }
@@ -952,7 +980,7 @@ function hasten(){
 // Relics
 const relicLvl=id=>S.relics[id]||0;
 function relicBonus(type){ let b=0; for(const r of RELICS){ const l=relicLvl(r.id); if(l&&r.fx[type]) b+=r.fx[type]*l; } return b; }
-const goldMult=()=>renownMult()*(1+relicBonus('gold'));
+const goldMult=()=>renownMult()*(1+relicBonus('gold'))*(charter('sylvan')>=3?1.1:1);
 function findRelic(region){
   const pool=RELICS.filter(r=>r.region===region&&relicLvl(r.id)<RELIC_MAX); if(!pool.length) return null;
   const r=pool[rnd(0,pool.length-1)]; S.relics[r.id]=relicLvl(r.id)+1;
@@ -968,7 +996,7 @@ const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=rnd(0,i); [a[i],a[j]]=
 const STAGE_GAIN=0.25, STAGE_HARM=0.15, AUTO_DRINK=0.4, MAX_TRIP=8*3600*1000;
 const RETREATS=[{p:0.5,label:'50%'},{p:0.3,label:'30%'},{p:0.15,label:'15%'},{p:0,label:'Never'}];
 const packMax=()=>Math.min(6,2+S.gear.armor);
-function yieldMult(k){ return (k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick]*(claimed('karak')?1.25:1)*(1+0.08*S.ench.pick))*(1+relicBonus(k))*matMult(); }
+function yieldMult(k){ return ((k==='wood'||k==='stone')&&charter('redtide')>=2?1.5:1)*(['copper','tin','iron'].includes(k)&&charter('karak')>=2?1.5:1)*(k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick]*(claimed('karak')?1.25:1)*(1+0.08*S.ench.pick))*(1+relicBonus(k))*matMult(); }
 function lootRange(l,k,[a,b]){ const m=yieldMult(k); return [Math.round(a*m),Math.round(b*m)]; }
 function expDuration(l){ return l.dur*(1-0.08*S.gear.armor)*(1-relicBonus('speed')); }   // seconds per depth
 function foeDamage(l,st){ return l.dmg*(1+STAGE_HARM*(st||0))*Math.max(0.35,1-0.12*S.gear.armor-0.06*S.gear.weapon)*Math.pow(0.97,S.ench.armor); }
@@ -986,7 +1014,7 @@ function genStage(e,k){
   const B=Math.max(3,Math.min(12,Math.round(e.len/5000))), sum=totals.reduce((a,[,n])=>a+n,0)||1;
   for(const [kk,n] of totals){ const c=Math.max(1,Math.min(n,Math.round(B*n/sum)));
     splitBeats('res',kk,n,c).forEach(b=>{ if(Math.random()<0.2) b.k='foe'; list.push(b); }); }
-  if(l.cry){ let c=rnd(...l.cry)*(1+relicBonus('cry'))*(1+0.1*k); c=Math.floor(c)+(Math.random()<c%1?1:0); for(let i=0;i<c;i++) list.push({k:'cry',r:CRYS[rnd(0,3)],n:1}); }
+  if(l.cry){ let c=rnd(...l.cry)*(1+relicBonus('cry'))*(1+0.1*k)*(charter('sylvan')>=2?2:1); c=Math.floor(c)+(Math.random()<c%1?1:0); for(let i=0;i<c;i++) list.push({k:'cry',r:CRYS[rnd(0,3)],n:1}); }
   if(Math.random()<Math.min(0.5,0.15+0.03*k)) list.push({k:'chest',r:'gold',n:0});
   shuffle(list).forEach((b,i)=>{ const bb=stamp(e,b,s0+e.len*(0.06+0.88*(i+0.5)/list.length)); bb.st=k; e.beats.push(bb); });
   if(l.dur>=40&&Math.random()<0.5){ const pool=shuffle(EVENTS.filter(ev=>(!ev.regions||ev.regions.includes(e.id))&&!e.used.includes(ev.id)));
@@ -1107,7 +1135,7 @@ function migrateOldExp(){ const e=S.exp; if(!e||e.v===2) return;
   (e.beats||[]).forEach(b=>{ if(!b.done&&b.k!=='chest'&&b.n>0) addRes(b.r,b.n); }); S.exp=null; }
 
 // Crystal mine
-function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))*(1+relicBonus('mine'))*(claimed('sylvan')?1.5:1)); }
+function mineInterval(){ const d=MINE[S.mine-1]; return d.every/(PICK_CRY[S.gear.pick]*(1+0.1*owned('tower'))*(1+relicBonus('mine'))*(claimed('sylvan')?1.5:1)*(charter('skar')>=2?1.5:1)); }
 // Digging a gallery takes time (the current level keeps producing meanwhile). Frost splits rock to speed it up.
 const DIG_TIME=[30,120,300,720], SPLIT_COST={frost:1};
 function digMine(){ const d=MINE[S.mine]; if(!d||S.digging||!canPay(d.cost)) return; pay(d.cost); const n=now();
@@ -1119,6 +1147,12 @@ function digDone(){ const g=S.digging; if(!g) return; S.digging=null; S.mine=g.l
 const canSplit=()=>!!S.digging&&canPay(SPLIT_COST);
 function splitRock(){ if(!canSplit()) return; pay(SPLIT_COST); const g=S.digging, n=now();
   g.end=n+(g.end-n)/2; if(g.end-n<1500) digDone(); else toast('Frost creeps into the rock and splits it. The miners dig twice as fast.'); refresh(); }
+function runWorks(dt){ for(const [r,w] of Object.entries(WORKS)){ const l=S.works[r]||0; if(!l||!claimed(r)) continue;
+  S.worksAcc[r]=(S.worksAcc[r]||0)+dt; const iv=w.lv[l-1].every, n=Math.floor(S.worksAcc[r]/iv); if(n){ S.worksAcc[r]-=n*iv; S.mat[w.res]+=n; } } }
+function buildWorks(r){ const w=WORKS[r], l=S.works[r]||0, nx=w&&w.lv[l]; if(!nx||!claimed(r)||!canPay(nx.cost)) return; pay(nx.cost); S.works[r]=l+1;
+  toast(l?`${w.name} expanded: one ${ONE[w.res]} every ${nx.every}s.`:`${w.name} opened. They yield ${NAMES[w.res]}, a treasure only ${REALMS[r].name} makes.`); refresh(); }
+function buyCharter(r){ const i=charter(r), c=CHARTER_COST[i], w=WORKS[r]; if(c==null||S.mat[w.res]<c) return; S.mat[w.res]-=c; S.charters[r]=i+1;
+  const ch=CHARTERS[r][i]; chronicle(`${REALMS[r].name} is granted the ${ch.name}.`); toast(`${ch.name}: ${ch.text}`); refresh(); }
 function mineCrystals(dt){
   if(!S.mine) return;
   S.mineAcc+=dt; const iv=mineInterval(); let n=Math.floor(S.mineAcc/iv); if(!n) return;
@@ -1325,7 +1359,7 @@ function renderSatchel(){
   if($('satchelSheet').hidden) return;
   const tile=(k,v)=>`<div class="inv${v?'':' none'}">${ICON(k)}<b>${fmt(v)}</b><span>${NAMES[k]}</span></div>`;
   const group=(title,keys,src)=>{ const ks=keys.filter(k=>S.seen[k]); return ks.length?`<div class="label">${title}</div><div class="inv-grid">${ks.map(k=>tile(k,src[k])).join('')}</div>`:''; };
-  const html=group('Materials',MATS,S.mat)+group('Crystals',CRYS,S.cry);
+  const html=group('Materials',MATS,S.mat)+group('Crystals',CRYS,S.cry)+group('Treasures of the realms',RARE,S.mat);
   setHTML($('invWrap'),html||'<p class="r-desc">Nothing yet. Send your hero out to gather wood and stone.</p>');
 }
 let bookSig='';
@@ -1371,7 +1405,7 @@ function logCatalog(){
       {id:'npc:brom',name:'Brom',desc:'Master smith of the keep’s forge.',hint:'Keeps the forge in the yard.',icon:()=>BROM_SVG},
       {id:'npc:maren',name:'Maren',desc:'Shipwright of the harbor below the keep. Builds and refits your ships.',hint:'Waits for a shipyard to run.',icon:()=>MAREN_SVG}]},
     {id:'relic',title:'Relics',items:RELICS.map(r=>({id:'relic:'+r.id,name:r.name,desc:`${fxLine(r.fx,1)} per level, up to level ${RELIC_MAX}.`,hint:`Somewhere in ${LOC[r.region].name}.`,icon:()=>glyphSvg(LOG_GLYPH.relic)}))},
-    {id:'res',title:'Resources',items:[...MATS,...CRYS].map(k=>({id:'res:'+k,name:NAMES[k]+(CRYS.includes(k)?' crystal':''),desc:CRYS.includes(k)?'A crystal of bound elemental magic.':'A crafting material from the wilds.',hint:CRYS.includes(k)?'Deep in the earth.':'Out on the roads.',icon:()=>ICON(k)}))},
+    {id:'res',title:'Resources',items:[...MATS,...CRYS,...RARE].map(k=>({id:'res:'+k,name:NAMES[k]+(CRYS.includes(k)?' crystal':''),desc:CRYS.includes(k)?'A crystal of bound elemental magic.':RARE.includes(k)?`A treasure made only in ${REALMS[Object.keys(WORKS).find(r=>WORKS[r].res===k)].name}.`:'A crafting material from the wilds.',hint:CRYS.includes(k)?'Deep in the earth.':RARE.includes(k)?'Made in a castle across the sea.':'Out on the roads.',icon:()=>ICON(k)}))},
     {id:'region',title:'Regions',items:LOCS.map(l=>({id:'region:'+l.id,name:l.name,desc:l.desc,hint:l.danger?`Needs armor for danger ${l.danger}.`:'Close to the keep.',icon:()=>glyphSvg(LOG_GLYPH.region)}))},
     {id:'foe',title:'Bestiary',items:Object.keys(FOE_NAMES).map(f=>({id:'foe:'+f,name:FOE_NAMES[f],desc:`Defeated on the road in ${regionsFor(f)}.`,hint:`Roams ${regionsFor(f)}.`,icon:()=>glyphSvg(LOG_GLYPH.foe)}))},
     {id:'event',title:'Road events',items:EVENTS.map(e=>({id:'event:'+e.id,name:e.title,desc:e.text,hint:'Met on longer expeditions.',icon:()=>glyphSvg(LOG_GLYPH.event)}))},
@@ -1522,9 +1556,9 @@ function tick(){
   if(dt>10){
     dt=Math.min(dt,OFFLINE_CAP);
     const g=gps(false)*dt; earn(g);
-    const before=CRYS.reduce((a,c)=>a+S.cry[c],0); mineCrystals(dt); const cr=CRYS.reduce((a,c)=>a+S.cry[c],0)-before;
+    runWorks(dt); const before=CRYS.reduce((a,c)=>a+S.cry[c],0); mineCrystals(dt); const cr=CRYS.reduce((a,c)=>a+S.cry[c],0)-before;
     if(g>=1||cr) toast(`While you were away: ${fmt(g)} gold${cr?` and ${cr} crystal${cr>1?'s':''}`:''}.`);
-  } else { earn(gps()*dt); mineCrystals(dt); }
+  } else { earn(gps()*dt); mineCrystals(dt); runWorks(dt); }
   questTick();
   if(S.forging&&t>=S.forging.end) forgeDone();
   if(S.digging&&t>=S.digging.end) digDone();
@@ -1540,7 +1574,7 @@ function tick(){
 const seaUnlocked=()=>S.sea.yard>0||(S.gear.armor>=2&&S.mine>=2);
 const seaCargo=()=>Object.entries(S.sea.cargo).filter(([k])=>k!=='gold').reduce((a,[,n])=>a+n,0);
 const holdCap=()=>Math.round(HOLD_CAP[S.sea.hold]*(claimed('redtide')?1.5:1));
-const seaGold=()=>claimed('redtide')?2:1;
+const seaGold=()=>(claimed('redtide')?2:1)*(charter('redtide')>=3?1.5:1);
 function isleState(id){ return S.sea.isles[id]||(S.sea.isles[id]={found:0,next:0}); }
 const cacheReady=id=>{ const st=isleState(id); return !!st.found&&st.next<=now(); };
 function toCargo(k,n){ n=Math.round(n); if(!(n>0)) return 0; if(k!=='gold'){ n=Math.min(n,holdCap()-seaCargo()); if(n<=0) return 0; }
@@ -1568,7 +1602,7 @@ function buildYard(){ if(S.sea.yard||S.sea.job||!seaUnlocked()||!canPay(YARD.cos
   S.sea.job={part:'yard',start:n,end:n+YARD.time*1000}; chronicle('Shipwrights lay a keel on the shore below the keep.'); refresh(); }
 const nextShip=k=>SHIP[k].tiers[S.sea[k]+1];
 // Sea battles
-const maxHull=()=>Math.round(HULL_HP[S.sea.hull]*(claimed('skar')?1.25:1)*(1+0.06*S.ench.hull));
+const maxHull=()=>Math.round(HULL_HP[S.sea.hull]*(claimed('skar')?1.25:1)*(charter('skar')>=3?1.25:1)*(1+0.06*S.ench.hull));
 const shipHP=()=>S.sea.hp==null?maxHull():S.sea.hp;
 const guardsLeft=id=>S.sea.fleets[id]??CASTLE_GUARD[id].count;
 const inHarborPos=()=>S.sea.x!=null&&Math.hypot(S.sea.x-HARBOR.x,S.sea.y-HARBOR.y)<DOCK_R;
@@ -1619,7 +1653,7 @@ function claimCastle(id,how){
   const is=ISLE[id], R=REALMS[id]; S.claimed[id]={t:now(),how:how||'blockade'}; S.siege=null; S.sea.fleets[id]=0;
   S.stats.castles=(S.stats.castles||0)+1; logUnlock('realm:'+id);
   chronicle(`${is.name} flies your banner.`);
-  toast(`${R.name} is yours! ${how==='storm'?'Your hero storms the gate.':how==='night'?'Your hero’s men are over the walls before dawn.':'Starved and cut off, the castle opens its gates.'} Switch realms in the Build tab to rule it. ${R.perk}`);
+  toast(`${R.name} is yours! ${how==='storm'?'Your hero storms the gate.':how==='night'?'Your hero’s men are over the walls before dawn.':'Starved and cut off, the castle opens its gates.'} Use the gold ⇄ button on the castle view, or the Build tab, to switch realms and rule it. ${R.perk}`);
   if(sea) sea.key=''; refresh(); }
 function shipSunk(){
   S.sea.cargo={}; S.sea.hp=Math.round(maxHull()*0.25); S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true;
@@ -1627,7 +1661,7 @@ function shipSunk(){
   toast('The Ember Gull is holed and sinks! The crew is fished out and towed home, but the cargo is lost. She is repairing in the harbor.'); refresh();
 }
 function upgradeShip(k){ const t=nextShip(k); if(!S.sea.yard||S.sea.job||!t||!canPay(t.cost)) return; pay(t.cost); const n=now();
-  S.sea.job={part:k,start:n,end:n+t.time*1000*(claimed('karak')?0.5:1)}; refresh(); }
+  S.sea.job={part:k,start:n,end:n+t.time*1000*(claimed('karak')?0.5:1)*(charter('karak')>=3?0.5:1)}; refresh(); }
 function shipJobDone(){ const j=S.sea.job; if(!j) return; S.sea.job=null;
   if(j.part==='yard'){ S.sea.yard=1; S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true; logUnlock('npc:maren');
     const msg='The shipyard is finished, and your cog, the Ember Gull, rides at anchor. Open the Harbor and set sail.'; chronicle('The Ember Gull is launched.'); toast(msg); }
@@ -1651,6 +1685,10 @@ function ICON(k){
   if(k==='gold') return `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="#e3ad45"/><circle cx="8" cy="8" r="4.2" fill="none" stroke="#a8792a" stroke-width="1.2"/><path d="M5.5 5.2a3.5 3.5 0 0 1 3-1.6" stroke="#fff1c4" stroke-width="1.2" fill="none"/></svg>`;
   if(k==='wood') return `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="5" width="11" height="6.5" rx="3.2" fill="#8a5e3a"/><path d="M3 6.8h7M4 9.6h6" stroke="#6a4428" stroke-width=".9"/><ellipse cx="12.5" cy="8.25" rx="2.4" ry="3.25" fill="#d8b07c"/><ellipse cx="12.5" cy="8.25" rx="1.2" ry="1.7" fill="none" stroke="#a87a4a" stroke-width=".8"/></svg>`;
   if(k==='stone') return `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 11.5 4 5.5 8.5 3.5 13 6 14 11 10 13.2H4.5Z" fill="#9c9ba6"/><path d="M8.5 3.5 13 6 14 11 10 13.2 9.4 7.6Z" fill="#7a7984"/><path d="M4 5.5 8.5 3.5 9.4 7.6 5.2 8.6Z" fill="#c3c3cc"/></svg>`;
+  if(k==='pearl') return `<svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="11.5" rx="6.5" ry="2.6" fill="#c9a07a"/><circle cx="8" cy="8" r="4.4" fill="#f3eee6"/><circle cx="6.6" cy="6.6" r="1.4" fill="#fff"/><path d="M4 9.6a4.4 4.4 0 0 0 8 0" fill="#d8d0e4" opacity=".7"/></svg>`;
+  if(k==='mithril') return `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 12.5 4 5.5h8l2.5 7Z" fill="#cfe0f0"/><path d="M12 5.5l2.5 7h-3.2L9.6 5.5Z" fill="#9fb8d4"/><path d="M4 5.5h8l-.6 1.6H4.6Z" fill="#fff"/><path d="M5.5 10.5h3" stroke="#fff" stroke-width=".9"/></svg>`;
+  if(k==='frostglass') return `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 14 3 7l3-5.5 2 4 2-3 3 5-2 6.5Z" fill="#bfeaf5" opacity=".9"/><path d="M6 1.5 8 5.5 7 14H5L3 7Z" fill="#e8fbff"/><path d="M10 2.5l3 5-2 6.5H9Z" fill="#8fd0e4"/></svg>`;
+  if(k==='moonsilk') return `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="2" fill="#d9d0f0"/><path d="M3 5.5q5 2 10 0M3 8q5 2 10 0M3 10.5q5 2 10 0" stroke="#b8a8e0" stroke-width=".9" fill="none"/><rect x="2" y="2.2" width="12" height="1.6" rx=".8" fill="#8a6fb8"/><rect x="2" y="12.2" width="12" height="1.6" rx=".8" fill="#8a6fb8"/></svg>`;
   const c=ICON_COL[k]; if(!c) return '';
   if(MATS.includes(k)) return `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 12.5 4 5.5h8l2.5 7Z" fill="${c[0]}"/><path d="M12 5.5l2.5 7h-3.2L9.6 5.5Z" fill="${c[1]}"/><path d="M4 5.5h8l-.6 1.6H4.6Z" fill="${c[2]}"/></svg>`;
   return `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="${c[0]}" opacity=".18"/><path d="M8 1.5 12.5 6 8 14.5 3.5 6Z" fill="${c[0]}"/><path d="M8 1.5 12.5 6H8Z" fill="${c[2]}"/><path d="M8 14.5 12.5 6H8Z" fill="${c[1]}"/></svg>`;
@@ -1795,6 +1833,21 @@ function renderForge(){
 function setTall(on){ $('realm').classList.toggle('tall',on); $('seaTall').hidden=view!=='sea';
   $('seaTall').textContent=on?'\u2195 Shorter':'\u2195 Taller';
   if(game&&game.scale){ const h=Math.round(H*Z*(on?SEA_TALL:1)); if(game.scale.gameSize.height!==h){ game.scale.setGameSize(W*Z,h); requestAnimationFrame(()=>game.scale.refresh()); setTimeout(()=>game.scale.refresh(),120); } } }
+function renderRealmExtra(){
+  const r=S.realm, on=r!=='home'&&!!WORKS[r]; $('realmExtra').hidden=!on;
+  const chip=$('realmChip'), rs=['home',...Object.keys(REALMS).filter(claimed)];
+  chip.hidden=!(view==='keep'&&rs.length>1); chip.textContent=`\u21C4 ${r==='home'?'Emberkeep':REALMS[r].name}`;
+  if(!on) return; const w=WORKS[r], l=S.works[r]||0, nx=w.lv[l], res=w.res;
+  $('wkName').textContent=w.name; $('wkLv').textContent=l?`Level ${l} / 3`:'Not built';
+  $('wkDesc').textContent=`${w.desc} ${l?`One ${ONE[res]} every ${w.lv[l-1].every}s.`:''}${nx?` Next: one every ${nx.every}s.`:''}`;
+  $('wkRate').textContent=l?`${fmt(S.mat[res])} ${NAMES[res]}`:'';
+  setHTML($('wkCost'),nx?costHTML(nx.cost):''); $('wkBtn').disabled=!nx||!canPay(nx.cost); $('wkBs').textContent=l?'Expand':'Build'; $('wkBt').textContent=nx?(l?`Level ${l+1}`:'Open works'):'Complete';
+  const i=charter(r); $('chHeld').textContent=`${i} / 3`;
+  const key=r+'|'+i+'|'+(i<3&&S.mat[res]>=CHARTER_COST[i]);
+  if($('chList').dataset.k!==key){ $('chList').dataset.k=key;
+    $('chList').innerHTML=CHARTERS[r].map((c,j)=>`<div class="row"><div><div class="r-head"><span class="r-name"${j>i?' style="color:var(--muted)"':''}>${c.name}</span><span class="r-tag">${j<i?'Granted':`${CHARTER_COST[j]} ${NAMES[res]}`}</span></div><div class="r-desc">${c.text}</div></div>
+      ${j===i?`<button class="act" data-charter="1" ${S.mat[res]>=CHARTER_COST[j]?'':'disabled'}><small>Grant</small><span>${ICON(res)} ${CHARTER_COST[j]}</span></button>`:''}</div>`).join(''); }
+}
 let yardKey='';
 function renderHarbor(){
   const sh=S.sea, open=seaUnlocked();
@@ -1885,8 +1938,8 @@ function refresh(){
 
   // stockpile
   { // a resource joins the satchel the first time the player holds any of it
-    MATS.forEach(k=>{ if(S.mat[k]>0){ S.seen[k]=1; logUnlock('res:'+k); } }); CRYS.forEach(k=>{ if(S.cry[k]>0){ S.seen[k]=1; logUnlock('res:'+k); } });
-    const known=[...MATS.filter(k=>S.seen[k]).map(k=>[k,S.mat[k]]),...CRYS.filter(k=>S.seen[k]).map(k=>[k,S.cry[k]])];
+    [...MATS,...RARE].forEach(k=>{ if(S.mat[k]>0){ S.seen[k]=1; logUnlock('res:'+k); } }); CRYS.forEach(k=>{ if(S.cry[k]>0){ S.seen[k]=1; logUnlock('res:'+k); } });
+    const known=[...MATS.filter(k=>S.seen[k]).map(k=>[k,S.mat[k]]),...RARE.filter(k=>S.seen[k]).map(k=>[k,S.mat[k]]),...CRYS.filter(k=>S.seen[k]).map(k=>[k,S.cry[k]])];
     setHTML($('stock'), known.length?known.map(([k,v])=>miniChip(k,v)).join(''):'<span class="r-desc">Empty. Your hero fills it on expeditions.</span>');
     renderSatchel(); }
 
@@ -1932,6 +1985,7 @@ function refresh(){
   { const rs=['home',...Object.keys(REALMS).filter(claimed)]; if(!rs.includes(S.realm)) S.realm='home';
     $('realmPick').hidden=rs.length<2; const key=rs.join()+'|'+S.realm;
     if(rs.length>1&&$('realmSeg').dataset.k!==key){ $('realmSeg').dataset.k=key; $('realmSeg').innerHTML=rs.map(r=>`<button data-realm="${r}" aria-pressed="${r===S.realm}">${r==='home'?'Emberkeep':REALMS[r].name}</button>`).join(''); }
+    renderRealmExtra();
     $('realmPerk').textContent=S.realm==='home'?'Your home keep. Every realm’s holdings pay into one treasury.':REALMS[S.realm].perk; }
   BUILDINGS.forEach(b=>{
     const row=$('b-'+b.id), rl=b.realm||'home';
@@ -2096,6 +2150,7 @@ function wireUI(){
   $('boonList').addEventListener('click',e=>{ const b=e.target.closest('button[data-tree]'); if(b&&!b.disabled) buyTree(b.dataset.tree); });
   $('jbHaste').addEventListener('click',hasten);
   $('jbReturn').addEventListener('click',()=>{ returnHome(); refresh(); });
+  $('realmChip').addEventListener('click',()=>{ const rs=['home',...Object.keys(REALMS).filter(claimed)]; S.realm=rs[(rs.indexOf(S.realm)+1)%rs.length]; setView('keep'); refresh(); });
   $('seaTall').addEventListener('click',()=>{ S.sea.tall=!S.sea.tall; setTall(view==='sea'&&S.sea.tall); if(S.sea.tall) setTimeout(()=>$('realm').scrollIntoView({behavior:'smooth',block:'start'}),60); });
   $('sgClose').addEventListener('click',()=>$('siegeCard').hidden=true);
   $('sgOpts').addEventListener('click',e=>{ const b=e.target.closest('button[data-sg]'); if(!b||b.disabled) return; doSiege(b.dataset.sg,b.dataset.id); });
@@ -2149,6 +2204,7 @@ function wireUI(){
         lesson:()=>showDialog('arthrex',CRYSTAL_LESSON,'I understand',()=>{})})[d.spire](); }
     else if(d.stoke) stoke();
     else if(d.tree) buyTree(d.tree);
+    else if(d.works) buildWorks(S.realm); else if(d.charter) buyCharter(S.realm);
     else if(d.tm) transmute(d.tm,d.n); else if(d.ench) enchant(d.ench);
     else if(d.yard) buildYard(); else if(d.ship) upgradeShip(d.ship); else if(d.sail){ setView('sea'); $('realm').scrollIntoView({behavior:'smooth',block:'center'}); }
     else if(d.split) splitRock();
@@ -3008,12 +3064,15 @@ class Fief extends Phaser.Scene{
       h.fillStyle(L(0x2a2430)); h.fillRect(x-3*s,y-8*s,6*s,8*s);
       h.fillStyle(this.light<0.5?0xf0b44a:L(0x3b3a45)); h.fillRect(x-10*s,y-11*s,4*s,4*s); h.fillRect(x+6*s,y-11*s,4*s,4*s);
       if(this.light<0.5){ hg.fillStyle(0xf0b44a,0.25*(1-this.light)); hg.fillCircle(x-8*s,y-9*s,7); hg.fillCircle(x+8*s,y-9*s,7); } });
+    const wl=S.works[id]||0; if(wl){ const [x,y]=[460,352], col={pearl:0xf3eee6,mithril:0xcfe0f0,frostglass:0xbfeaf5,moonsilk:0xd9d0f0}[WORKS[id].res];
+      h.fillStyle(0x000000,0.2); h.fillEllipse(x+2,y+1,48,8); h.fillStyle(L(0x5a4a3a)); h.fillRect(x-20,y-16,40,16); h.fillStyle(L(0x3a2e24)); h.fillTriangle(x-24,y-16,x,y-30,x+24,y-16);
+      h.fillStyle(L(col)); for(let i=0;i<wl;i++) h.fillCircle(x-10+i*10,y-7,3.2); h.lineStyle(1.5,L(0x3a2616)); h.lineBetween(x+18,y-16,x+18,y-38); h.fillStyle(L(lk.roof)); h.fillTriangle(x+18,y-38,x+30,y-34,x+18,y-30); }
     this.title.setText(R.name); this.sub.setText(`${ISLE[id].culture} · ${R.holdings.reduce((a,b)=>a+owned(b.id),0)} holdings`);
   }
   update(){
     if(!this.shown) return; const id=S.realm, lk=FIEF_LOOK[id]; if(!lk) return;
     const d=dayInfo(); this.light=d.light;
-    const key=id+'|'+Math.round(d.light*24)+'|'+Math.round(d.warm*12)+'|'+REALMS[id].holdings.map(b=>Math.min(owned(b.id),100)).join();
+    const key=id+'|'+Math.round(d.light*24)+'|'+Math.round(d.warm*12)+'|'+REALMS[id].holdings.map(b=>Math.min(owned(b.id),100)).join()+'|'+(S.works[id]||0);
     if(key!==this.key){ this.key=key; this.draw(id,lk,d); }
     this.stars.setAlpha((1-d.light)*(1-d.warm*0.7)); const x=-30+d.u*780, y=190-150*Math.sin(Math.PI*d.u);
     this.sun.setVisible(d.day).setPosition(x,y); this.moon.setVisible(!d.day).setPosition(x,y);

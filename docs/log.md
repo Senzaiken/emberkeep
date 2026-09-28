@@ -14,7 +14,7 @@ Undiscovered entries are blacked-out silhouettes labelled **???**. Tapping one s
 |---|---:|---|
 | Folk of the keep | 3 | You meet Arthrex or Brom, or Maren finishes your shipyard |
 | Relics | 15 | You find the relic |
-| Resources | 9 | You first hold the material or crystal |
+| Resources | 13 | You first hold the material, crystal or realm treasure (pearls, mithril, frostglass, moonsilk) |
 | Regions | 5 | Your hero first sets out for it |
 | Bestiary | 8 | You defeat that kind of foe |
 | Road events | 7 | You first meet the event on the road |

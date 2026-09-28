@@ -140,7 +140,7 @@ Defense: Redtide Hold 1, Karak Brine 2, Skarholm 3, Sylvanreach 4. Power is weap
 
 ## Claimed castles (realms)
 
-A claimed castle is a **realm of your own**. The Build tab gets a realm switcher (Emberkeep plus every castle you hold). Choosing a realm shows its five holdings in the Build tab and its castle in the Keep view, where tapping earns gold as usual. All realms pay into one treasury, so gold/sec counts every holding everywhere. Each realm's holdings have three techniques each in the Upgrades tab (at 1, 10 and 25 owned).
+A claimed castle is a **realm of your own**. Switch realms with the gold **⇄** button in the bottom-left of the castle view (it cycles through Emberkeep and every castle you hold), or with the switcher at the top of the Build tab. Choosing a realm shows its five holdings in the Build tab and its castle in the Keep view, where tapping earns gold as usual. All realms pay into one treasury, so gold/sec counts every holding everywhere. Each realm's holdings have three techniques each in the Upgrades tab (at 1, 10 and 25 owned).
 
 Its port also becomes yours: sailing up to it unloads the hold there, and no fleet guards it.
 
@@ -151,7 +151,29 @@ Its port also becomes yours: sailing up to it unloads the hold there, and no fle
 | **Skarholm** (frost jarl) | Ship **20% faster** with **25% more hull**; hero **+25 max health** | Whaling Camp 500K → 1,100 · Fur Traders 5.5M → 6,500 · Mead Hall 60M → 37K · Longship Sheds 650M → 210K · Skalds' Circle 7B → 1.2M |
 | **Sylvanreach** (elven) | Crystal mine **50% faster**; Verdant draughts heal **75%** | Silk Groves 2M → 4,200 · Moonwell 22M → 24K · Archers' Glade 240M → 140K · Starwatch 2.6B → 800K · Elder Tree 28B → 4.5M |
 
-Each realm's Keep view is its own island: the castle drawn large (corsair palisade and watchtower, dwarven sea-fort with a golden door, snow-roofed longhall, white elven spires), the sea behind, its own trees (palms, bare rock, snowy pines, forest), and a house for each holding you own, which grows as you build more.
+### Works, treasures and royal charters
+
+Each claimed castle's Build tab also has **Works** that make a treasure found nowhere else, and **Royal charters** that spend it. Treasures appear in the satchel under *Treasures of the realms*, and works keep producing while you're away.
+
+| Realm | Works | Treasure | Level 1 / 2 / 3 cost | Rate (per unit) |
+|---|---|---|---|---|
+| Redtide Hold | Pearl Beds | Pearls | 50K gold, 150 wood, 80 stone / 500K gold, 300 wood, 60 iron / 5M gold, 200 iron, 80 tin | 20s / 12s / 6s |
+| Karak Brine | Mithril Deeps | Mithril | 150K gold, 250 stone, 60 iron / 1.5M gold, 400 stone, 150 iron / 15M gold, 400 iron, 150 tin | 20s / 12s / 6s |
+| Skarholm | Frostglass Caves | Frostglass | 500K gold, 300 wood, 200 stone / 5M gold, 500 stone, 120 tin / 50M gold, 500 iron, 250 tin | 20s / 12s / 6s |
+| Sylvanreach | Moonsilk Canopy | Moonsilk | 1.5M gold, 600 wood, 150 copper / 15M gold, 1,000 wood, 250 tin / 150M gold, 2,000 wood, 500 iron | 20s / 12s / 6s |
+
+Charters are granted in order for **25, 100 and 350** of the realm's treasure:
+
+| Realm | 1st | 2nd | 3rd |
+|---|---|---|---|
+| Redtide Hold | Pearl Exchange: its holdings ×2 | Smugglers' Routes: expeditions ×1.5 wood and stone | Admiralty Prize Law: its holdings ×3 more, gold at sea ×1.5 |
+| Karak Brine | Guild Seal of Karak: its holdings ×2 | Mithril Tools: expeditions ×1.5 copper, tin and iron | Deepforge Pact: its holdings ×3 more, forging and shipwright work twice as fast again |
+| Skarholm | The Jarl's Oath: its holdings ×2 | Frostglass Lanterns: crystal mine 50% faster | Saga of the Sea-King: its holdings ×3 more, ship hull +25% |
+| Sylvanreach | The Elder Council: its holdings ×2 | Moonsilk Satchels: expeditions find twice as many crystals | Starsong: its holdings ×3 more, +10% all gold |
+
+With all three charters a realm's holdings produce ×6. Works, treasures and charters reset on ascension with the castle.
+
+Each realm's Keep view is its own island: the castle drawn large (corsair palisade and watchtower, dwarven sea-fort with a golden door, snow-roofed longhall, white elven spires), the sea behind, its own trees (palms, bare rock, snowy pines, forest), and a house for each holding you own, which grows as you build more. Once built, the works stand by the shore with a light for each level.
 
 ## Ascension
 
