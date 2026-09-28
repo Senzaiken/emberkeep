@@ -70,7 +70,7 @@ These unlock in order, each one once the previous is bought and the reign has ea
 
 ### Legacy tree
 
-In the Legacy tab. Each node has levels, bought in order with Renown, and purchases are permanent. Head starts apply right away (if you're below them) and at the start of every new life.
+The tree opens as a sheet **right after you ascend** (it isn't shown in the Legacy tab, which only notes any unspent Renown). Each node has levels, bought in order with Renown, and purchases are permanent. Head starts apply right away, to the life just begun, and at the start of every life after. **Begin your reign** closes the sheet; anything unspent waits for the next ascension.
 
 | Node | Levels | Cost per level | Each level |
 |---|---:|---|---|

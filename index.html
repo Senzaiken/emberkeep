@@ -458,8 +458,7 @@
       <div class="label">Gold this reign<span id="reignGold">0</span></div>
       <div class="label">Renown on ascension<span id="pending">0</span></div>
     </div>
-    <div class="panel-head sub"><span class="label">Legacy tree</span><span class="label num" id="boonCount"></span></div>
-    <div id="boonList" class="list" style="margin-bottom:12px"></div>
+    <p class="r-desc" id="treeNote" style="margin:0 0 12px"></p>
     <div class="asc-actions">
       <button class="act" id="ascendBtn"><small>Ascend</small><span id="ascendTxt">Found a new dynasty</span></button>
       <span class="r-desc" id="ascendHint"></span>
@@ -510,6 +509,14 @@
     <div class="sheet-head"><span class="sheet-title" id="satTitle">Satchel</span><button class="act ghost" id="satClose" style="min-width:0;padding:6px 14px"><span>Close</span></button></div>
     <div id="invWrap"></div>
     <p class="r-desc" style="margin:0">Materials come home from expeditions. Crystals come from the Crystal Mine, the deep regions and Arthrex’s errands.</p>
+  </div>
+</div>
+<div class="sheet-back nodrag" id="legacySheet" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="legTitle">
+    <div class="sheet-head"><span class="sheet-title" id="legTitle">A new dynasty</span><span class="label num" id="boonCount"></span></div>
+    <div class="r-desc" id="legIntro"></div>
+    <div id="boonList" class="list" style="margin:8px 0 12px"></div>
+    <div class="sheet-foot"><span class="r-desc">Unspent Renown waits for your next ascension.</span><button class="act" id="legDone" style="min-width:0"><small>Legacy chosen</small><span>Begin your reign</span></button></div>
   </div>
 </div>
 <div class="sheet-back" id="bookSheet" hidden>
@@ -791,9 +798,9 @@ const compass=a=>COMPASS[((Math.round(a/(Math.PI/4))%8)+8)%8];
 const CACHE_BUNDLE={wood:150,stone:100,copper:50,tin:30,iron:20};
 const TREE=[
   {k:'mine',name:'Miners’ Oath',costs:[3,8,20,50],fx:l=>l?`Start each life with the ${MINE[l-1].done} dug`:'',what:'Start with the Crystal Mine dug deeper'},
-  {k:'weapon',name:'Heirloom Blade',costs:[2,6,16,40],fx:l=>l?`Start with a ${GEAR.weapon.tiers[l].name}`:'',what:'Start with a better weapon'},
+  {k:'weapon',name:'Heirloom Blade',costs:[2,6,16,40],fx:l=>l?`Start with ${aan(GEAR.weapon.tiers[l].name)}`:'',what:'Start with a better weapon'},
   {k:'armor',name:'Heirloom Armor',costs:[2,6,16,40],fx:l=>l?`Start with ${GEAR.armor.tiers[l].name}`:'',what:'Start with better armor'},
-  {k:'pick',name:'Heirloom Pick',costs:[2,6,16,40],fx:l=>l?`Start with a ${GEAR.pick.tiers[l].name}`:'',what:'Start with a better pickaxe'},
+  {k:'pick',name:'Heirloom Pick',costs:[2,6,16,40],fx:l=>l?`Start with ${aan(GEAR.pick.tiers[l].name)}`:'',what:'Start with a better pickaxe'},
   {k:'cache',name:'Founder’s Cache',costs:[1,3,6,10,15],fx:l=>l?`Start with ${Object.entries(CACHE_BUNDLE).map(([r,n])=>`${n*l} ${NAMES[r]}`).join(', ')}`:'',what:'Start each life with materials'},
   {k:'treasury',name:'Royal Treasury',costs:[2,4,6,8,10,12,14,16,18,20],fx:l=>l?`+${l*10}% gold`:'',what:'+10% gold per level'},
   {k:'qm',name:'Quartermaster',costs:[2,4,6,8,10,12,14,16,18,20],fx:l=>l?`+${l*10}% materials from expeditions, the sea and transmutation`:'',what:'+10% materials per level'},
@@ -801,6 +808,7 @@ const TREE=[
   {k:'grimoire',name:'Family Grimoire',costs:[2,4,8,12,30],fx:l=>l?`Start knowing ${SPELLS.slice(0,l).map(x=>x.name).join(', ')}`:'',what:'Start each life knowing spells'},
   {k:'ships',name:'Hereditary Shipyard',costs:[25,50],fx:l=>l===1?'Start with the shipyard built':l===2?'Start with the shipyard, an Oak-ribbed Hull and Deck Ballistae':'',what:'Start with the shipyard'},
 ];
+const aan=w=>`${/^[AEIOU]/.test(w)?'an':'a'} ${w}`;
 const TREE_K=Object.fromEntries(TREE.map(n=>[n.k,n]));
 const treeLvl=k=>(S.tree&&S.tree[k])||0;
 const renownSpent=()=>TREE.reduce((a,n)=>a+n.costs.slice(0,treeLvl(n.k)).reduce((x,y)=>x+y,0),0);
@@ -817,7 +825,7 @@ const ENCH={
 };
 const enchCost=l=>Math.ceil(3*Math.pow(1.35,l));
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928002936';
+const BUILD='20260928010603';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1499,6 +1507,8 @@ function ascend(){
     dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:1,
     seen:{...S.seen},favs:S.favs.slice(),retreat:S.retreat,pack:S.pack,tut:S.tut,tutV:S.tutV,tree:{...S.tree},renownV:2};
   S=Object.assign(fresh(),keep); applyTree(true); S.hp=maxHP(); upSet=new Set(); setView('keep');
+  $('legIntro').textContent=`Life ${S.dynasty} begins with ${S.renown} Renown (+${S.renown*2}% gold). Spend it on your family’s legacy: head starts take effect at once, and in every life to come.`;
+  $('boonList').dataset.k=''; $('legacySheet').hidden=false;
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
 function wipe(){ S=fresh(); S.hp=maxHP(); upSet=new Set(); setView('keep'); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); setTimeout(introStory,300); }
@@ -2037,9 +2047,10 @@ function refresh(){
   // ascend
   const p=pendingRenown();
   $('renown').textContent=S.renown; $('renownBonus').textContent=`+${S.renown*2}% gold`;
-  $('boonCount').textContent=`${fmt(renownFree())} Renown to spend`;
+  $('treeNote').textContent=renownFree()>0?`${fmt(renownFree())} Renown unspent. You choose your Legacy each time you ascend.`:'Each time you ascend, you spend your Renown on your family’s Legacy.';
+  $('boonCount').textContent=`${fmt(renownFree())} to spend`;
   { const key=TREE.map(n=>treeLvl(n.k)).join()+'|'+renownFree();
-    if($('boonList').dataset.k!==key){ $('boonList').dataset.k=key;
+    if(!$('legacySheet').hidden&&$('boonList').dataset.k!==key){ $('boonList').dataset.k=key;
       $('boonList').innerHTML=TREE.map(n=>{ const l=treeLvl(n.k), max=n.costs.length, c=n.costs[l];
         return `<div class="row"><div><div class="r-head"><span class="r-name">${n.name}</span><span class="r-tag">${l} / ${max}</span></div>
           <div class="r-desc">${l?n.fx(l):n.what}</div>${c?`<div class="r-meta">Next: ${n.fx(l+1)}</div>`:''}</div>
@@ -2076,7 +2087,9 @@ function wireUI(){
   $('buildTxt').textContent=`Build ${BUILD}`;
   $('updateBtn').addEventListener('click',()=>reloadFresh(newBuild));
   $('dlgNext').addEventListener('click',dialogNext);
-  document.querySelectorAll('.sheet-back').forEach(enableSheetDrag);
+  document.querySelectorAll('.sheet-back:not(.nodrag)').forEach(enableSheetDrag);
+  $('legDone').addEventListener('click',()=>{ $('legacySheet').hidden=true; refresh(); });
+  $('boonList').addEventListener('click',e=>{ const b=e.target.closest('button[data-tree]'); if(b&&!b.disabled) buyTree(b.dataset.tree); });
   $('jbHaste').addEventListener('click',hasten);
   $('jbReturn').addEventListener('click',()=>{ returnHome(); refresh(); });
   $('sgClose').addEventListener('click',()=>$('siegeCard').hidden=true);
