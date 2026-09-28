@@ -451,14 +451,14 @@
 
   <section id="p-asc" class="panel asc" hidden>
     <div class="panel-head"><span class="label">Dynasty</span><span class="label num" id="lifeNo"></span></div>
-    <p>Abdicate and found a new dynasty. Everything starts over: gold, holdings, upgrades, your hero’s gear and spells, relics, materials, crystals and the mine. What you keep is <b>Renown</b>, earned from the gold this reign gathered. Each point adds <b>5% to all gold</b> and <b>3% to materials</b> your hero and ship bring home, forever, and Renown milestones unlock <b>legacy boons</b>: head starts for every new life.</p>
+    <p>Abdicate and found a new dynasty. Everything starts over: gold, holdings, upgrades, your hero’s gear and spells, relics, materials, crystals and the mine. What you keep is <b>Renown</b>, earned from the gold this reign gathered. Each point adds <b>2% to all gold</b>, forever, and can be spent once in the <b>Legacy tree</b> on head starts and bonuses for every life to come. Spending it never lowers the gold bonus.</p>
     <div class="stats">
       <div class="label">Renown<span id="renown">0</span></div>
       <div class="label">Bonus<span id="renownBonus">+0%</span></div>
       <div class="label">Gold this reign<span id="reignGold">0</span></div>
       <div class="label">Renown on ascension<span id="pending">0</span></div>
     </div>
-    <div class="panel-head sub"><span class="label">Legacy boons</span><span class="label num" id="boonCount"></span></div>
+    <div class="panel-head sub"><span class="label">Legacy tree</span><span class="label num" id="boonCount"></span></div>
     <div id="boonList" class="list" style="margin-bottom:12px"></div>
     <div class="asc-actions">
       <button class="act" id="ascendBtn"><small>Ascend</small><span id="ascendTxt">Found a new dynasty</span></button>
@@ -787,14 +787,24 @@ const angDiff=(a,b)=>{ let d=(a-b)%(Math.PI*2); if(d>Math.PI) d-=Math.PI*2; if(d
 const COMPASS=['east','south-east','south','south-west','west','north-west','north','north-east'];
 const compass=a=>COMPASS[((Math.round(a/(Math.PI/4))%8)+8)%8];
 
-// Legacy boons: permanent head starts at Renown milestones (not spent), applied at the start of each new life
-const BOONS=[
-  {at:5,name:'Miners’ Oath',text:'Each life starts with the Crystal Mine open.'},
-  {at:10,name:'Heirloom Kit',text:'Each life starts with an Oaken Buckler and a Stone Pick.'},
-  {at:25,name:'Founder’s Cache',text:'Each life starts with 200 wood, 100 stone and 50 copper.'},
-  {at:50,name:'Hereditary Shipyard',text:'Each life starts with the shipyard built and the Ember Gull at anchor.'},
-  {at:100,name:'Scale of the Old Guard',text:'Each life starts with Copper Scale armor.'},
+// The Legacy tree: Renown is spent on permanent head starts and bonuses. Spending never lowers the passive gold bonus.
+const CACHE_BUNDLE={wood:150,stone:100,copper:50,tin:30,iron:20};
+const TREE=[
+  {k:'mine',name:'Miners’ Oath',costs:[3,8,20,50],fx:l=>l?`Start each life with the ${MINE[l-1].done} dug`:'',what:'Start with the Crystal Mine dug deeper'},
+  {k:'weapon',name:'Heirloom Blade',costs:[2,6,16,40],fx:l=>l?`Start with a ${GEAR.weapon.tiers[l].name}`:'',what:'Start with a better weapon'},
+  {k:'armor',name:'Heirloom Armor',costs:[2,6,16,40],fx:l=>l?`Start with ${GEAR.armor.tiers[l].name}`:'',what:'Start with better armor'},
+  {k:'pick',name:'Heirloom Pick',costs:[2,6,16,40],fx:l=>l?`Start with a ${GEAR.pick.tiers[l].name}`:'',what:'Start with a better pickaxe'},
+  {k:'cache',name:'Founder’s Cache',costs:[1,3,6,10,15],fx:l=>l?`Start with ${Object.entries(CACHE_BUNDLE).map(([r,n])=>`${n*l} ${NAMES[r]}`).join(', ')}`:'',what:'Start each life with materials'},
+  {k:'treasury',name:'Royal Treasury',costs:[2,4,6,8,10,12,14,16,18,20],fx:l=>l?`+${l*10}% gold`:'',what:'+10% gold per level'},
+  {k:'qm',name:'Quartermaster',costs:[2,4,6,8,10,12,14,16,18,20],fx:l=>l?`+${l*10}% materials from expeditions, the sea and transmutation`:'',what:'+10% materials per level'},
+  {k:'vigor',name:'Hero’s Vigor',costs:[3,6,9,12,15],fx:l=>l?`+${l*20} hero health`:'',what:'+20 hero health per level'},
+  {k:'grimoire',name:'Family Grimoire',costs:[2,4,8,12,30],fx:l=>l?`Start knowing ${SPELLS.slice(0,l).map(x=>x.name).join(', ')}`:'',what:'Start each life knowing spells'},
+  {k:'ships',name:'Hereditary Shipyard',costs:[25,50],fx:l=>l===1?'Start with the shipyard built':l===2?'Start with the shipyard, an Oak-ribbed Hull and Deck Ballistae':'',what:'Start with the shipyard'},
 ];
+const TREE_K=Object.fromEntries(TREE.map(n=>[n.k,n]));
+const treeLvl=k=>(S.tree&&S.tree[k])||0;
+const renownSpent=()=>TREE.reduce((a,n)=>a+n.costs.slice(0,treeLvl(n.k)).reduce((x,y)=>x+y,0),0);
+const renownFree=()=>S.renown-renownSpent();
 // Transmutation: Arthrex turns crystals into materials. Better with a deeper mine.
 const TRANSMUTE={ember:{iron:3,copper:2},frost:{stone:6,tin:2},verdant:{wood:10},storm:{wood:2,stone:2,copper:2,tin:2,iron:2}};
 // Enchanting: endless levels on gear and ship, paid in the element's crystals
@@ -807,14 +817,14 @@ const ENCH={
 };
 const enchCost=l=>Math.ceil(3*Math.pow(1.35,l));
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928002109';
+const BUILD='20260928002936';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,ench:{weapon:0,armor:0,pick:0,hull:0,arms:0},sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,ench:{weapon:0,armor:0,pick:0,hull:0,arms:0},tree:{},renownV:2,sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, sea=null, fief=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed),ench:Object.assign(f.ench,d.ench)}); }
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed),ench:Object.assign(f.ench,d.ench),tree:Object.assign(f.tree,d.tree),renownV:d.renownV||1}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -825,8 +835,8 @@ const has=id=>upSet.has(id);
 const owned=id=>S.owned[id]||0;
 const active=id=>(S.spells[id]||0)>now();
 const knows=id=>S.known.includes(id);
-const renownMult=()=>1+0.05*S.renown;
-const matMult=()=>1+0.03*S.renown;   // Renown also brings more materials home
+const renownMult=()=>(1+0.02*S.renown)*(1+0.1*treeLvl('treasury'));
+const matMult=()=>1+0.1*treeLvl('qm');   // the Quartermaster brings more materials home
 const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 
 function res(k){ return k==='gold'?S.gold : k in S.mat?S.mat[k] : S.cry[k]; }
@@ -877,13 +887,18 @@ function transmute(el,n){ n=n==='all'?S.cry[el]:Math.min(+n,S.cry[el]); if(!(n>0
   toast(`Arthrex transmutes ${n} ${NAMES[el]} crystal${n>1?'s':''} into ${got.map(([k,v])=>`${fmt(v)} ${NAMES[k]}`).join(', ')}.`); refresh(); }
 function enchant(k){ const e=ENCH[k], c=enchCost(S.ench[k]); if(!e||!e.need()||S.cry[e.el]<c) return;
   S.cry[e.el]-=c; S.ench[k]++; toast(`${e.label} enchanted to level ${S.ench[k]}: ${e.fx(S.ench[k])}.`); refresh(); }
-function applyBoons(){ const r=S.renown, got=BOONS.filter(b=>r>=b.at);
-  if(r>=5) S.mine=Math.max(S.mine,1);
-  if(r>=10){ S.gear.armor=Math.max(S.gear.armor,1); S.gear.pick=Math.max(S.gear.pick,1); }
-  if(r>=25){ S.mat.wood+=200; S.mat.stone+=100; S.mat.copper+=50; }
-  if(r>=50){ S.sea.yard=1; S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true; }
-  if(r>=100) S.gear.armor=Math.max(S.gear.armor,2);
-  return got; }
+// Head starts: raise the keep to the tree's levels (at the start of each life, and when a level is bought)
+function applyTree(fresh){
+  const m=treeLvl('mine'); if(S.mine<m){ if(S.digging&&S.digging.level<m) S.digging=null; S.mine=m; }
+  for(const k of ['weapon','armor','pick']){ const l=treeLvl(k); if(S.gear[k]<l){ if(S.forging&&S.forging.slot===k) S.forging=null; S.gear[k]=l; } }
+  if(fresh){ const c=treeLvl('cache'); for(const [r,n] of Object.entries(CACHE_BUNDLE)) S.mat[r]+=n*c; }
+  const g=treeLvl('grimoire'); SPELLS.slice(0,g).forEach(x=>{ if(!knows(x.id)) S.known.push(x.id); });
+  const sh=treeLvl('ships'); if(sh&&!S.sea.yard){ if(S.sea.job&&S.sea.job.part==='yard') S.sea.job=null; S.sea.yard=1; S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true; }
+  if(sh>=2){ S.sea.hull=Math.max(S.sea.hull,1); S.sea.arms=Math.max(S.sea.arms,1); }
+}
+function buyTree(k){ const n=TREE_K[k], l=treeLvl(k), c=n&&n.costs[l]; if(!c||renownFree()<c) return;
+  S.tree[k]=l+1; applyTree(false); if(k==='cache') for(const [r,v] of Object.entries(CACHE_BUNDLE)) S.mat[r]+=v;
+  toast(`${n.name} ${l+1}: ${n.fx(l+1)}.`); refresh(); }
 // Forging takes time: one piece at a time, paid up front, finishes on its own (even while away).
 const FORGE_TIME=[0,15,60,180,480], STOKE_COST={ember:1};
 function forge(slot){
@@ -907,7 +922,7 @@ function stoke(){
 // Hero health
 const HP_REGEN_FULL=240, MEND_COST={verdant:1}, HASTE_COST={storm:1};
 const claimed=id=>!!(S.claimed&&S.claimed[id]);
-const maxHP=()=>100+25*S.gear.armor+relicBonus('hp')+(claimed('skar')?25:0);
+const maxHP=()=>100+25*S.gear.armor+relicBonus('hp')+(claimed('skar')?25:0)+20*treeLvl('vigor');
 function heal(n){ const before=S.hp; S.hp=Math.min(maxHP(),S.hp+n); return Math.round(S.hp-before); }
 function hurt(n){ n=Math.max(1,Math.round(n)); S.hp=Math.max(0,S.hp-n); journey&&journey.hurtFx(n);
   if(S.exp){ autoDrink(); if(S.hp<=0) finishExp(true); else checkRetreat(); } return n; }
@@ -1476,15 +1491,14 @@ const ARTHREX_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" 
 <path d="M21 46 L26 42 L28 48Z" fill="#e3ad45"/></svg>`;
 
 function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto){ S.taps++; S.stats.tapGold+=v; } const f=S.realm!=='home'&&fief&&fief.shown?fief:scene; f&&f.fx(x,y,v,auto); }
-function pendingRenown(){ return Math.floor(Math.sqrt(S.total/1e6)); }
+function pendingRenown(){ return Math.floor(Math.cbrt(S.total/1e7)); }
 function ascend(){
   const p=pendingRenown(); if(p<1) return;
   // Full reset: only Renown, lifetime stats, story progress and UI preferences carry over.
   const keep={renown:S.renown+p,life:S.life,taps:S.taps,story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats)),
     dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:1,
-    seen:{...S.seen},favs:S.favs.slice(),retreat:S.retreat,pack:S.pack,tut:S.tut,tutV:S.tutV};
-  S=Object.assign(fresh(),keep); const boons=applyBoons(); S.hp=maxHP(); upSet=new Set(); setView('keep');
-  if(boons.length) setTimeout(()=>toast(`Legacy boons: ${boons.map(b=>b.name).join(', ')}.`),2500);
+    seen:{...S.seen},favs:S.favs.slice(),retreat:S.retreat,pack:S.pack,tut:S.tut,tutV:S.tutV,tree:{...S.tree},renownV:2};
+  S=Object.assign(fresh(),keep); applyTree(true); S.hp=maxHP(); upSet=new Set(); setView('keep');
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
 function wipe(){ S=fresh(); S.hp=maxHP(); upSet=new Set(); setView('keep'); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); setTimeout(introStory,300); }
@@ -2022,13 +2036,18 @@ function refresh(){
 
   // ascend
   const p=pendingRenown();
-  $('renown').textContent=S.renown; $('renownBonus').textContent=`+${S.renown*5}% gold · +${S.renown*3}% mats`;
-  $('boonCount').textContent=`${BOONS.filter(b=>S.renown>=b.at).length} / ${BOONS.length}`;
-  setHTML($('boonList'),BOONS.map(b=>{ const on=S.renown>=b.at; return `<div class="row"><div><div class="r-head"><span class="r-name"${on?'':' style="color:var(--muted)"'}>${b.name}</span><span class="r-tag">${b.at} Renown</span></div><div class="r-desc">${b.text}</div><div class="r-meta">${on?'Unlocked: applies to every new life':`Locked: ${b.at-S.renown} more Renown`}</div></div></div>`; }).join(''));
+  $('renown').textContent=S.renown; $('renownBonus').textContent=`+${S.renown*2}% gold`;
+  $('boonCount').textContent=`${fmt(renownFree())} Renown to spend`;
+  { const key=TREE.map(n=>treeLvl(n.k)).join()+'|'+renownFree();
+    if($('boonList').dataset.k!==key){ $('boonList').dataset.k=key;
+      $('boonList').innerHTML=TREE.map(n=>{ const l=treeLvl(n.k), max=n.costs.length, c=n.costs[l];
+        return `<div class="row"><div><div class="r-head"><span class="r-name">${n.name}</span><span class="r-tag">${l} / ${max}</span></div>
+          <div class="r-desc">${l?n.fx(l):n.what}</div>${c?`<div class="r-meta">Next: ${n.fx(l+1)}</div>`:''}</div>
+          <button class="act" data-tree="${n.k}" ${c&&renownFree()>=c?'':'disabled'}><small>${c?'Unlock':'Complete'}</small><span>${c?`${c} Renown`:'✔'}</span></button></div>`; }).join(''); } }
   $('reignGold').textContent=fmt(S.total); $('pending').textContent=p;
   $('lifeGold').textContent=fmt(S.life); $('taps').textContent=S.taps.toLocaleString('en-US');
   $('ascendBtn').disabled=p<1;
-  $('ascendHint').textContent=p<1?`Gather ${fmt(1e6)} gold in one reign to earn your first Renown.`:`+${p} Renown: +${p*5}% gold, +${p*3}% materials`;
+  $('ascendHint').textContent=p<1?`Gather ${fmt(1e7)} gold in one reign to earn your first Renown.`:`+${p} Renown (+${p*2}% gold, and ${p} to spend in the tree)`;
 }
 
 let chronTimer;
@@ -2114,6 +2133,7 @@ function wireUI(){
     else if(d.spire){ ({accept:acceptQuest,reroll:rerollQuest,abandon:abandonQuest,claim:claimQuest,
         lesson:()=>showDialog('arthrex',CRYSTAL_LESSON,'I understand',()=>{})})[d.spire](); }
     else if(d.stoke) stoke();
+    else if(d.tree) buyTree(d.tree);
     else if(d.tm) transmute(d.tm,d.n); else if(d.ench) enchant(d.ench);
     else if(d.yard) buildYard(); else if(d.ship) upgradeShip(d.ship); else if(d.sail){ setView('sea'); $('realm').scrollIntoView({behavior:'smooth',block:'center'}); }
     else if(d.split) splitRock();
@@ -2998,6 +3018,8 @@ function start(data){
   if(S.tut==null&&S.life>0) S.tut=TUT.length;
   if(S.tutV===2&&S.tut!=null&&S.tut>=7) S.tut++;   // a Return home step was added at index 7
   S.tutV=3;
+  if(S.renownV!==2){ const old=S.renown||0; S.renown=Math.floor(Math.cbrt(old*old/10)); S.renownV=2;   // old: sqrt(gold/1M) per reign, now cbrt(gold/10M)
+    if(old) setTimeout(()=>toast(`Renown has been rescaled: your ${old} Renown is now ${S.renown}, and it can be spent in the new Legacy tree.`),2000); }
   if(tutActive()) setTimeout(tutEnter,800);
   tick(); refresh();
   if(!S.story.intro) setTimeout(introStory,600);

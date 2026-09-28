@@ -4,6 +4,8 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Legacy tree and Renown rescale.** Renown snowballed too fast (square root of reign gold, +5% gold each). It's now `cbrt(reignGold / 10M)`, worth +2% gold per point, and it's **spent** in a new **Legacy tree**: deeper starting mines, heirloom weapon/armor/pickaxe tiers, a Founder's Cache of materials, Royal Treasury (+gold), Quartermaster (+materials), Hero's Vigor (+health), a Family Grimoire of starting spells, and a Hereditary Shipyard. Spending never lowers the gold bonus. The milestone boons and the flat +3% materials per Renown are gone. Existing Renown is converted (for example 400 → 25). See [Economy](economy.md#legacy-tree).
+
 - **Renown helps the climb.** Each Renown point now also adds +3% to materials from expeditions, the sea and transmutation. **Legacy boons** at 5/10/25/50/100 Renown give every new life a head start: the mine open, starter gear, a cache of materials, the shipyard, Copper Scale. Listed in the Legacy tab. See [Economy](economy.md#legacy-boons).
 - **Transmutation.** Arthrex turns crystals into materials in the Magic tab (Ember → iron and copper, Frost → stone and tin, Verdant → wood, Storm → a bit of everything). Better with a deeper mine and more Renown. See [Magic](magic.md#transmutation).
 - **Enchantments.** Endless crystal-priced levels for your weapon (tap gold), armor (less damage), pickaxe (more ore), and the ship's hull and ballistae. In the Forge tab. See [Forge](forge.md#enchantments).

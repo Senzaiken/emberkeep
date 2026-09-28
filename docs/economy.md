@@ -62,21 +62,29 @@ These unlock in order, each one once the previous is bought and the reign has ea
 
 ## Renown and ascension
 
-- Renown earned on ascending: `floor(sqrt(reignGold / 1,000,000))`, so the first point needs 1M gold in one reign.
-- Each point of Renown adds **+5%** to all gold (taps and holdings) and **+3%** to materials: expedition loot, island treasure, ship salvage and flotsam, and [transmutation](magic.md#transmutation).
+- Renown earned on ascending: `floor(cbrt(reignGold / 10,000,000))`. The first point needs 10M gold in one reign; 10 points need 10B, 46 need 1T, 100 need 10T.
+- Each point of Renown ever earned adds **+2%** to all gold (taps and holdings), forever.
+- Renown is also **spent** in the Legacy tree (below). Spending never lowers the +2% bonus: the bonus counts all Renown earned, spent or not.
 - **Ascending is a full reset:** gold, holdings, upgrades, hero equipment (and anything Brom is forging), learned spells, relics, materials, crystals, the Crystal Mine, any running expedition, active spells and Arthrex's current errand.
 - **Ascending keeps:** Renown (and its gold bonus), the [Adventurer's Log](log.md) (and the life number goes up by one), lifetime stats, story progress (the tutorial isn't replayed, and Arthrex and Brom remember you), discovered resources, and starred spells (they show again once relearned). The hero starts at full health.
 
-### Legacy boons
+### Legacy tree
 
-Renown milestones unlock permanent head starts, applied at the start of every new life. Renown isn't spent on them, so they never cost you the gold or material bonus. They're listed in the Legacy tab.
+In the Legacy tab. Each node has levels, bought in order with Renown, and purchases are permanent. Head starts apply right away (if you're below them) and at the start of every new life.
 
-| Renown | Boon | Each new life starts with |
-|---:|---|---|
-| 5 | Miners' Oath | The Crystal Mine open |
-| 10 | Heirloom Kit | An Oaken Buckler and a Stone Pick |
-| 25 | Founder's Cache | 200 wood, 100 stone, 50 copper |
-| 50 | Hereditary Shipyard | The shipyard built and the Ember Gull at anchor (no refits) |
-| 100 | Scale of the Old Guard | Copper Scale armor |
+| Node | Levels | Cost per level | Each level |
+|---|---:|---|---|
+| Miners' Oath | 4 | 3 / 8 / 20 / 50 | Start with the mine dug to that depth (Crystal Mine → Heartvein) |
+| Heirloom Blade | 4 | 2 / 6 / 16 / 40 | Start with that weapon tier (Oak Cudgel → Iron Longsword) |
+| Heirloom Armor | 4 | 2 / 6 / 16 / 40 | Start with that armor tier (Oaken Buckler → Iron Plate) |
+| Heirloom Pick | 4 | 2 / 6 / 16 / 40 | Start with that pickaxe tier (Stone Pick → Iron Pick) |
+| Founder's Cache | 5 | 1 / 3 / 6 / 10 / 15 | Start with 150 wood, 100 stone, 50 copper, 30 tin, 20 iron per level (and get one bundle when bought) |
+| Royal Treasury | 10 | 2, 4, … 20 | +10% gold |
+| Quartermaster | 10 | 2, 4, … 20 | +10% materials from expeditions, island treasure, ship salvage, flotsam and transmutation |
+| Hero's Vigor | 5 | 3 / 6 / 9 / 12 / 15 | +20 hero max health |
+| Family Grimoire | 5 | 2 / 4 / 8 / 12 / 30 | Start knowing the grimoire's spells in order (Midas Touch → Dragon's Tithe) |
+| Hereditary Shipyard | 2 | 25 / 50 | 1: start with the shipyard built. 2: also an Oak-ribbed Hull and Deck Ballistae |
 
-For reference, Renown 10 needs 100M gold in one reign, 25 needs 625M, 50 needs 2.5B and 100 needs 10B.
+The whole tree costs about 700 Renown, so it fills over many lives.
+
+**Rescale (September 2026):** Renown used to be `floor(sqrt(reignGold / 1M))` with +5% gold per point, which snowballed. Saves from before were converted with `floor(cbrt(old² / 10))` (for example 400 → 25), and the old milestone boons were replaced by the tree.

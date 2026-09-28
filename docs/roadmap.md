@@ -16,7 +16,7 @@ All three phases are built: sailing and treasure, broadside battles, sieges and 
 
 ## Later
 
-- [ ] **More legacy boons**, or a spendable Renown tree on top of the milestone boons (for example faster forging or extra relic chance).
+- [ ] More Legacy tree nodes (for example faster forging, extra relic chance, starting relics), and tuning the costs once real play data is in.
 
 - [ ] Premium currency (for example Aether Shards) with an instant full heal as the first use. Hero health is already built to support it.
 - [ ] More road events, and region-specific ones for every region.

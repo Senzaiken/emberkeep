@@ -36,6 +36,7 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `exp` | Current expedition or `null`: `{v:2, id, start, len, pause, gen, rolled, deepest, beats[], events[], used[], carry{}, pack, blessed, seq, returning, retAt, end, hasted}`. `len` is ms per depth, `pause` is time added by road events, `gen` the last depth generated, `carry` the haul not yet banked, `pack` draughts left. Each beat is `{id, t, st, k, r, n, done, tap, bonus?, foe?, cut?, ret?}` (`st` depth, `cut` skipped by turning back, `ret` a foe on the road home), and each event is `{id, t, deadline, done, choice, cut?}`. Saves with an older fixed-length trip bank its remaining loot and clear it on load. |
 | `retreat`, `pack` | Turn-back setting (index into 50% / 30% / 15% / Never, default 1) and the number of Verdant draughts to pack. Kept through ascension. |
 | `claimed`, `realm`, `siege` | Claimed castles `{id: {t, how}}`, the realm shown in the Build tab and Keep view (`home` or a castle id), and a blockade in progress `{id, start, end}` or `null`. Reset on ascension. Realm holdings are ordinary entries in `owned`/`up` (ids like `rt_rum`, `kb_forge`). |
+| `renown`, `tree`, `renownV` | Renown earned (all lives), Legacy tree levels `{node: level}`, and the Renown scale version (2; older saves are converted on load). |
 | `ench` | Enchantment levels `{weapon, armor, pick, hull, arms}`. Reset on ascension. |
 | `wounded` | `true` after a defeat, until the hero is back to full health (halves resting). |
 | `hp` | Hero health |

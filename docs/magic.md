@@ -54,7 +54,7 @@ Once you've met Arthrex, the Magic tab has a **Transmutation** section: he turns
 | Verdant | 10 wood |
 | Storm | 2 each of wood, stone, copper, tin and iron |
 
-The yield is multiplied by `(1 + 0.5 × (mine depth − 1)) × (1 + 0.03 × Renown)`, rounded down. At the Storm Vault (depth 3) with 10 Renown that's ×2.6. Keep a few crystals back for Mend, draughts, Hasten, stoking and splitting.
+The yield is multiplied by `(1 + 0.5 × (mine depth − 1)) × (1 + 0.1 × Quartermaster level)`, rounded down. At the Storm Vault (depth 3) with Quartermaster 3 that's ×2.6. Keep a few crystals back for Mend, draughts, Hasten, stoking and splitting.
 
 ## Arthrex
 
