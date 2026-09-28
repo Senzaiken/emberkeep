@@ -62,7 +62,7 @@ The court sorcerer explains crystals after your first expedition and gives you 1
 
 ## Spells
 
-Spells must be **learned individually** (a one-time cost in gold and crystals). After that, each cast costs crystal reagents. Learned spells **reset on ascension** and must be learned again.
+Spells must be **learned individually** (a one-time cost in gold and crystals), in the **Study new spells** section at the bottom of the spellbook. After that, each cast costs crystal reagents. Learned spells **reset on ascension** and must be learned again.
 
 | Spell | Learn cost | Reagents per cast | Effect |
 |---|---|---|---|
@@ -83,7 +83,9 @@ The **book button** to the right of the hero's health bar opens the spellbook, a
 The other crystal actions live where they're used, not in the spellbook: **Hasten** (1 Storm, halves the walk home) is on the journey bar under the Journey view, **Stoke the Forge** (1 Ember) is on Brom's anvil card, and **Split the Rock** (1 Frost) is on the mine row. Each crystal element has an everyday use. See [Hero](hero.md#crystal-quick-actions).
 - Every spell you've **learned**, with its reagent cost and a Cast button.
 
-Each entry shows why it can't be cast right now, if it can't (for example "Only while your hero is away", or the time left on an active spell). Your crystal counts are shown at the top. A violet dot on the book means Mend is worth casting: the hero is below half health and you have a Verdant crystal. **Open grimoire** jumps to the Magic tab, where new spells are learned.
+Each entry shows why it can't be cast right now, if it can't (for example "Only while your hero is away", or the time left on an active spell). Your crystal counts are shown at the top. Below the castable spells, **Study new spells** lists the ones you haven't learned, with their cost and a Study button (the section disappears once you know them all). A violet dot on the book means something is worth doing there: a spell you can afford to learn, or Mend while the hero is below half health.
+
+The Magic tab holds Arthrex's spire, the Crystal Mine, then Transmutation. It no longer has a grimoire section.
 
 ### Starred spells (quick-cast bar)
 

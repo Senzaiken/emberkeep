@@ -4,6 +4,8 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Study spells in the spellbook.** Learning new spells moved from the Magic tab's grimoire into the spellbook, under **Study new spells**. The book's violet dot also lights when a spell can be learned. In the Magic tab, Transmutation now comes after the Crystal Mine.
+
 - **Legacy is chosen when you ascend.** The Legacy tree is no longer in the Legacy tab. It opens right after you ascend, so you pick your head starts as the new life begins. Unspent Renown carries over to the next ascension.
 
 - **Legacy tree and Renown rescale.** Renown snowballed too fast (square root of reign gold, +5% gold each). It's now `cbrt(reignGold / 10M)`, worth +2% gold per point, and it's **spent** in a new **Legacy tree**: deeper starting mines, heirloom weapon/armor/pickaxe tiers, a Founder's Cache of materials, Royal Treasury (+gold), Quartermaster (+materials), Hero's Vigor (+health), a Family Grimoire of starting spells, and a Hereditary Shipyard. Spending never lowers the gold bonus. The milestone boons and the flat +3% materials per Renown are gone. Existing Renown is converted (for example 400 → 25). See [Economy](economy.md#legacy-tree).

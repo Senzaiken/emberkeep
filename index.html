@@ -302,7 +302,7 @@
   .le-icon .log-orb{width:70px;height:70px;} .le-icon .log-orb svg{width:40px!important;height:40px!important;}
   .le-icon.locked{filter:brightness(0) opacity(.55);}
   /* Arthrex's spire */
-  #sList,#spire{scroll-margin-top:110px;}
+  #spire{scroll-margin-top:110px;}
   .spire{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;}
   .spire-head{display:flex;gap:12px;align-items:center;}
   .spire-head .portrait{width:52px;height:52px;}
@@ -440,13 +440,11 @@
   <section id="p-magic" class="panel" hidden>
     <div class="panel-head" id="spire"><span class="label">Arthrex’s spire</span><span class="label num" id="questNote"></span></div>
     <div class="spire" id="spireBox"></div>
-    <div id="transBox" hidden><div class="panel-head sub"><span class="label">Transmutation</span><span class="label num" id="transRate"></span></div>
-    <p class="r-desc" style="margin:0 0 6px">Arthrex turns spare crystals into materials. A deeper mine and more Renown give more for each crystal.</p>
-    <div id="tList" class="list"></div></div>
     <div class="panel-head sub"><span class="label">Crystal mine</span><span class="label num" id="mineRate"></span></div>
     <div id="mList" class="list"></div>
-    <div class="panel-head sub"><span class="label">Grimoire</span></div>
-    <div id="sList" class="list"></div>
+    <div id="transBox" hidden><div class="panel-head sub"><span class="label">Transmutation</span><span class="label num" id="transRate"></span></div>
+    <p class="r-desc" style="margin:0 0 6px">Arthrex turns spare crystals into materials. A deeper mine and the Quartermaster give more for each crystal.</p>
+    <div id="tList" class="list"></div></div>
   </section>
 
   <section id="p-asc" class="panel asc" hidden>
@@ -526,7 +524,8 @@
     <div class="r-desc">Cast with the crystals you carry.</div>
     <div class="cost" id="bookStock" style="margin:6px 0 12px"></div>
     <div class="list" id="bookList"></div>
-    <div class="sheet-foot"><span class="r-desc" id="bookMore"></span><button class="act ghost" id="bookGrimoire" style="min-width:0"><span>Open grimoire</span></button></div>
+    <div id="studyBox"><div class="label" style="margin:14px 0 2px">Study new spells</div><div class="r-desc">Learn once, then cast with crystals.</div><div class="list" id="sList"></div></div>
+    <div class="sheet-foot"><span class="r-desc" id="bookMore"></span></div>
   </div>
 </div>
 <div class="dialog-back" id="dialog" hidden>
@@ -825,7 +824,7 @@ const ENCH={
 };
 const enchCost=l=>Math.ceil(3*Math.pow(1.35,l));
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928010603';
+const BUILD='20260928011227';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1141,7 +1140,7 @@ const ARTHREX='Arthrex, Court Sorcerer';
 const CRYSTAL_LESSON=[
   'Magic in this land is not drawn from the air. It is bound in crystal: Ember, Frost, Verdant and Storm. Each answers to its own element.',
   'Where to find them? The old Crystal Mine beneath the keep can be reopened. Dig it deeper and it yields more kinds. The deep places, Ironroot and the Caldera, have them lying loose in the rock.',
-  'What are they for? Verdant mends wounds, so tap Mend when you are hurt. Storm quickens the road: Hasten halves a journey. And every spell in my grimoire needs them as reagents. You will find it in the Magic tab.',
+  'What are they for? Verdant mends wounds, so tap Mend when you are hurt. Storm quickens the road: Hasten halves a journey. And every spell in my grimoire needs them as reagents. Study new spells in your spellbook, the book beside your health.',
 ];
 function meetArthrex(){
   if(S.story.met||dialogOpen()) return;
@@ -1338,7 +1337,7 @@ function renderBook(){
   list.forEach(e=>{ setHTML($('bkc-'+e.id),costHTML(e.cost())); $('bkb-'+e.id).disabled=!e.can(); $('bkw-'+e.id).textContent=e.why(); });
   setHTML($('bookStock'),CRYS.map(c=>chip(c,S.cry[c])).join(' '));
   const unlearned=SPELLS.filter(sp=>!knows(sp.id)).length;
-  $('bookMore').textContent=(S.favs.length?'':'Tap \u2606 to pin a spell to your keep screen. ')+(unlearned?`${unlearned} more spell${unlearned>1?'s':''} can be learned from the grimoire.`:'You know every spell in the grimoire.');
+  $('bookMore').textContent=(S.favs.length?'':'Tap \u2606 to pin a spell to your keep screen. ')+(unlearned?`${unlearned} more spell${unlearned>1?'s':''} left to study.`:'You know every spell in the grimoire.');
 }
 
 /* ---------- Adventurer's Log: permanent across every life ---------- */
@@ -1887,7 +1886,6 @@ function refresh(){
   else { $('expLine').textContent=S.hp<mhp?(S.wounded?'Wounded, resting slowly':'Resting at the keep'):'Rested and ready'; $('expTime').textContent=S.hp<mhp?`healed in ${clock((mhp-S.hp)/(mhp/HP_REGEN_FULL*(S.wounded?0.5:1))*1000)}`:''; $('expFill').parentNode.hidden=true; }
   setHTML($('hpTxt'),`<span>HEALTH</span><span>${Math.ceil(S.hp)} / ${mhp}</span>`);
   $('hpFill').style.width=(100*S.hp/mhp)+'%'; $('hpFill').classList.toggle('low',S.hp<=LOCS[0].cost);
-  $('bookDot').hidden=!(canMend()&&S.hp<maxHP()*0.5);
   renderBook(); renderQuickbar();
   { const jb=$('journeyBar'), on=view==='journey'&&!!S.exp; jb.hidden=!on;
     if(on){ const e=S.exp, l=LOC[e.id], t=now(), ret=e.returning;
@@ -2023,23 +2021,13 @@ function refresh(){
   // Arthrex's spire
   renderSpire();
 
-  // grimoire
-  let magicReady=0;
-  SPELLS.forEach(s=>{
-    const k=knows(s.id), btn=$('sb-'+s.id), on=s.dur&&active(s.id);
-    btn.classList.toggle('arcane',k);
-    $('st-'+s.id).textContent=k?'Known':'Unlearned';
-    if(!k){
-      setHTML($('sc-'+s.id), `<div class="r-meta">To learn</div>`+costHTML(s.learn));
-      $('sq-'+s.id).textContent='Learn'; $('sp-'+s.id).textContent='Study';
-      btn.disabled=!canPay(s.learn); if(!btn.disabled) magicReady++;
-    } else {
-      setHTML($('sc-'+s.id), `<div class="r-meta">Reagents per cast</div>`+costHTML(s.cast));
-      $('sq-'+s.id).textContent=on?'Active':'Cast';
-      $('sp-'+s.id).textContent=on?`${Math.ceil((S.spells[s.id]-now())/1000)}s left`:(s.id==='road'&&!S.exp?'No trip':'Invoke');
-      btn.disabled=!castable(s);
-    }
-  });
+  // study (in the spellbook): unlearned spells only
+  let magicReady=0, learnable=0;
+  SPELLS.forEach(s=>{ const k=knows(s.id), row=$('s-'+s.id); row.hidden=k; if(k) return;
+    $('st-'+s.id).textContent='Unlearned'; setHTML($('sc-'+s.id), `<div class="r-meta">To learn</div>`+costHTML(s.learn));
+    const b=$('sb-'+s.id); b.disabled=!canPay(s.learn); if(!b.disabled) learnable++; });
+  $('studyBox').hidden=SPELLS.every(s=>knows(s.id));
+  $('bookDot').hidden=!(learnable||(canMend()&&S.hp<maxHP()*0.5));
   if(d&&!S.digging&&canPay(d.cost)) magicReady++;
   if(S.story.met&&S.quest&&(S.quest.state==='offered'||questDone(S.quest))) magicReady++;
   badge('magicBadge',magicReady);
@@ -2118,10 +2106,7 @@ function wireUI(){
   $('quickbar').addEventListener('click',e=>{ const b=e.target.closest('button[data-qs]'); if(!b) return; e.stopPropagation();
     const en=bookEntries().find(x=>x.id===b.dataset.qs); if(!en) return;
     if(en.can()) en.run(); else toast(`${en.name}: ${en.why()||'you need more crystals'}.`); });
-  $('bookGrimoire').addEventListener('click',()=>{ closeBook();
-    document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tab==='magic'));
-    TABS.forEach(k=>$('p-'+k).hidden=k!=='magic');
-    $('sList').scrollIntoView({behavior:'smooth',block:'start'}); });
+  $('sList').addEventListener('click',e=>{ const b=e.target.closest('button[data-spell]'); if(b&&!b.disabled) learn(b.dataset.spell); });
   $('checkBtn').addEventListener('click',()=>checkForUpdate(true));
   setTimeout(()=>checkForUpdate(false),3000);
   setInterval(()=>{ if(!document.hidden) checkForUpdate(false); },120000);
