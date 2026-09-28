@@ -236,6 +236,9 @@
   .realm-pick .seg{overflow-x:auto;scrollbar-width:none;}
   .realm-pick .seg button{white-space:nowrap;flex:1;}
   .realm-pick .r-desc{margin:0;font-size:13px;}
+  .tbtns{display:flex;gap:6px;}
+  .tbtns .act{min-width:0;padding:6px 10px;}
+  .tbtns .act:disabled{opacity:.4;}
   .prep{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:10px 12px;margin:4px 0 8px;display:flex;flex-direction:column;gap:8px;}
   .prep-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .prep .r-desc{margin:0;font-size:13px;}
@@ -421,6 +424,9 @@
     <div class="gear" id="gearNow"></div>
     <div class="panel-head sub"><span class="label">Anvil</span></div>
     <div id="fList" class="list"></div>
+    <div class="panel-head sub"><span class="label">Enchantments</span></div>
+    <p class="r-desc" style="margin:0 0 6px">Brom forges, Arthrex binds. Each level costs more crystals of the item’s element, and there is no limit. Enchantments reset on ascension.</p>
+    <div id="eList" class="list"></div>
   </section>
 
   <section id="p-sea" class="panel" hidden>
@@ -434,6 +440,9 @@
   <section id="p-magic" class="panel" hidden>
     <div class="panel-head" id="spire"><span class="label">Arthrex’s spire</span><span class="label num" id="questNote"></span></div>
     <div class="spire" id="spireBox"></div>
+    <div id="transBox" hidden><div class="panel-head sub"><span class="label">Transmutation</span><span class="label num" id="transRate"></span></div>
+    <p class="r-desc" style="margin:0 0 6px">Arthrex turns spare crystals into materials. A deeper mine and more Renown give more for each crystal.</p>
+    <div id="tList" class="list"></div></div>
     <div class="panel-head sub"><span class="label">Crystal mine</span><span class="label num" id="mineRate"></span></div>
     <div id="mList" class="list"></div>
     <div class="panel-head sub"><span class="label">Grimoire</span></div>
@@ -442,13 +451,15 @@
 
   <section id="p-asc" class="panel asc" hidden>
     <div class="panel-head"><span class="label">Dynasty</span><span class="label num" id="lifeNo"></span></div>
-    <p>Abdicate and found a new dynasty. Everything starts over: gold, holdings, upgrades, your hero’s gear and spells, relics, materials, crystals and the mine. What you keep is <b>Renown</b>, earned from the gold this reign gathered. Each point adds 5% to all gold, forever, so every new dynasty rises faster.</p>
+    <p>Abdicate and found a new dynasty. Everything starts over: gold, holdings, upgrades, your hero’s gear and spells, relics, materials, crystals and the mine. What you keep is <b>Renown</b>, earned from the gold this reign gathered. Each point adds <b>5% to all gold</b> and <b>3% to materials</b> your hero and ship bring home, forever, and Renown milestones unlock <b>legacy boons</b>: head starts for every new life.</p>
     <div class="stats">
       <div class="label">Renown<span id="renown">0</span></div>
       <div class="label">Bonus<span id="renownBonus">+0%</span></div>
       <div class="label">Gold this reign<span id="reignGold">0</span></div>
       <div class="label">Renown on ascension<span id="pending">0</span></div>
     </div>
+    <div class="panel-head sub"><span class="label">Legacy boons</span><span class="label num" id="boonCount"></span></div>
+    <div id="boonList" class="list" style="margin-bottom:12px"></div>
     <div class="asc-actions">
       <button class="act" id="ascendBtn"><small>Ascend</small><span id="ascendTxt">Found a new dynasty</span></button>
       <span class="r-desc" id="ascendHint"></span>
@@ -776,15 +787,34 @@ const angDiff=(a,b)=>{ let d=(a-b)%(Math.PI*2); if(d>Math.PI) d-=Math.PI*2; if(d
 const COMPASS=['east','south-east','south','south-west','west','north-west','north','north-east'];
 const compass=a=>COMPASS[((Math.round(a/(Math.PI/4))%8)+8)%8];
 
+// Legacy boons: permanent head starts at Renown milestones (not spent), applied at the start of each new life
+const BOONS=[
+  {at:5,name:'Miners’ Oath',text:'Each life starts with the Crystal Mine open.'},
+  {at:10,name:'Heirloom Kit',text:'Each life starts with an Oaken Buckler and a Stone Pick.'},
+  {at:25,name:'Founder’s Cache',text:'Each life starts with 200 wood, 100 stone and 50 copper.'},
+  {at:50,name:'Hereditary Shipyard',text:'Each life starts with the shipyard built and the Ember Gull at anchor.'},
+  {at:100,name:'Scale of the Old Guard',text:'Each life starts with Copper Scale armor.'},
+];
+// Transmutation: Arthrex turns crystals into materials. Better with a deeper mine.
+const TRANSMUTE={ember:{iron:3,copper:2},frost:{stone:6,tin:2},verdant:{wood:10},storm:{wood:2,stone:2,copper:2,tin:2,iron:2}};
+// Enchanting: endless levels on gear and ship, paid in the element's crystals
+const ENCH={
+  weapon:{label:'Weapon',el:'ember',fx:l=>`+${l*10}% tap gold`,need:()=>true},
+  armor:{label:'Armor',el:'frost',fx:l=>`−${Math.round((1-Math.pow(0.97,l))*100)}% foe damage`,need:()=>true},
+  pick:{label:'Pickaxe',el:'verdant',fx:l=>`+${l*8}% stone and ore`,need:()=>true},
+  hull:{label:'Ship’s hull',el:'verdant',fx:l=>`+${l*6}% hull`,need:()=>S.sea.yard>0},
+  arms:{label:'Ship’s ballistae',el:'storm',fx:l=>`+${l*6}% bolt damage`,need:()=>S.sea.yard>0},
+};
+const enchCost=l=>Math.ceil(3*Math.pow(1.35,l));
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260927235824';
+const BUILD='20260928002109';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,ench:{weapon:0,armor:0,pick:0,hull:0,arms:0},sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, sea=null, fief=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed)}); }
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed),ench:Object.assign(f.ench,d.ench)}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -796,6 +826,7 @@ const owned=id=>S.owned[id]||0;
 const active=id=>(S.spells[id]||0)>now();
 const knows=id=>S.known.includes(id);
 const renownMult=()=>1+0.05*S.renown;
+const matMult=()=>1+0.03*S.renown;   // Renown also brings more materials home
 const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 
 function res(k){ return k==='gold'?S.gold : k in S.mat?S.mat[k] : S.cry[k]; }
@@ -809,7 +840,7 @@ function gps(withSpells=true){ let g=0; for(const b of BUILDINGS) g+=owned(b.id)
 function tapValue(){
   let flat=1,mult=1,pct=0;
   for(const t of TAPS) if(has(t.id)){ if(t.flat)flat+=t.flat; if(t.mult)mult*=t.mult; if(t.pct)pct+=t.pct; }
-  let v=flat*mult*WEAPON_TAP[S.gear.weapon]*goldMult()*(1+relicBonus('tap'))+gps()*pct;
+  let v=flat*mult*WEAPON_TAP[S.gear.weapon]*goldMult()*(1+relicBonus('tap'))*(1+0.1*S.ench.weapon)+gps()*pct;
   if(active('midas')) v*=10;
   return v;
 }
@@ -838,6 +869,21 @@ function buyUpgrade(id){
 
 // Forge
 function nextGear(slot){ return GEAR[slot].tiers[S.gear[slot]+1]; }
+// Transmutation and enchanting: where spare crystals go
+const transRate=()=>(1+0.5*Math.max(0,S.mine-1))*matMult();
+const transOut=(el,n)=>Object.entries(TRANSMUTE[el]).map(([k,v])=>[k,Math.floor(v*n*transRate())]);
+function transmute(el,n){ n=n==='all'?S.cry[el]:Math.min(+n,S.cry[el]); if(!(n>0)||!S.story.met) return;
+  S.cry[el]-=n; const got=transOut(el,n); got.forEach(([k,v])=>addRes(k,v));
+  toast(`Arthrex transmutes ${n} ${NAMES[el]} crystal${n>1?'s':''} into ${got.map(([k,v])=>`${fmt(v)} ${NAMES[k]}`).join(', ')}.`); refresh(); }
+function enchant(k){ const e=ENCH[k], c=enchCost(S.ench[k]); if(!e||!e.need()||S.cry[e.el]<c) return;
+  S.cry[e.el]-=c; S.ench[k]++; toast(`${e.label} enchanted to level ${S.ench[k]}: ${e.fx(S.ench[k])}.`); refresh(); }
+function applyBoons(){ const r=S.renown, got=BOONS.filter(b=>r>=b.at);
+  if(r>=5) S.mine=Math.max(S.mine,1);
+  if(r>=10){ S.gear.armor=Math.max(S.gear.armor,1); S.gear.pick=Math.max(S.gear.pick,1); }
+  if(r>=25){ S.mat.wood+=200; S.mat.stone+=100; S.mat.copper+=50; }
+  if(r>=50){ S.sea.yard=1; S.sea.x=HARBOR.x; S.sea.y=HARBOR.y; S.sea.a=0; S.sea.anchored=true; }
+  if(r>=100) S.gear.armor=Math.max(S.gear.armor,2);
+  return got; }
 // Forging takes time: one piece at a time, paid up front, finishes on its own (even while away).
 const FORGE_TIME=[0,15,60,180,480], STOKE_COST={ember:1};
 function forge(slot){
@@ -896,10 +942,10 @@ const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=rnd(0,i); [a[i],a[j]]=
 const STAGE_GAIN=0.25, STAGE_HARM=0.15, AUTO_DRINK=0.4, MAX_TRIP=8*3600*1000;
 const RETREATS=[{p:0.5,label:'50%'},{p:0.3,label:'30%'},{p:0.15,label:'15%'},{p:0,label:'Never'}];
 const packMax=()=>Math.min(6,2+S.gear.armor);
-function yieldMult(k){ return (k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick]*(claimed('karak')?1.25:1))*(1+relicBonus(k)); }
+function yieldMult(k){ return (k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick]*(claimed('karak')?1.25:1)*(1+0.08*S.ench.pick))*(1+relicBonus(k))*matMult(); }
 function lootRange(l,k,[a,b]){ const m=yieldMult(k); return [Math.round(a*m),Math.round(b*m)]; }
 function expDuration(l){ return l.dur*(1-0.08*S.gear.armor)*(1-relicBonus('speed')); }   // seconds per depth
-function foeDamage(l,st){ return l.dmg*(1+STAGE_HARM*(st||0))*Math.max(0.35,1-0.12*S.gear.armor-0.06*S.gear.weapon); }
+function foeDamage(l,st){ return l.dmg*(1+STAGE_HARM*(st||0))*Math.max(0.35,1-0.12*S.gear.armor-0.06*S.gear.weapon)*Math.pow(0.97,S.ench.armor); }
 const primary=l=>Object.keys(l.loot)[0];
 const tripTotal=k=>S.exp?S.exp.beats.filter(b=>b.r===k&&b.k!=='chest'&&!b.done&&!b.cut).reduce((a,b)=>a+b.n,0)||5:0;
 const tollCost=()=>Math.max(20,Math.round(gps(false)*15+tapValue()*10));
@@ -1437,7 +1483,8 @@ function ascend(){
   const keep={renown:S.renown+p,life:S.life,taps:S.taps,story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats)),
     dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:1,
     seen:{...S.seen},favs:S.favs.slice(),retreat:S.retreat,pack:S.pack,tut:S.tut,tutV:S.tutV};
-  S=Object.assign(fresh(),keep); S.hp=maxHP(); upSet=new Set(); setView('keep');
+  S=Object.assign(fresh(),keep); const boons=applyBoons(); S.hp=maxHP(); upSet=new Set(); setView('keep');
+  if(boons.length) setTimeout(()=>toast(`Legacy boons: ${boons.map(b=>b.name).join(', ')}.`),2500);
   chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
 }
 function wipe(){ S=fresh(); S.hp=maxHP(); upSet=new Set(); setView('keep'); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); setTimeout(introStory,300); }
@@ -1481,7 +1528,7 @@ function digCache(id){
   if(!canDigCache(id)) return; const is=ISLE[id], got=[], lost=[];
   const g=Math.round(Math.max(150*is.tier,(gps(false)*45+tapValue()*15)*is.tier)*seaGold()); toCargo('gold',g); got.push(goodsText('gold',g));
   const take=(k,n)=>{ const t=toCargo(k,n); if(t) got.push(goodsText(k,t)); if(t<n) lost.push(k); };
-  for(const [k,[a,b]] of Object.entries(is.loot)) take(k,rnd(a,b));
+  for(const [k,[a,b]] of Object.entries(is.loot)) take(k,Math.round(rnd(a,b)*matMult()));
   if(is.cry){ const n=rnd(...is.cry); for(let i=0;i<n;i++) take(CRYS[rnd(0,3)],1); }
   isleState(id).next=now()+is.refill*60000; S.stats.caches=(S.stats.caches||0)+1;
   sea&&sea.floatText(is.x,is.y-is.r*0.5,'Treasure!');
@@ -1489,19 +1536,19 @@ function digCache(id){
 }
 function pickFlotsam(){ const r=Math.random();
   if(r<0.25){ const g=Math.round(Math.max(20,gps(false)*5+tapValue()*3)*seaGold()); toCargo('gold',g); return `+${fmt(g)} gold`; }
-  const k=r<0.85?'wood':'stone', n=toCargo(k,rnd(3,k==='wood'?8:6)); return n?`+${n} ${NAMES[k]}`:'Hold full'; }
+  const k=r<0.85?'wood':'stone', n=toCargo(k,Math.round(rnd(3,k==='wood'?8:6)*matMult())); return n?`+${n} ${NAMES[k]}`:'Hold full'; }
 function buildYard(){ if(S.sea.yard||S.sea.job||!seaUnlocked()||!canPay(YARD.cost)) return; pay(YARD.cost); const n=now();
   S.sea.job={part:'yard',start:n,end:n+YARD.time*1000}; chronicle('Shipwrights lay a keel on the shore below the keep.'); refresh(); }
 const nextShip=k=>SHIP[k].tiers[S.sea[k]+1];
 // Sea battles
-const maxHull=()=>Math.round(HULL_HP[S.sea.hull]*(claimed('skar')?1.25:1));
+const maxHull=()=>Math.round(HULL_HP[S.sea.hull]*(claimed('skar')?1.25:1)*(1+0.06*S.ench.hull));
 const shipHP=()=>S.sea.hp==null?maxHull():S.sea.hp;
 const guardsLeft=id=>S.sea.fleets[id]??CASTLE_GUARD[id].count;
 const inHarborPos=()=>S.sea.x!=null&&Math.hypot(S.sea.x-HARBOR.x,S.sea.y-HARBOR.y)<DOCK_R;
 function shipLoot(tier,mult){
   const out=[['gold',Math.round(Math.max(100*tier,(gps(false)*30+tapValue()*10)*tier)*mult*seaGold())]];
   const t={1:{wood:[10,25],stone:[5,15]},2:{copper:[10,20],iron:[5,10],wood:[10,20]},3:{iron:[15,30],tin:[8,15]},4:{iron:[20,35],tin:[10,20]}}[tier];
-  for(const [k,[a,b]] of Object.entries(t)) out.push([k,Math.round(rnd(a,b)*mult)]);
+  for(const [k,[a,b]] of Object.entries(t)) out.push([k,Math.round(rnd(a,b)*mult*matMult())]);
   const cr=tier>=4?rnd(2,4):tier>=3?1:0; for(let i=0;i<cr;i++) out.push([CRYS[rnd(0,3)],1]);
   return out.filter(([,n])=>n>0);
 }
@@ -1607,6 +1654,12 @@ function buildRows(){
       </div>
       <button class="act" id="lb-${l.id}" data-go="${l.id}"><small id="lq-${l.id}">Depart</small><span id="lp-${l.id}"></span></button>
     </div>`).join('');
+  $('tList').innerHTML=CRYS.map(el=>`
+    <div class="row"><div><div class="r-head"><span class="r-name"><span class="res">${ICON(el)}</span>${NAMES[el]}</span><span class="r-count" id="tc-${el}"></span></div><div class="r-desc" id="to-${el}"></div></div>
+      <div class="tbtns"><button class="act ghost" data-tm="${el}" data-n="1" id="t1-${el}"><span>×1</span></button><button class="act ghost" data-tm="${el}" data-n="10" id="t10-${el}"><span>×10</span></button><button class="act arcane" data-tm="${el}" data-n="all" id="ta-${el}"><span>All</span></button></div></div>`).join('');
+  $('eList').innerHTML=Object.entries(ENCH).map(([k,e])=>`
+    <div class="row" id="e-${k}"><div><div class="r-head"><span class="r-name">${e.label}</span><span class="r-tag" id="el-${k}"></span></div><div class="r-desc" id="ef-${k}"></div><div id="ec-${k}"></div></div>
+      <button class="act arcane" id="eb-${k}" data-ench="${k}"><small>Enchant</small><span id="en-${k}"></span></button></div>`).join('');
   fList.innerHTML=Object.entries(GEAR).map(([k,g])=>`
     <div class="row" id="f-${k}">
       <div>
@@ -1919,6 +1972,14 @@ function refresh(){
     $('fb-'+k).querySelector('span').textContent=busy?clock(S.forging.end-now()):'Craft';
   });
   badge('forgeBadge',forgeable);
+  Object.entries(ENCH).forEach(([k,e])=>{ const row=$('e-'+k), ok=e.need(); row.hidden=!ok; if(!ok) return; const l=S.ench[k], c=enchCost(l);
+    $('el-'+k).textContent=l?`Level ${l}`:'Unenchanted'; $('ef-'+k).textContent=`${l?e.fx(l)+' now \u00B7 ':''}next: ${e.fx(l+1)}`;
+    setHTML($('ec-'+k),costHTML({[e.el]:c})); $('eb-'+k).disabled=S.cry[e.el]<c; $('en-'+k).textContent=`Level ${l+1}`; });
+  $('transBox').hidden=!S.story.met;
+  if(S.story.met){ $('transRate').textContent=`×${transRate().toFixed(2)}`;
+    CRYS.forEach(el=>{ const n=S.cry[el]; $('tc-'+el).textContent=`${fmt(n)} held`;
+      $('to-'+el).textContent=`1 crystal \u2192 ${transOut(el,1).map(([k,v])=>`${v} ${NAMES[k]}`).join(', ')}`;
+      $('t1-'+el).disabled=n<1; $('t10-'+el).disabled=n<10; $('ta-'+el).disabled=n<1; }); }
   renderForge();
 
   // crystal mine
@@ -1961,11 +2022,13 @@ function refresh(){
 
   // ascend
   const p=pendingRenown();
-  $('renown').textContent=S.renown; $('renownBonus').textContent=`+${S.renown*5}%`;
+  $('renown').textContent=S.renown; $('renownBonus').textContent=`+${S.renown*5}% gold · +${S.renown*3}% mats`;
+  $('boonCount').textContent=`${BOONS.filter(b=>S.renown>=b.at).length} / ${BOONS.length}`;
+  setHTML($('boonList'),BOONS.map(b=>{ const on=S.renown>=b.at; return `<div class="row"><div><div class="r-head"><span class="r-name"${on?'':' style="color:var(--muted)"'}>${b.name}</span><span class="r-tag">${b.at} Renown</span></div><div class="r-desc">${b.text}</div><div class="r-meta">${on?'Unlocked: applies to every new life':`Locked: ${b.at-S.renown} more Renown`}</div></div></div>`; }).join(''));
   $('reignGold').textContent=fmt(S.total); $('pending').textContent=p;
   $('lifeGold').textContent=fmt(S.life); $('taps').textContent=S.taps.toLocaleString('en-US');
   $('ascendBtn').disabled=p<1;
-  $('ascendHint').textContent=p<1?`Gather ${fmt(1e6)} gold in one reign to earn your first Renown.`:`+${p} Renown, +${p*5}% gold`;
+  $('ascendHint').textContent=p<1?`Gather ${fmt(1e6)} gold in one reign to earn your first Renown.`:`+${p} Renown: +${p*5}% gold, +${p*3}% materials`;
 }
 
 let chronTimer;
@@ -2051,6 +2114,7 @@ function wireUI(){
     else if(d.spire){ ({accept:acceptQuest,reroll:rerollQuest,abandon:abandonQuest,claim:claimQuest,
         lesson:()=>showDialog('arthrex',CRYSTAL_LESSON,'I understand',()=>{})})[d.spire](); }
     else if(d.stoke) stoke();
+    else if(d.tm) transmute(d.tm,d.n); else if(d.ench) enchant(d.ench);
     else if(d.yard) buildYard(); else if(d.ship) upgradeShip(d.ship); else if(d.sail){ setView('sea'); $('realm').scrollIntoView({behavior:'smooth',block:'center'}); }
     else if(d.split) splitRock();
     else if(d.buy) buyBuilding(d.buy); else if(d.up) buyUpgrade(d.up); else if(d.go) depart(d.go);
@@ -2734,7 +2798,7 @@ class Sea extends Phaser.Scene{
       this.puff.setParticleTint(0xe8e2d0); this.puff.explode(2,x,y); }
   }
   fire(){ const sh=S.sea, A=ARMS[sh.arms], e=this.foeNear(360), side=this.sideFor(e), i=side<0?0:1;
-    if(this.rl[i]>0) return; this.volley({x:sh.x,y:sh.y,a:sh.a,v:this.v},side,A.n,A.dmg,BOLT_RANGE,'me',A.fire); this.rl[i]=A.reload; refresh(); }
+    if(this.rl[i]>0) return; this.volley({x:sh.x,y:sh.y,a:sh.a,v:this.v},side,A.n,Math.round(A.dmg*(1+0.06*S.ench.arms)),BOLT_RANGE,'me',A.fire); this.rl[i]=A.reload; refresh(); }
   hitFoe(e,dmg){ e.hp-=dmg; e.hurt=true; this.floatText(e.x,e.y-16,'-'+dmg,'#ffd9b8');
     if(e.guard) this.foes.forEach(f=>{ if(f.guard===e.guard) f.hurt=true; });
     if(e.hp<=0){ const loot=shipLoot(e.T.tier,0.6), per=Math.ceil(loot.length/3);

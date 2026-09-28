@@ -4,6 +4,10 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Renown helps the climb.** Each Renown point now also adds +3% to materials from expeditions, the sea and transmutation. **Legacy boons** at 5/10/25/50/100 Renown give every new life a head start: the mine open, starter gear, a cache of materials, the shipyard, Copper Scale. Listed in the Legacy tab. See [Economy](economy.md#legacy-boons).
+- **Transmutation.** Arthrex turns crystals into materials in the Magic tab (Ember → iron and copper, Frost → stone and tin, Verdant → wood, Storm → a bit of everything). Better with a deeper mine and more Renown. See [Magic](magic.md#transmutation).
+- **Enchantments.** Endless crystal-priced levels for your weapon (tap gold), armor (less damage), pickaxe (more ore), and the ship's hull and ballistae. In the Forge tab. See [Forge](forge.md#enchantments).
+
 - **See the haul.** The journey bar now lists what the hero is carrying item by item (gold, wood, stone, ore, crystals) instead of a single total. The hero card still shows the total.
 
 - **Claimed castles (sea phase 3).** Break a castle's fleet and **besiege** it: storm the gate (costs hero health), scale the walls by night (half the cost, night only), or blockade the harbor (8–32 minutes at anchor, no health). A claimed castle is a realm of your own, switchable in the Build tab, with five holdings of its people, its own Keep view, a friendly port that unloads your hold, and a perk: Redtide Hold (double sea gold, bigger hold), Karak Brine (half forging and shipwright times, more ore), Skarholm (faster, tougher ship, +25 hero health), Sylvanreach (faster crystal mine, stronger draughts). New log section: Your realms. See [The Sea](sea.md#claimed-castles-realms).

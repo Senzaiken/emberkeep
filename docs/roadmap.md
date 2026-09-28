@@ -16,7 +16,7 @@ All three phases are built: sailing and treasure, broadside battles, sieges and 
 
 ## Later
 
-- [ ] **Renown tech tree.** Spend Renown on permanent perks (for example a starting gold pouch, faster forging, extra relic chance, a head start on the mine), on top of the passive +5% gold per point.
+- [ ] **More legacy boons**, or a spendable Renown tree on top of the milestone boons (for example faster forging or extra relic chance).
 
 - [ ] Premium currency (for example Aether Shards) with an instant full heal as the first use. Hero health is already built to support it.
 - [ ] More road events, and region-specific ones for every region.

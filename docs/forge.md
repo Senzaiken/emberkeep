@@ -54,3 +54,17 @@ Boosts ore and stone from expeditions, and speeds up the [Crystal Mine](magic.md
 | 2 | Copper Pick | 600 gold, 10 wood, 20 copper | ×1.5 | ×2.25 |
 | 3 | Bronze Pick | 12K gold, 10 wood, 20 copper, 10 tin | ×2 | ×3.5 |
 | 4 | Iron Pick | 250K gold, 10 wood, 30 iron | ×2.5 | ×5 |
+
+## Enchantments
+
+Below the anvil, the Forge tab has **Enchantments**: Brom forges, Arthrex binds. Each item can be enchanted without limit, paid in one element's crystals. Level *n* → *n+1* costs `ceil(3 × 1.35^n)` crystals: 3, 5, 6, 8, 10, 14, … about 60 at level 10 and 270 at level 15.
+
+| Item | Crystal | Per level |
+|---|---|---|
+| Weapon | Ember | +10% tap gold |
+| Armor | Frost | Foe damage ×0.97 (so −26% at level 10) |
+| Pickaxe | Verdant | +8% stone and ore from expeditions |
+| Ship's hull | Verdant | +6% max hull (shown once the shipyard is built) |
+| Ship's ballistae | Storm | +6% bolt damage (shown once the shipyard is built) |
+
+Enchantments belong to the item, not the tier, so they carry over when Brom or Maren upgrades it. They reset on ascension, like the gear itself.

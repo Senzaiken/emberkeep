@@ -43,6 +43,19 @@ Each gallery is a construction job. Pay the cost, and the miners dig for a while
 
 **Split the rock** (1 Frost crystal) halves the time left, and you can use it repeatedly. It's on the mine row. A ⛏ countdown floats over the mine site in the keep view.
 
+## Transmutation
+
+Once you've met Arthrex, the Magic tab has a **Transmutation** section: he turns crystals into materials, one, ten, or all at a time.
+
+| Crystal | Base yield per crystal |
+|---|---|
+| Ember | 3 iron, 2 copper |
+| Frost | 6 stone, 2 tin |
+| Verdant | 10 wood |
+| Storm | 2 each of wood, stone, copper, tin and iron |
+
+The yield is multiplied by `(1 + 0.5 × (mine depth − 1)) × (1 + 0.03 × Renown)`, rounded down. At the Storm Vault (depth 3) with 10 Renown that's ×2.6. Keep a few crystals back for Mend, draughts, Hasten, stoking and splitting.
+
 ## Arthrex
 
 The court sorcerer explains crystals after your first expedition and gives you 10 of each. He then sets errands that pay in crystals. See [Story and Arthrex](story.md).

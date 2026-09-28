@@ -63,7 +63,20 @@ These unlock in order, each one once the previous is bought and the reign has ea
 ## Renown and ascension
 
 - Renown earned on ascending: `floor(sqrt(reignGold / 1,000,000))`, so the first point needs 1M gold in one reign.
-- Each point of Renown adds **+5%** to all gold (taps and holdings).
+- Each point of Renown adds **+5%** to all gold (taps and holdings) and **+3%** to materials: expedition loot, island treasure, ship salvage and flotsam, and [transmutation](magic.md#transmutation).
 - **Ascending is a full reset:** gold, holdings, upgrades, hero equipment (and anything Brom is forging), learned spells, relics, materials, crystals, the Crystal Mine, any running expedition, active spells and Arthrex's current errand.
 - **Ascending keeps:** Renown (and its gold bonus), the [Adventurer's Log](log.md) (and the life number goes up by one), lifetime stats, story progress (the tutorial isn't replayed, and Arthrex and Brom remember you), discovered resources, and starred spells (they show again once relearned). The hero starts at full health.
-- Planned: Renown becomes spendable on a Renown tech tree (see [Roadmap](roadmap.md)).
+
+### Legacy boons
+
+Renown milestones unlock permanent head starts, applied at the start of every new life. Renown isn't spent on them, so they never cost you the gold or material bonus. They're listed in the Legacy tab.
+
+| Renown | Boon | Each new life starts with |
+|---:|---|---|
+| 5 | Miners' Oath | The Crystal Mine open |
+| 10 | Heirloom Kit | An Oaken Buckler and a Stone Pick |
+| 25 | Founder's Cache | 200 wood, 100 stone, 50 copper |
+| 50 | Hereditary Shipyard | The shipyard built and the Ember Gull at anchor (no refits) |
+| 100 | Scale of the Old Guard | Copper Scale armor |
+
+For reference, Renown 10 needs 100M gold in one reign, 25 needs 625M, 50 needs 2.5B and 100 needs 10B.
