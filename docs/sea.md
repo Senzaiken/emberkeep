@@ -57,6 +57,8 @@ Base speed is 46 knots × the sails' multiplier. To go upwind, tack across it.
 
 ### The view
 
+- **Taller / Shorter** (under the Keep/Journey/Sea switch) makes the sea view 2.5 times taller, so it fills most of a phone screen and more of the sea is visible around the ship. It's remembered, and only applies to the Sea view: the keep and the journey keep their usual size.
+
 - A **chart** in the bottom-left shows the islands you've charted, your harbor, and the ship.
 - Islands are revealed on the chart when you sail within sight of them, and each adds an entry to the [Adventurer's Log](log.md).
 - The name of the island you're beside shows at the bottom of the view.

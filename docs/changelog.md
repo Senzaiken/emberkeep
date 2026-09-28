@@ -4,6 +4,8 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Taller sea view.** A **Taller** button on the Sea view makes the canvas 2.5 times taller, easier to steer with a thumb and showing more water. **Shorter** puts it back. The choice is remembered, and the keep and journey views keep their usual size.
+
 - **Study spells in the spellbook.** Learning new spells moved from the Magic tab's grimoire into the spellbook, under **Study new spells**. The book's violet dot also lights when a spell can be learned. In the Magic tab, Transmutation now comes after the Crystal Mine.
 
 - **Legacy is chosen when you ascend.** The Legacy tree is no longer in the Legacy tab. It opens right after you ascend, so you pick your head starts as the new life begins. Unspent Renown carries over to the next ascension.

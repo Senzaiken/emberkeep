@@ -58,6 +58,8 @@
   #realm{width:100%;aspect-ratio:2/1;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0b0d1a;
     user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;}
   #realm canvas{display:block;}
+  #realm.tall{aspect-ratio:2/2.5;}
+  .sea-tall{position:absolute;top:44px;right:8px;z-index:1;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#cfc6ad;background:rgba(10,12,25,.55);border:1px solid rgba(236,226,200,.25);border-radius:6px;padding:5px 10px;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
   .chron{margin:0;font-family:var(--display);font-size:16px;color:var(--muted);min-height:1.4em;text-align:center;transition:opacity .4s;text-wrap:balance;}
 
   .tabs{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:sticky;top:0;z-index:2;background:var(--night);}
@@ -364,6 +366,7 @@
       <button id="vJourney" data-view="journey" aria-pressed="false" disabled>Journey</button>
       <button id="vSea" data-view="sea" aria-pressed="false" hidden>Sea</button>
     </div>
+    <button class="sea-tall" id="seaTall" hidden>↕ Taller</button>
   </div>
   <div class="journey-bar" id="journeyBar" hidden>
     <div class="jb-info"><span class="label" id="jbWhere">On the road</span><div class="jb-carry" id="jbCarry"></div><span class="num" id="jbLeft"></span></div>
@@ -824,7 +827,7 @@ const ENCH={
 };
 const enchCost=l=>Math.ceil(3*Math.pow(1.35,l));
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928011227';
+const BUILD='20260928013844';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1762,6 +1765,7 @@ function setView(v){
   $('vKeep').setAttribute('aria-pressed',v==='keep'); $('vJourney').setAttribute('aria-pressed',v==='journey'); $('vSea').setAttribute('aria-pressed',v==='sea');
   $('realm').setAttribute('aria-label',v==='keep'?'Your keep. Tap to collect gold.':v==='sea'?'Your ship at sea. Tap the water to steer.':'Your hero on the road. Tap what lies ahead to help.');
   if(sea) sea.setShown(v==='sea');
+  setTall(v==='sea'&&!!S.sea.tall);
   const home=S.realm==='home'; if(scene){ scene.scene.setVisible(v==='keep'&&home); scene.input.enabled=v==='keep'&&home; }
   if(fief) fief.setShown(v==='keep'&&!home);
   if(journey) journey.setShown(v==='journey');
@@ -1781,6 +1785,10 @@ function renderForge(){
   $('fgLeft').textContent=`Ready in ${fmtTime(left/1000)}`; $('fgBar').style.width=pct+'%'; $('fgStoke').disabled=!canStoke();
   $('forgeNote').textContent=`Ready in ${clock(left)}`;
 }
+// The sea view can be made taller: the whole canvas grows, and the sea camera shows more of the water
+function setTall(on){ $('realm').classList.toggle('tall',on); $('seaTall').hidden=view!=='sea';
+  $('seaTall').textContent=on?'\u2195 Shorter':'\u2195 Taller';
+  if(game&&game.scale){ const h=Math.round(H*Z*(on?SEA_TALL:1)); if(game.scale.gameSize.height!==h){ game.scale.setGameSize(W*Z,h); requestAnimationFrame(()=>game.scale.refresh()); setTimeout(()=>game.scale.refresh(),120); } } }
 let yardKey='';
 function renderHarbor(){
   const sh=S.sea, open=seaUnlocked();
@@ -2080,6 +2088,7 @@ function wireUI(){
   $('boonList').addEventListener('click',e=>{ const b=e.target.closest('button[data-tree]'); if(b&&!b.disabled) buyTree(b.dataset.tree); });
   $('jbHaste').addEventListener('click',hasten);
   $('jbReturn').addEventListener('click',()=>{ returnHome(); refresh(); });
+  $('seaTall').addEventListener('click',()=>{ S.sea.tall=!S.sea.tall; setTall(view==='sea'&&S.sea.tall); if(S.sea.tall) setTimeout(()=>$('realm').scrollIntoView({behavior:'smooth',block:'start'}),60); });
   $('sgClose').addEventListener('click',()=>$('siegeCard').hidden=true);
   $('sgOpts').addEventListener('click',e=>{ const b=e.target.closest('button[data-sg]'); if(!b||b.disabled) return; doSiege(b.dataset.sg,b.dataset.id); });
   $('realmSeg').addEventListener('click',e=>{ const b=e.target.closest('button[data-realm]'); if(!b) return; S.realm=b.dataset.realm; setView('keep'); refresh(); });
@@ -2672,7 +2681,7 @@ class Journey extends Phaser.Scene{
 }
 
 /* ================= SEA (top-down sailing) ================= */
-const SEA_Z=Z*1.5, VW=W*Z/SEA_Z, VH=H*Z/SEA_Z;   // 480 x 240 world units on screen
+const SEA_Z=Z*1.5, VW=W*Z/SEA_Z, SEA_TALL=2.5;   // 480 world units wide; 240 tall, or 600 with the taller sea view
 const ISLE_LOOK={
   green:{sand:0xd9c48e,land:0x5f9a4a,dark:0x3f7436,tree:0x2f5e2e},
   rock:{sand:0xb9ae98,land:0x7d7a70,dark:0x5e5b54,tree:0x4a6a40},
@@ -2690,8 +2699,8 @@ class Sea extends Phaser.Scene{
     const g=this.make.graphics({add:false}); g.lineStyle(1.4,0xffffff,0.55); const rr=seededRand(7);
     for(let i=0;i<18;i++){ const x=8+rr()*112,y=8+rr()*112; g.beginPath(); g.arc(x,y,5,Math.PI*1.15,Math.PI*1.85); g.strokePath(); }
     g.generateTexture('waves',128,128); g.clear(); g.fillStyle(0xffffff); g.fillCircle(4,4,4); g.generateTexture('seadot',8,8); g.destroy();
-    this.water=this.add.rectangle(0,0,VW+2,VH+2,0x2e7ea6).setOrigin(0);
-    this.waves=this.add.tileSprite(0,0,VW+2,VH+2,'waves').setOrigin(0).setAlpha(0.3);
+    this.water=this.add.rectangle(0,0,VW+2,242,0x2e7ea6).setOrigin(0);
+    this.waves=this.add.tileSprite(0,0,VW+2,242,'waves').setOrigin(0).setAlpha(0.3);
     this.isles=ISLES.map(is=>{ const c=this.add.container(is.x,is.y); const land=this.add.graphics(), mark=this.add.graphics(), glow=this.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
       c.add([land,glow,mark]); return {is,c,land,mark,glow}; });
     this.flotG=this.add.container(0,0);
@@ -2708,8 +2717,8 @@ class Sea extends Phaser.Scene{
     this.hud=this.add.container(0,0);
     this.title=tx('The Ember Sea',14).setPosition(8,6);
     this.hint=this.add.text(8,24,'Tap the sea to steer',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'10px',color:'#cfe6f0',stroke:'#0b0d19',strokeThickness:2,resolution:SEA_Z});
-    this.place=tx('',12,'#f6cf6a').setOrigin(0.5,0).setPosition(VW/2,VH-22);
-    this.mapG=this.add.graphics(); this.rose=this.add.container(VW-22,VH-22); this.roseArrow=this.add.graphics();
+    this.place=tx('',12,'#f6cf6a').setOrigin(0.5,0).setPosition(VW/2,218);
+    this.mapG=this.add.graphics(); this.rose=this.add.container(VW-22,218); this.roseArrow=this.add.graphics();
     const roseBg=this.add.graphics(); roseBg.fillStyle(0x0b0d19,0.5); roseBg.fillCircle(0,0,15); roseBg.lineStyle(1,0xc9bea2,0.5); roseBg.strokeCircle(0,0,15);
     this.rose.add([roseBg,this.roseArrow,this.add.text(0,-24,'WIND',{fontFamily:'"Alegreya Sans", sans-serif',fontSize:'8px',color:'#c9bea2',resolution:SEA_Z}).setOrigin(0.5,0)]);
     this.roseArrow.fillStyle(0xe8eef4); this.roseArrow.fillTriangle(11,0,-5,-5,-5,5); this.roseArrow.fillRect(-11,-1,8,2);
@@ -2718,6 +2727,7 @@ class Sea extends Phaser.Scene{
     this.setShown(false);
   }
   setShown(v){ this.shown=v; this.scene.setVisible(v); this.input.enabled=v; if(v){ this.key=''; this.last=0; } }
+  layout(vh){ this.vh=vh; this.water.setSize(VW+2,vh+2); this.waves.setSize(VW+2,vh+2); this.place.setY(vh-22); this.rose.setY(vh-22); }
   aim(p){ const sh=S.sea; if(!sh.yard||sh.x==null||S.siege) return; this.target=Math.atan2(p.worldY-sh.y,p.worldX-sh.x); if(sh.anchored){ sh.anchored=false; refresh(); } S.sea.steered=1; }
   L(c){ return mixColor(mixColor(c,0x0e1120,0.6),c,this.light); }
   drawIsle(o){
@@ -2906,6 +2916,7 @@ class Sea extends Phaser.Scene{
       return true; });
     if(!S.sea.yard) return;
     // camera and hud
+    const VH=this.cameras.main.height/SEA_Z; if(VH!==this.vh) this.layout(VH);
     const cx=Math.max(VW/2,Math.min(SEA_W-VW/2,sh.x)), cy=Math.max(VH/2,Math.min(SEA_H-VH/2,sh.y)); this.cameras.main.centerOn(cx,cy);
     const L0=cx-VW/2, T0=cy-VH/2;
     this.water.setPosition(L0-1,T0-1).setFillStyle(mixColor(0x0f2a44,0x2e7ea6,d.light));
@@ -2921,7 +2932,7 @@ class Sea extends Phaser.Scene{
     this.hint.setVisible(!sh.steered||sh.anchored).setText(sh.anchored?'At anchor. Tap the sea to set sail':'Tap the sea to steer');
     this.place.setText(near?`${near.name}${near.culture?' · '+near.culture:''}`:this.inHarbor?'Emberkeep harbor':'');
     // chart: discovered islands, the harbor and the ship
-    const m=this.mapG, mw=84, mh=mw*SEA_H/SEA_W, mx=8, my=VH-mh-8, sc=mw/SEA_W; m.clear();
+    const m=this.mapG, mw=84, mh=mw*SEA_H/SEA_W, mx=8, my=this.vh-mh-8, sc=mw/SEA_W; m.clear();
     m.fillStyle(0x0b0d19,0.55); m.fillRect(mx,my,mw,mh); m.lineStyle(1,0xc9bea2,0.5); m.strokeRect(mx,my,mw,mh);
     ISLES.forEach(is=>{ if(is.id!=='home'&&!isleState(is.id).found) return; m.fillStyle(is.kind==='castle'?0xe3ad45:is.id==='home'?0xe8744a:0x7cc97a); m.fillCircle(mx+is.x*sc,my+is.y*sc,Math.max(1.5,is.r*sc*0.8)); });
     m.fillStyle(0xd9443a); this.foes.forEach(e=>m.fillCircle(mx+e.x*sc,my+e.y*sc,1.2));
