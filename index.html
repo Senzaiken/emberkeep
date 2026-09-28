@@ -819,15 +819,16 @@ const renownFree=()=>S.renown-renownSpent();
 const TRANSMUTE={ember:{iron:3,copper:2},frost:{stone:6,tin:2},verdant:{wood:10},storm:{wood:2,stone:2,copper:2,tin:2,iron:2}};
 // Enchanting: endless levels on gear and ship, paid in the element's crystals
 const ENCH={
-  weapon:{label:'Weapon',el:'ember',fx:l=>`+${l*10}% tap gold`,need:()=>true},
-  armor:{label:'Armor',el:'frost',fx:l=>`−${Math.round((1-Math.pow(0.97,l))*100)}% foe damage`,need:()=>true},
-  pick:{label:'Pickaxe',el:'verdant',fx:l=>`+${l*8}% stone and ore`,need:()=>true},
-  hull:{label:'Ship’s hull',el:'verdant',fx:l=>`+${l*6}% hull`,need:()=>S.sea.yard>0},
-  arms:{label:'Ship’s ballistae',el:'storm',fx:l=>`+${l*6}% bolt damage`,need:()=>S.sea.yard>0},
+  weapon:{label:'Weapon',el:'ember',fx:l=>`+${l*10}% tap gold`,need:()=>true,top:()=>S.gear.weapon>=4,req:'Iron Longsword'},
+  armor:{label:'Armor',el:'frost',fx:l=>`−${Math.round((1-Math.pow(0.97,l))*100)}% foe damage`,need:()=>true,top:()=>S.gear.armor>=4,req:'Iron Plate'},
+  pick:{label:'Pickaxe',el:'verdant',fx:l=>`+${l*8}% stone and ore`,need:()=>true,top:()=>S.gear.pick>=4,req:'Iron Pick'},
+  hull:{label:'Ship’s hull',el:'verdant',fx:l=>`+${l*6}% hull`,need:()=>S.sea.yard>0,top:()=>S.sea.hull>=3,req:'Dwarf-riveted Hull'},
+  arms:{label:'Ship’s ballistae',el:'storm',fx:l=>`+${l*6}% bolt damage`,need:()=>S.sea.yard>0,top:()=>S.sea.arms>=3,req:'Ember Ballistae'},
 };
-const enchCost=l=>Math.ceil(3*Math.pow(1.35,l));
+// Only the finest piece of each kind can hold an enchantment
+const enchCost=l=>Math.ceil(10*Math.pow(1.35,l));
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928013844';
+const BUILD='20260928014641';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -895,7 +896,7 @@ const transOut=(el,n)=>Object.entries(TRANSMUTE[el]).map(([k,v])=>[k,Math.floor(
 function transmute(el,n){ n=n==='all'?S.cry[el]:Math.min(+n,S.cry[el]); if(!(n>0)||!S.story.met) return;
   S.cry[el]-=n; const got=transOut(el,n); got.forEach(([k,v])=>addRes(k,v));
   toast(`Arthrex transmutes ${n} ${NAMES[el]} crystal${n>1?'s':''} into ${got.map(([k,v])=>`${fmt(v)} ${NAMES[k]}`).join(', ')}.`); refresh(); }
-function enchant(k){ const e=ENCH[k], c=enchCost(S.ench[k]); if(!e||!e.need()||S.cry[e.el]<c) return;
+function enchant(k){ const e=ENCH[k], c=enchCost(S.ench[k]); if(!e||!e.need()||!e.top()||S.cry[e.el]<c) return;
   S.cry[e.el]-=c; S.ench[k]++; toast(`${e.label} enchanted to level ${S.ench[k]}: ${e.fx(S.ench[k])}.`); refresh(); }
 // Head starts: raise the keep to the tree's levels (at the start of each life, and when a level is bought)
 function applyTree(fresh){
@@ -2003,8 +2004,9 @@ function refresh(){
   });
   badge('forgeBadge',forgeable);
   Object.entries(ENCH).forEach(([k,e])=>{ const row=$('e-'+k), ok=e.need(); row.hidden=!ok; if(!ok) return; const l=S.ench[k], c=enchCost(l);
-    $('el-'+k).textContent=l?`Level ${l}`:'Unenchanted'; $('ef-'+k).textContent=`${l?e.fx(l)+' now \u00B7 ':''}next: ${e.fx(l+1)}`;
-    setHTML($('ec-'+k),costHTML({[e.el]:c})); $('eb-'+k).disabled=S.cry[e.el]<c; $('en-'+k).textContent=`Level ${l+1}`; });
+    const top=e.top(); $('el-'+k).textContent=l?`Level ${l}`:top?'Unenchanted':'Locked';
+    $('ef-'+k).textContent=top?`${l?e.fx(l)+' now \u00B7 ':''}next: ${e.fx(l+1)}`:`Only the finest can hold an enchantment: needs the ${e.req}.${l?` (${e.fx(l)} still applies.)`:''}`;
+    setHTML($('ec-'+k),top?costHTML({[e.el]:c}):''); $('eb-'+k).disabled=!top||S.cry[e.el]<c; $('en-'+k).textContent=top?`Level ${l+1}`:'Locked'; });
   $('transBox').hidden=!S.story.met;
   if(S.story.met){ $('transRate').textContent=`×${transRate().toFixed(2)}`;
     CRYS.forEach(el=>{ const n=S.cry[el]; $('tc-'+el).textContent=`${fmt(n)} held`;

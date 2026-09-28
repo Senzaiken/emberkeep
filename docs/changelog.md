@@ -4,6 +4,8 @@ Newest first. Dates are US Eastern.
 
 ## 2026-09-27
 
+- **Enchanting is endgame only.** Only an item at its top tier can be enchanted (Iron Longsword, Iron Plate, Iron Pick, Dwarf-riveted Hull, Ember Ballistae), and levels cost more: 10 crystals for the first, rising 35% each. Existing enchantments still apply.
+
 - **Taller sea view.** A **Taller** button on the Sea view makes the canvas 2.5 times taller, easier to steer with a thumb and showing more water. **Shorter** puts it back. The choice is remembered, and the keep and journey views keep their usual size.
 
 - **Study spells in the spellbook.** Learning new spells moved from the Magic tab's grimoire into the spellbook, under **Study new spells**. The book's violet dot also lights when a spell can be learned. In the Magic tab, Transmutation now comes after the Crystal Mine.

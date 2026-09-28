@@ -57,14 +57,16 @@ Boosts ore and stone from expeditions, and speeds up the [Crystal Mine](magic.md
 
 ## Enchantments
 
-Below the anvil, the Forge tab has **Enchantments**: Brom forges, Arthrex binds. Each item can be enchanted without limit, paid in one element's crystals. Level *n* → *n+1* costs `ceil(3 × 1.35^n)` crystals: 3, 5, 6, 8, 10, 14, … about 60 at level 10 and 270 at level 15.
+Below the anvil, the Forge tab has **Enchantments**: Brom forges, Arthrex binds. Each item can be enchanted without limit, paid in one element's crystals. Level *n* → *n+1* costs `ceil(10 × 1.35^n)` crystals: 10, 14, 19, 25, 34, 45, … about 200 at level 10 and 900 at level 15.
+
+**Only the finest piece can be enchanted:** the Iron Longsword, Iron Plate and Iron Pick, and the ship's Dwarf-riveted Hull and Ember Ballistae. Until then the row shows as Locked with what it needs. Levels bought before this rule keep working, but can't be raised until the item is at its top tier.
 
 | Item | Crystal | Per level |
 |---|---|---|
 | Weapon | Ember | +10% tap gold |
 | Armor | Frost | Foe damage ×0.97 (so −26% at level 10) |
 | Pickaxe | Verdant | +8% stone and ore from expeditions |
-| Ship's hull | Verdant | +6% max hull (shown once the shipyard is built) |
-| Ship's ballistae | Storm | +6% bolt damage (shown once the shipyard is built) |
+| Ship's hull | Verdant | +6% max hull (shown once the shipyard is built; needs the Dwarf-riveted Hull) |
+| Ship's ballistae | Storm | +6% bolt damage (shown once the shipyard is built; needs Ember Ballistae) |
 
 Enchantments belong to the item, not the tier, so they carry over when Brom or Maren upgrades it. They reset on ascension, like the gear itself.
