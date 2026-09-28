@@ -828,7 +828,7 @@ const ENCH={
 // Only the finest piece of each kind can hold an enchantment
 const enchCost=l=>Math.ceil(10*Math.pow(1.35,l));
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928014641';
+const BUILD='20260928015021';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
@@ -1584,12 +1584,17 @@ function shipBeaten(type,guard){
   if(guard){ const left=Math.max(0,guardsLeft(guard)-1); S.sea.fleets[guard]=left;
     if(!left){ const is=ISLE[guard]; chronicle(`${is.name}’s fleet is broken.`); toast(`The last of ${is.name}’s fleet is gone, and its harbor chain falls. The castle can be besieged.`); } }
 }
+// Boarding a crippled ship. With the hero leading it's worth more; without them the crew goes over alone.
+const CRIPPLED=0.35, BOARD_RANGE=75;
+const boardCost=e=>Math.round(8+6*e.T.tier);
+const heroCanBoard=e=>!S.exp&&S.hp>boardCost(e);
 function boardFoe(e){
-  if(!e||e.dead) return; if(S.exp){ toast('Your hero is away on an expedition. There is no one to lead the boarding party.'); return; }
-  const cost=Math.round(8+6*e.T.tier); if(S.hp<=cost){ toast(`Your hero is too hurt to lead a boarding party (needs more than ${cost} health).`); return; }
-  S.hp-=cost; const got=[]; for(const [k,n] of shipLoot(e.T.tier,1.5)){ const t=toCargo(k,n); if(t) got.push(goodsText(k,t)); }
+  if(!e||e.dead) return; const hero=heroCanBoard(e), cost=boardCost(e);
+  if(hero) S.hp-=cost;
+  const got=[]; for(const [k,n] of shipLoot(e.T.tier,hero?1.5:1)){ const t=toCargo(k,n); if(t) got.push(goodsText(k,t)); }
   sea&&sea.removeFoe(e,true); shipBeaten(e.type,e.guard);
-  toast(`Your hero leads the boarders over the rail and takes the ${e.T.name} (−${cost} health): ${got.join(', ')||'the hold is full'}.`); refresh();
+  toast(hero?`Your hero leads the boarders over the rail and takes the ${e.T.name} (−${cost} health): ${got.join(', ')||'the hold is full'}.`
+            :`${S.exp?'With your hero away':'With your hero too hurt to fight'}, the crew boards the ${e.T.name} alone: ${got.join(', ')||'the hold is full'}.`); refresh();
 }
 // Sieges: once a castle's fleet is broken, take it by storm, by night, or by blockade
 const siegePower=()=>S.gear.weapon+S.gear.armor+S.sea.arms;
@@ -1805,7 +1810,8 @@ function renderHarbor(){
       if(foe){ const fd=Math.hypot(foe.x-sh.x,foe.y-sh.y), side=sea.sideFor(foe), rl=sea.rl[side<0?0:1];
         $('sbWhere').textContent=foe.T.name;
         $('sbInfo').textContent=`Their hull ${Math.max(0,Math.ceil(foe.hp))}/${foe.max} \u00B7 yours ${Math.ceil(shipHP())}/${maxHull()} \u00B7 ${Math.round(fd)} yards`;
-        if(foe.hp<=foe.max*0.3&&fd<55){ act='board'; small='She’s crippled'; big='Board her!'; }
+        if(foe.hp<=foe.max*CRIPPLED&&fd<BOARD_RANGE){ act='board'; small=heroCanBoard(foe)?`Hero leads \u00B7 −${boardCost(foe)} health`:`Crew only \u00B7 ${S.exp?'hero away':'hero hurt'}`; big='Board her!'; }
+        else if(foe.hp<=foe.max*CRIPPLED&&side!=null&&rl<=0){ act='fire'; small=`Crippled \u00B7 close in to board`; big='Fire!'; }
         else { act='fire'; small=`Fire to ${side<0?'port':'starboard'}`; big=rl>0?`Reloading ${rl.toFixed(1)}s`:'Fire!'; dis=rl>0; } }
       else if(near&&near.kind==='cache'){ const st=isleState(near.id); act='dig'; small='Go ashore'; if(cacheReady(near.id)) big='Dig for treasure'; else { big=`Refills in ${clock(st.next-now())}`; dis=true; } }
       else if(near&&near.kind==='castle'&&claimed(near.id)){ act='none'; small='Your port'; big='Cargo unloads here'; dis=true; }
@@ -2096,7 +2102,7 @@ function wireUI(){
   $('realmSeg').addEventListener('click',e=>{ const b=e.target.closest('button[data-realm]'); if(!b) return; S.realm=b.dataset.realm; setView('keep'); refresh(); });
   $('sbAct').addEventListener('click',()=>{ const a=$('sbAct').dataset.act, sh=S.sea;
     if(a==='siege'&&sea&&sea.near) openSiege(sea.near.id); else if(a==='lift') liftBlockade();
-    else if(a==='fire'&&sea) sea.fire(); else if(a==='board'&&sea){ const f=sea.foeNear(60); if(f) boardFoe(f); }
+    else if(a==='fire'&&sea) sea.fire(); else if(a==='board'&&sea){ const f=sea.foeNear(BOARD_RANGE+10); if(f) boardFoe(f); }
     else if(a==='dig'&&sea&&sea.near) digCache(sea.near.id); else if(a==='anchor'){ sh.anchored=true; } else if(a==='weigh'){ sh.anchored=false; } refresh(); });
   $('retreatSeg').innerHTML=RETREATS.map((r,i)=>`<button data-i="${i}">${r.label}</button>`).join('');
   $('retreatSeg').addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(!b) return; S.retreat=+b.dataset.i; refresh(); });
@@ -2849,7 +2855,7 @@ class Sea extends Phaser.Scene{
       want=Math.atan2(e.pt.y-e.y,e.pt.x-e.x); }
     for(const is of ISLES){ if(isleDist(is,e.x+Math.cos(e.a)*45,e.y+Math.sin(e.a)*45)<1.12){ const away=Math.atan2(e.y-is.y,e.x-is.x); want=away+(angDiff(e.a,away)>0?1.1:-1.1); break; } }
     const df=angDiff(want,e.a), tr=1.1*dt; e.a+=Math.max(-tr,Math.min(tr,df));
-    const vmax=SAIL_BASE*T.speed*Math.max(0.45,windFactor(angDiff(e.a,w)))*(e.mode==='flee'?1.15:e.mode==='patrol'?0.55:1);
+    const vmax=SAIL_BASE*T.speed*Math.max(0.45,windFactor(angDiff(e.a,w)))*(e.mode==='flee'?1.15:e.mode==='patrol'?0.55:1)*(e.hp<=e.max*CRIPPLED?0.45:1);   // crippled ships limp
     e.v+=(vmax-e.v)*Math.min(1,dt*0.8);
     let nx=e.x+Math.cos(e.a)*e.v*dt, ny=e.y+Math.sin(e.a)*e.v*dt;
     for(const is of ISLES){ if(isleDist(is,nx,ny)<1.04){ const an=Math.atan2((ny-is.y)/ISQ,nx-is.x), cr=is.r*isleK(is,an)*1.04; nx=is.x+Math.cos(an)*cr; ny=is.y+Math.sin(an)*cr*ISQ; } }
@@ -2857,7 +2863,7 @@ class Sea extends Phaser.Scene{
     e.rl[0]-=dt; e.rl[1]-=dt;
     if(e.mode==='fight'&&d<T.range) [[0,-1],[1,1]].forEach(([i,sd])=>{ if(e.rl[i]<=0&&Math.abs(angDiff(b,e.a+sd*Math.PI/2))<0.32){ this.volley(e,sd,T.n,T.dmg,T.range,'foe'); e.rl[i]=T.reload*(0.9+Math.random()*0.3); } });
     e.c.setPosition(e.x,e.y+Math.sin(time/600+e.hx)*0.6).setRotation(e.a); e.s.rotation=Math.max(-1.2,Math.min(1.2,angDiff(w,e.a)));
-    e.bar.clear(); if(e.hurt||e.mode==='fight'){ e.bar.fillStyle(0x1a1016,0.8); e.bar.fillRect(e.x-16,e.y-30,32,4); e.bar.fillStyle(e.hp<e.max*0.3?0x9ff0a0:0xd0584a); e.bar.fillRect(e.x-16,e.y-30,32*Math.max(0,e.hp)/e.max,4); }
+    e.bar.clear(); if(e.hurt||e.mode==='fight'){ e.bar.fillStyle(0x1a1016,0.8); e.bar.fillRect(e.x-16,e.y-30,32,4); e.bar.fillStyle(e.hp<=e.max*CRIPPLED?0x9ff0a0:0xd0584a); e.bar.fillRect(e.x-16,e.y-30,32*Math.max(0,e.hp)/e.max,4); }
     if(!e.guard&&d>950) this.removeFoe(e,true);
   }
   addFlot(x,y,loot){ const o=this.add.graphics(); o.fillStyle(this.L(loot?0x5a3a22:0x7a5232)); o.fillEllipse(0,0,loot?12:9,loot?7:6); o.lineStyle(1,this.L(0x3a2616)); o.lineBetween(-2,-3,-2,3); o.lineBetween(2,-3,2,3);

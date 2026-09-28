@@ -90,14 +90,14 @@ Ships at sea fight with **broadsides**: ballista bolts fire sideways from the ra
 - When an enemy ship comes within about 330 yards, the sea bar shows its name, both hulls and the distance, and its button becomes **Fire!**. It fires from whichever side (port or starboard) faces the nearest enemy, and each side reloads separately.
 - Bolts fly about 190 yards in a slightly spread line. Anything they pass through takes the damage; they splash into the sea or hit land otherwise. So aim with the whole ship: turn broadside, then fire.
 - Enemy ships do the same: they close in at an angle, then turn broadside to fire, and circle you to keep their side on you. Wind affects them too.
-- Their hull shows as a bar over the ship, which turns green when they're crippled (30% or less).
+- Their hull shows as a bar over the ship, which turns green when they're **crippled** (35% or less). Crippled ships limp along at under half speed, so you can catch them.
 
 ### Taking a ship
 
 | How | What you get |
 |---|---|
 | **Sink her** | She breaks up and leaves three salvage barrels (gold dot on top) with 60% of her loot. Sail through them to pick it up. |
-| **Board her!** | When she's crippled and within about 55 yards, the button becomes **Board her!**. Your hero leads the boarders (costs 8 + 6 × tier health, and the hero must be home, not on an expedition). You take 150% of her loot straight into the hold. |
+| **Board her!** | When she's crippled and within about 75 yards, the button becomes **Board her!**. If your hero is home with more than 8 + 6 × tier health, they lead the boarders for that much health and you take **150%** of her loot. If the hero is away on an expedition (or too hurt), the crew boards alone: no health cost, **100%** of her loot. The button's small line says which it will be. Loot goes straight into the hold. |
 
 Loot per ship tier: gold (`max(100 × tier, (gold/sec × 30 + gold/tap × 10) × tier)`), plus tier 1: wood and stone; tier 2: copper, iron, wood; tier 3: iron, tin, 1 crystal; tier 4: iron, tin, 2–4 crystals.
 
