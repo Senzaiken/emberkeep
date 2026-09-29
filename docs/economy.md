@@ -64,6 +64,7 @@ These unlock in order, each one once the previous is bought and the reign has ea
 
 - Renown earned on ascending: `floor(cbrt(reignGold / 10,000,000))`. The first point needs 10M gold in one reign; 10 points need 10B, 46 need 1T, 100 need 10T.
 - Each point of Renown ever earned adds **+2%** to all gold (taps and holdings), forever.
+- Two more sources, from claimed castles: **Tribute of the realms** (bonus Renown at ascension from the realm treasures you hold) and **Pearls at court** (buy Renown with pearls). See [The Sea](sea.md#what-realm-treasures-are-for).
 - Renown is also **spent** in the Legacy tree (below). Spending never lowers the +2% bonus: the bonus counts all Renown earned, spent or not.
 - **Ascending is a full reset:** gold, holdings, upgrades, hero equipment (and anything Brom is forging), learned spells, relics, materials, crystals, the Crystal Mine, any running expedition, active spells and Arthrex's current errand.
 - **Ascending keeps:** Renown (and its gold bonus), the [Adventurer's Log](log.md) (and the life number goes up by one), lifetime stats, story progress (the tutorial isn't replayed, and Arthrex and Brom remember you), discovered resources, and starred spells (they show again once relearned). The hero starts at full health.

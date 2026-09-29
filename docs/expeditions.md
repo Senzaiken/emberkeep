@@ -26,7 +26,7 @@ The Explore tab has a **preparations** card above the regions:
 | Setting | Options | Effect |
 |---|---|---|
 | **Turn back at** | 50% · 30% (default) · 15% · Never | When health drops to this share of max after a hit, the hero turns for home by themselves. |
-| **Verdant draughts** | 0 up to **2 + armor tier** (max 6), limited by the Verdant crystals you hold | Taken from your crystals when the hero departs. Below **40% health** the hero drinks one and heals 50% of max. Unused draughts come home on a safe return, and are lost on defeat. |
+| **Verdant draughts** | 0 up to **2 + armor tier** (max 6), plus 2 per **Moonsilk satchel** (up to 3 satchels, sewn from Sylvanreach's moonsilk in the same card), limited by the Verdant crystals you hold | Taken from your crystals when the hero departs. Below **40% health** the hero drinks one and heals 50% of max. Unused draughts come home on a safe return, and are lost on defeat. |
 
 Both settings are remembered. Draughts are checked before the turn-back point, so a packed hero drinks first and turns back only once the draughts run out.
 

@@ -37,7 +37,7 @@ Top-level fields of the saved object (see `fresh()` in `index.html`):
 | `retreat`, `pack` | Turn-back setting (index into 50% / 30% / 15% / Never, default 1) and the number of Verdant draughts to pack. Kept through ascension. |
 | `claimed`, `realm`, `siege` | Claimed castles `{id: {t, how}}`, the realm shown in the Build tab and Keep view (`home` or a castle id), and a blockade in progress `{id, start, end}` or `null`. Reset on ascension. Realm holdings are ordinary entries in `owned`/`up` (ids like `rt_rum`, `kb_forge`). |
 | `renown`, `tree`, `renownV` | Renown earned (all lives), Legacy tree levels `{node: level}`, and the Renown scale version (2; older saves are converted on load). |
-| `works`, `worksAcc`, `charters` | Per claimed castle: works level (0–3), production progress, and royal charters granted (0–3). Realm treasures are stored in `mat` (`pearl`, `mithril`, `frostglass`, `moonsilk`). Reset on ascension. |
+| `works`, `worksAcc`, `charters`, `prosper`, `satchel`, `court` | Per claimed castle: works level (0–3), production progress, royal charters granted (0–3) and Prosperity level; Moonsilk satchels sewn (0–3); pearls presented at court this life. Realm treasures are stored in `mat` (`pearl`, `mithril`, `frostglass`, `moonsilk`). Reset on ascension. |
 | `ench` | Enchantment levels `{weapon, armor, pick, hull, arms}`. Reset on ascension. |
 | `wounded` | `true` after a defeat, until the hero is back to full health (halves resting). |
 | `hp` | Hero health |

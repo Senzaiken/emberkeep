@@ -2,6 +2,10 @@
 
 Newest first. Dates are US Eastern.
 
+## 2026-09-29
+
+- **Realm treasures always have a use.** After the three charters, each castle has endless **Prosperity** levels (+15% to its holdings each). At ascension, treasures you hold become **Tribute** for bonus Renown (cube root of treasures ÷ 50). Each treasure also feeds a system of its own: **pearls** buy Renown at court, **mithril** forges tier-5 Mithril Blade/Mail/Pick, **frostglass** builds tier-4 Frostglass Rigging and Frostglass-sheathed Hull, and **moonsilk** sews satchels that carry 2 more draughts each. New log entries and a Prosperity achievement. See [The Sea](sea.md#what-realm-treasures-are-for).
+
 ## 2026-09-27
 
 - **Log catches up.** New Adventurer's Log sections: **Shipwright's work** (all 12 ship refits) and **Works & charters** (4 works, 12 royal charters). New achievements: Castles claimed (up to *Lord of the Ember Sea*), Realm treasures, Transmutation and Enchanting. Existing saves are credited for what they already have. The log now has 119 collectibles and 109 achievements. See [Adventurer's Log](log.md).

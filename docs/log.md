@@ -18,16 +18,16 @@ Undiscovered entries are blacked-out silhouettes labelled **???**. Tapping one s
 | Regions | 5 | Your hero first sets out for it |
 | Bestiary | 8 | You defeat that kind of foe |
 | Road events | 7 | You first meet the event on the road |
-| Arms & armor | 12 | Brom finishes forging that piece |
+| Arms & armor | 15 | Brom finishes forging that piece |
 | Spells | 5 | You learn the spell |
 | Crystal Mine | 4 | The gallery is dug |
 | Seas & isles | 10 | You sail within sight of the island or castle |
 | Your realms | 4 | You claim the castle |
 | Ships of the sea | 5 | You sink or board that kind of ship |
-| Shipwright's work | 12 | Maren finishes that sails, hold, hull or arms refit |
-| Works & charters | 16 | You open a castle's works (4), or grant one of its royal charters (12) |
+| Shipwright's work | 14 | Maren finishes that sails, hold, hull or arms refit |
+| Works & charters | 19 | You open a castle's works (4), grant one of its royal charters (12), or sew a Moonsilk satchel (3) |
 
-119 collectibles in all.
+127 collectibles in all.
 
 ## Achievements
 
@@ -49,9 +49,10 @@ Medals in five tiers: bronze, silver, gold, frost and mythic. Locked medals are 
 | Realm treasures gathered (all lives) | 10 / 100 / 1K / 10K / 100K |
 | Crystals transmuted | 10 / 100 / 1K / 5K / 25K |
 | Enchanting (highest level on any item) | 1 / 5 / 10 / 15 / 20 |
+| Prosperity (highest level in any realm) | 1 / 5 / 10 / 20 / 40 |
 | Dynasties (reach life N) | 2 / 5 / 10 / 25 / 100 |
 
-109 achievements in all. Saves from before an entry existed are backfilled on load with what they already have (for example your shipyard, refits, claimed castles, works and charters).
+114 achievements in all. Saves from before an entry existed are backfilled on load with what they already have (for example your shipyard, refits, claimed castles, works and charters).
 
 Achievements are checked about once a second.
 

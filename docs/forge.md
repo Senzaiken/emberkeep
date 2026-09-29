@@ -30,6 +30,7 @@ Multiplies tap gold and boosts wood from expeditions.
 | 2 | Copper Blade | 1,000 gold, 10 wood, 20 copper | ×4 | ×1.5 |
 | 3 | Bronze Sword | 20K gold, 10 wood, 25 copper, 15 tin | ×8 | ×1.75 |
 | 4 | Iron Longsword | 400K gold, 20 wood, 40 iron | ×16 | ×2 |
+| 5 | Mithril Blade | 50M gold, 200 iron, 150 **mithril** | ×40 | ×2.25 |
 
 ## Armor
 
@@ -42,6 +43,7 @@ Sets how dangerous a region the hero can enter, and shortens trips.
 | 2 | Copper Scale | 800 gold, 30 copper, 5 wood | 2 | 84% |
 | 3 | Bronze Mail | 15K gold, 30 copper, 20 tin | 3 | 76% |
 | 4 | Iron Plate | 300K gold, 60 iron, 20 stone | 4 | 68% |
+| 5 | Mithril Mail | 40M gold, 250 iron, 200 **mithril** | 5 | 60% |
 
 ## Pickaxe
 
@@ -54,12 +56,15 @@ Boosts ore and stone from expeditions, and speeds up the [Crystal Mine](magic.md
 | 2 | Copper Pick | 600 gold, 10 wood, 20 copper | ×1.5 | ×2.25 |
 | 3 | Bronze Pick | 12K gold, 10 wood, 20 copper, 10 tin | ×2 | ×3.5 |
 | 4 | Iron Pick | 250K gold, 10 wood, 30 iron | ×2.5 | ×5 |
+| 5 | Mithril Pick | 30M gold, 150 iron, 120 **mithril** | ×3.5 | ×7.5 |
+
+Tier 5 needs **mithril** from Karak Brine's Mithril Deeps (see [The Sea](sea.md#what-realm-treasures-are-for)). Forging it takes 15 minutes.
 
 ## Enchantments
 
 Below the anvil, the Forge tab has **Enchantments**: Brom forges, Arthrex binds. Each item can be enchanted without limit, paid in one element's crystals. Level *n* → *n+1* costs `ceil(10 × 1.35^n)` crystals: 10, 14, 19, 25, 34, 45, … about 200 at level 10 and 900 at level 15.
 
-**Only the finest piece can be enchanted:** the Iron Longsword, Iron Plate and Iron Pick, and the ship's Dwarf-riveted Hull and Ember Ballistae. Until then the row shows as Locked with what it needs. Levels bought before this rule keep working, but can't be raised until the item is at its top tier.
+**Only the finest pieces can be enchanted:** iron or mithril gear (tier 4 or 5), and the ship's Dwarf-riveted Hull and Ember Ballistae. Until then the row shows as Locked with what it needs. Levels bought before this rule keep working, but can't be raised until the item is at its top tier.
 
 | Item | Crystal | Per level |
 |---|---|---|

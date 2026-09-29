@@ -18,6 +18,7 @@ Maren also refits the ship, one job at a time:
 | | 1 | Linen Sails | 30,000 gold, 80 wood, 40 copper | 1m 30s | Speed ×1.15 |
 | | 2 | Twin Masts | 300K gold, 150 wood, 40 tin | 4m | Speed ×1.3 (and a second sail) |
 | | 3 | Storm-woven Sails | 3M gold, 300 wood, 100 copper, 5 Storm | 10m | Speed ×1.5 |
+| | 4 | Frostglass Rigging | 30M gold, 500 wood, 150 **frostglass** | 15m | Speed ×1.75 |
 | Hold | 0 | Small Hold | – | – | 150 goods |
 | | 1 | Deep Hold | 25,000 gold, 200 wood, 50 stone | 1m 30s | 300 goods |
 | | 2 | Merchant Hold | 250K gold, 300 wood, 40 iron | 4m | 600 goods |
@@ -26,6 +27,7 @@ Maren also refits the ship, one job at a time:
 | | 1 | Oak-ribbed Hull | 40,000 gold, 150 wood, 20 iron | 1m 30s | 160 hull |
 | | 2 | Iron-banded Hull | 400K gold, 250 wood, 60 iron | 4m | 240 hull |
 | | 3 | Dwarf-riveted Hull | 4M gold, 150 iron, 60 tin | 10m | 340 hull |
+| | 4 | Frostglass-sheathed Hull | 40M gold, 300 iron, 200 **frostglass** | 15m | 480 hull |
 | Arms | 0 | Crossbow Rail | – | – | 3 bolts a side, 5 damage, reload 3.5s |
 | | 1 | Deck Ballistae | 35,000 gold, 100 wood, 25 iron | 1m 30s | 4 bolts, 7 damage, reload 3s |
 | | 2 | Twin Ballista Batteries | 350K gold, 150 wood, 60 iron, 40 copper | 4m | 5 bolts, 9 damage, reload 2.6s |
@@ -172,6 +174,19 @@ Charters are granted in order for **25, 100 and 350** of the realm's treasure:
 | Sylvanreach | The Elder Council: its holdings ×2 | Moonsilk Satchels: expeditions find twice as many crystals | Starsong: its holdings ×3 more, +10% all gold |
 
 With all three charters a realm's holdings produce ×6. Works, treasures and charters reset on ascension with the castle.
+
+### What realm treasures are for
+
+| Use | Where | How it works |
+|---|---|---|
+| **Royal charters** | Build tab, in that realm | 25 / 100 / 350 of the realm's treasure, in order |
+| **Prosperity** | Build tab, once all three charters are granted | Endless levels: each adds **+15%** to that realm's holdings. Level *n* → *n+1* costs `ceil(200 × 1.4^n)` of its treasure (200, 280, 392, … about 5,800 at level 10). |
+| **Tribute of the realms** | Legacy tab | When you ascend, all treasures you hold are offered to the crown for bonus Renown: `floor(cbrt(treasures ÷ 50))` (50 → 1, 400 → 2, 1,350 → 3, 3,200 → 4, 50,000 → 10). It's added to the Renown from gold. Treasures spent before ascending don't count, so there's a choice between spending and hoarding. |
+| **Pearls at court** (pearls) | Legacy tab | Present pearls for **+1 Renown right away**: 250, then ×1.5 each time (375, 563, …), resetting each life. |
+| **Mithril gear** (mithril) | Forge tab | Tier 5: Mithril Blade, Mithril Mail, Mithril Pick (see [Forge](forge.md)) |
+| **Frostglass refits** (frostglass) | Harbor tab | Tier 4: Frostglass Rigging (speed ×1.75) and Frostglass-sheathed Hull (480 hull) |
+| **Moonsilk satchels** (moonsilk) | Explore tab, preparations | Up to 3 satchels for 50 / 150 / 400 moonsilk, each letting the hero carry **2 more draughts** (up to 12) |
+
 
 Each realm's Keep view is its own island: the castle drawn large (corsair palisade and watchtower, dwarven sea-fort with a golden door, snow-roofed longhall, white elven spires), the sea behind, its own trees (palms, bare rock, snowy pines, forest), and a house for each holding you own, which grows as you build more. Once built, the works stand by the shore with a light for each level.
 

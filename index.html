@@ -414,6 +414,8 @@
       <div class="panel-head sub"><span class="label">Royal charters</span><span class="label num" id="chHeld"></span></div>
       <p class="r-desc" style="margin:0 0 6px">Granted in order, paid in this realm’s treasure. They last until you ascend.</p>
       <div id="chList" class="list"></div>
+      <div id="prospBox" hidden><div class="panel-head sub"><span class="label">Prosperity</span><span class="label num" id="prLv"></span></div>
+        <div class="row"><div><div class="r-desc" id="prTxt"></div><div id="prCost"></div></div><button class="act" id="prBtn" data-prosper="1"><small>Invest</small><span id="prNext"></span></button></div></div>
     </div>
   </section>
 
@@ -427,6 +429,7 @@
     <div class="prep" id="prep">
       <div class="prep-row"><span class="label">Turn back at</span><div class="seg" id="retreatSeg"></div></div>
       <div class="prep-row"><span class="label">Verdant draughts</span><div class="stepper"><button id="packDn" aria-label="Fewer">−</button><span class="num" id="packN">0</span><button id="packUp" aria-label="More">+</button></div></div>
+      <div class="prep-row" id="satRow" hidden><span class="label" id="satLbl">Moonsilk satchel</span><button class="act ghost" id="satBtn" style="min-width:0;padding:5px 10px"><span id="satTxt"></span></button></div>
       <p class="r-desc" id="prepNote"></p>
     </div>
     <div id="lList" class="list"></div>
@@ -474,6 +477,11 @@
       <div class="label">Renown on ascension<span id="pending">0</span></div>
     </div>
     <p class="r-desc" id="treeNote" style="margin:0 0 12px"></p>
+    <div id="tribBox" hidden class="list" style="margin-bottom:12px">
+      <div class="row"><div><div class="r-head"><span class="r-name">Tribute of the realms</span><span class="r-tag" id="tribTag"></span></div><div class="r-desc" id="tribTxt"></div></div></div>
+      <div class="row" id="courtRow" hidden><div><div class="r-head"><span class="r-name">Pearls at court</span><span class="r-tag" id="courtTag"></span></div><div class="r-desc">Present pearls to the crown for a point of Renown now. The price rises each time, and resets each life.</div></div>
+        <button class="act" id="courtBtn"><small>Present</small><span id="courtTxt"></span></button></div>
+    </div>
     <div class="asc-actions">
       <button class="act" id="ascendBtn"><small>Ascend</small><span id="ascendTxt">Found a new dynasty</span></button>
       <span class="r-desc" id="ascendHint"></span>
@@ -643,6 +651,7 @@ const GEAR={
     {name:'Copper Blade',cost:{gold:1000,wood:10,copper:20}},
     {name:'Bronze Sword',cost:{gold:20000,wood:10,copper:25,tin:15}},
     {name:'Iron Longsword',cost:{gold:4e5,wood:20,iron:40}},
+    {name:'Mithril Blade',cost:{gold:5e7,iron:200,mithril:150}},
   ]},
   armor:{label:'Armor',effect:t=>`Reaches danger ${t} · trips ${Math.round(t*8)}% faster`,tiers:[
     {name:'Travelling Cloak'},
@@ -650,6 +659,7 @@ const GEAR={
     {name:'Copper Scale',cost:{gold:800,copper:30,wood:5}},
     {name:'Bronze Mail',cost:{gold:15000,copper:30,tin:20}},
     {name:'Iron Plate',cost:{gold:3e5,iron:60,stone:20}},
+    {name:'Mithril Mail',cost:{gold:4e7,iron:250,mithril:200}},
   ]},
   pick:{label:'Pickaxe',effect:t=>`Ore ×${PICK_ORE[t]} · crystals ×${PICK_CRY[t]}`,tiers:[
     {name:'Bare Hands'},
@@ -657,10 +667,11 @@ const GEAR={
     {name:'Copper Pick',cost:{gold:600,wood:10,copper:20}},
     {name:'Bronze Pick',cost:{gold:12000,wood:10,copper:20,tin:10}},
     {name:'Iron Pick',cost:{gold:2.5e5,wood:10,iron:30}},
+    {name:'Mithril Pick',cost:{gold:3e7,iron:150,mithril:120}},
   ]},
 };
 const RES_HEX={wood:'#c89a6a',stone:'#c3c3cc',copper:'#e39a66',tin:'#dfe4ea',iron:'#a9b3c1',gold:'#f6cf6a'};
-const WEAPON_TAP=[1,2,4,8,16], PICK_ORE=[1,1.25,1.5,2,2.5], PICK_CRY=[1,1.5,2.25,3.5,5];
+const WEAPON_TAP=[1,2,4,8,16,40], PICK_ORE=[1,1.25,1.5,2,2.5,3.5], PICK_CRY=[1,1.5,2.25,3.5,5,7.5];
 
 const LOCS=[
   {id:'wood',cost:10,name:'Whisperwood',dur:20,danger:0,dir:-1,dmg:6,relic:0.06,foes:['boar','wolf'],desc:'Old oaks at the western edge of the realm.',loot:{wood:[4,7],stone:[0,2]}},
@@ -779,19 +790,19 @@ const YARD={cost:{gold:20000,wood:120,stone:60,iron:10},time:180};
 const SHIP={
   sails:{label:'Sails',effect:t=>`Speed ×${SAIL_SPEED[t]}`,tiers:[
     {name:'Patched Sail'},{name:'Linen Sails',cost:{gold:30000,wood:80,copper:40},time:90},
-    {name:'Twin Masts',cost:{gold:3e5,wood:150,tin:40},time:240},{name:'Storm-woven Sails',cost:{gold:3e6,wood:300,copper:100,storm:5},time:600}]},
+    {name:'Twin Masts',cost:{gold:3e5,wood:150,tin:40},time:240},{name:'Storm-woven Sails',cost:{gold:3e6,wood:300,copper:100,storm:5},time:600},{name:'Frostglass Rigging',cost:{gold:3e7,wood:500,frostglass:150},time:900}]},
   hold:{label:'Hold',effect:t=>`Carries ${HOLD_CAP[t]} goods`,tiers:[
     {name:'Small Hold'},{name:'Deep Hold',cost:{gold:25000,wood:200,stone:50},time:90},
     {name:'Merchant Hold',cost:{gold:2.5e5,wood:300,iron:40},time:240},{name:'Dragon’s Hold',cost:{gold:2.5e6,wood:500,iron:120},time:600}]},
 };
-const SAIL_SPEED=[1,1.15,1.3,1.5], HOLD_CAP=[150,300,600,1200];
+const SAIL_SPEED=[1,1.15,1.3,1.5,1.75], HOLD_CAP=[150,300,600,1200];
 SHIP.hull={label:'Hull',effect:t=>`${HULL_HP[t]} hull`,tiers:[
   {name:'Cog Hull'},{name:'Oak-ribbed Hull',cost:{gold:40000,wood:150,iron:20},time:90},
-  {name:'Iron-banded Hull',cost:{gold:4e5,wood:250,iron:60},time:240},{name:'Dwarf-riveted Hull',cost:{gold:4e6,iron:150,tin:60},time:600}]};
+  {name:'Iron-banded Hull',cost:{gold:4e5,wood:250,iron:60},time:240},{name:'Dwarf-riveted Hull',cost:{gold:4e6,iron:150,tin:60},time:600},{name:'Frostglass-sheathed Hull',cost:{gold:4e7,iron:300,frostglass:200},time:900}]};
 SHIP.arms={label:'Arms',effect:t=>`${ARMS[t].n} bolts a side · ${ARMS[t].dmg} damage each · reload ${ARMS[t].reload}s${ARMS[t].fire?' · burning bolts':''}`,tiers:[
   {name:'Crossbow Rail'},{name:'Deck Ballistae',cost:{gold:35000,wood:100,iron:25},time:90},
   {name:'Twin Ballista Batteries',cost:{gold:3.5e5,wood:150,iron:60,copper:40},time:240},{name:'Ember Ballistae',cost:{gold:3.5e6,iron:150,tin:50,ember:10},time:600}]};
-const HULL_HP=[100,160,240,340];
+const HULL_HP=[100,160,240,340,480];
 const ARMS=[{n:3,dmg:5,reload:3.5},{n:4,dmg:7,reload:3},{n:5,dmg:9,reload:2.6},{n:6,dmg:12,reload:2.2,fire:true}];
 const BOLT_RANGE=190, BOLT_SPEED=240;
 // Ships met at sea. Raiders roam the open water; each foreign castle is guarded by its own fleet.
@@ -850,6 +861,10 @@ const WORKS={
   sylvan:{res:'moonsilk',name:'Moonsilk Canopy',desc:'Moths high in the elder trees spin silk by moonlight.',lv:[{cost:{gold:1.5e6,wood:600,copper:150},every:20},{cost:{gold:1.5e7,wood:1000,tin:250},every:12},{cost:{gold:1.5e8,wood:2000,iron:500},every:6}]},
 };
 const CHARTER_COST=[25,100,350];
+const prospCost=l=>Math.ceil(200*Math.pow(1.4,l));   // endless, after all three charters
+const courtCost=n=>Math.ceil(250*Math.pow(1.5,n));    // pearls presented at court for Renown, rising each time (per life)
+const treasuresHeld=()=>RARE.reduce((a,k)=>a+(S.mat[k]||0),0);
+const tributeRenown=()=>Math.floor(Math.cbrt(treasuresHeld()/50));
 const ONE={pearl:'pearl',mithril:'bar of mithril',frostglass:'shard of frostglass',moonsilk:'bolt of moonsilk'};
 const CHARTERS={
   redtide:[{name:'Pearl Exchange',text:'Redtide holdings produce ×2.'},{name:'Smugglers’ Routes',text:'Expeditions bring back ×1.5 wood and stone.'},{name:'Admiralty Prize Law',text:'Redtide holdings ×3 more, and gold at sea ×1.5.'}],
@@ -858,14 +873,14 @@ const CHARTERS={
   sylvan:[{name:'The Elder Council',text:'Sylvanreach holdings produce ×2.'},{name:'Moonsilk Satchels',text:'Expeditions find twice as many crystals.'},{name:'Starsong',text:'Sylvanreach holdings ×3 more, and +10% to all gold.'}],
 };
 const OFFLINE_CAP=8*3600, SAVE_KEY='emberkeep-save-v2';
-const BUILD='20260928020154';
+const BUILD='20260929172809';
 
 /* ================= STATE ================= */
 const fresh=()=>({gold:0,total:0,life:0,owned:{},up:[],renown:0,spells:{},known:[],taps:0,chron:[],
   mat:{wood:0,stone:0,copper:0,tin:0,iron:0,pearl:0,mithril:0,frostglass:0,moonsilk:0},cry:{ember:0,frost:0,verdant:0,storm:0},
-  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,ench:{weapon:0,armor:0,pick:0,hull:0,arms:0},works:{},worksAcc:{},charters:{},tree:{},renownV:2,sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
+  gear:{weapon:0,armor:0,pick:0},forging:null,digging:null,exp:null,mine:0,mineAcc:0,hp:null,relics:{},story:{intro:false,met:false},seen:{},favs:[],retreat:1,pack:0,wounded:false,claimed:{},realm:'home',siege:null,ench:{weapon:0,armor:0,pick:0,hull:0,arms:0},works:{},worksAcc:{},charters:{},prosper:{},satchel:0,court:0,tree:{},renownV:2,sea:{yard:0,job:null,sails:0,hold:0,hull:0,arms:0,hp:null,fleets:{},x:null,y:null,a:0,anchored:true,steered:0,cargo:{},isles:{},seen:0},tut:null,tutV:3,tutBase:0,quest:null,questNext:0,stats:{trips:{},foes:0,tapGold:0,relics:0,quests:0,casts:0,foeKinds:{}},dynasty:1,log:{},logNew:0,last:Date.now()});
 let S, upSet, qty=1, scene=null, journey=null, sea=null, fief=null, game=null, view='keep';
-function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed),ench:Object.assign(f.ench,d.ench),tree:Object.assign(f.tree,d.tree),works:Object.assign(f.works,d.works),worksAcc:Object.assign(f.worksAcc,d.worksAcc),charters:Object.assign(f.charters,d.charters),renownV:d.renownV||1}); }
+function hydrate(d){ const f=fresh(); return Object.assign(f,d,{mat:Object.assign(f.mat,d.mat),cry:Object.assign(f.cry,d.cry),gear:Object.assign(f.gear,d.gear),relics:Object.assign(f.relics,d.relics),story:Object.assign(f.story,d.story),seen:Object.assign(f.seen,d.seen),stats:Object.assign(f.stats,d.stats),log:Object.assign(f.log,d.log),sea:Object.assign(f.sea,d.sea),claimed:Object.assign(f.claimed,d.claimed),ench:Object.assign(f.ench,d.ench),tree:Object.assign(f.tree,d.tree),works:Object.assign(f.works,d.works),worksAcc:Object.assign(f.worksAcc,d.worksAcc),charters:Object.assign(f.charters,d.charters),prosper:Object.assign(f.prosper,d.prosper),renownV:d.renownV||1}); }
 function load(){ try{ const r=localStorage.getItem(SAVE_KEY); return r?hydrate(JSON.parse(r)):null; }catch(e){ return null; } }
 function save(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(S)); }catch(e){} }
 
@@ -887,7 +902,7 @@ function pay(c){ for(const [k,v] of Object.entries(c)){ if(k==='gold') S.gold-=v
 
 function bMult(b){ let m=1; for(let i=0;i<5;i++) if(has(b.id+i)) m*=2; return m; }
 const charter=r=>(S.charters&&S.charters[r])||0;
-const realmMult=r=>(charter(r)>=1?2:1)*(charter(r)>=3?3:1);
+const realmMult=r=>(charter(r)>=1?2:1)*(charter(r)>=3?3:1)*(1+0.15*((S.prosper&&S.prosper[r])||0));
 function bRate(b){ return b.rate*bMult(b)*goldMult()*(b.realm?realmMult(b.realm):1); }
 function gps(withSpells=true){ let g=0; for(const b of BUILDINGS) g+=owned(b.id)*bRate(b); if(withSpells&&active('harvest')) g*=3; return g; }
 function tapValue(){
@@ -943,7 +958,7 @@ function buyTree(k){ const n=TREE_K[k], l=treeLvl(k), c=n&&n.costs[l]; if(!c||re
   S.tree[k]=l+1; applyTree(false); if(k==='cache') for(const [r,v] of Object.entries(CACHE_BUNDLE)) S.mat[r]+=v;
   toast(`${n.name} ${l+1}: ${n.fx(l+1)}.`); refresh(); }
 // Forging takes time: one piece at a time, paid up front, finishes on its own (even while away).
-const FORGE_TIME=[0,15,60,180,480], STOKE_COST={ember:1};
+const FORGE_TIME=[0,15,60,180,480,900], STOKE_COST={ember:1};
 function forge(slot){
   const t=nextGear(slot); if(!t||S.forging||!canPay(t.cost)) return;
   pay(t.cost); const secs=FORGE_TIME[S.gear[slot]+1]*(claimed('karak')?0.5:1)*(charter('karak')>=3?0.5:1), n=now();
@@ -999,7 +1014,9 @@ function findRelic(region){
 const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=rnd(0,i); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 const STAGE_GAIN=0.25, STAGE_HARM=0.15, AUTO_DRINK=0.4, MAX_TRIP=8*3600*1000;
 const RETREATS=[{p:0.5,label:'50%'},{p:0.3,label:'30%'},{p:0.15,label:'15%'},{p:0,label:'Never'}];
-const packMax=()=>Math.min(6,2+S.gear.armor);
+const SATCHEL_COST=[50,150,400];
+const packMax=()=>Math.min(6,2+S.gear.armor)+2*(S.satchel||0);   // Moonsilk satchels carry more draughts
+function sewSatchel(){ const l=S.satchel||0, c=SATCHEL_COST[l]; if(c==null||S.mat.moonsilk<c) return; S.mat.moonsilk-=c; S.satchel=l+1; logUnlock('satchel:'+S.satchel); toast(`A Moonsilk satchel (level ${S.satchel}): your hero can carry ${packMax()} draughts.`); refresh(); }
 function yieldMult(k){ return ((k==='wood'||k==='stone')&&charter('redtide')>=2?1.5:1)*(['copper','tin','iron'].includes(k)&&charter('karak')>=2?1.5:1)*(k==='wood'?1+0.25*S.gear.weapon:PICK_ORE[S.gear.pick]*(claimed('karak')?1.25:1)*(1+0.08*S.ench.pick))*(1+relicBonus(k))*matMult(); }
 function lootRange(l,k,[a,b]){ const m=yieldMult(k); return [Math.round(a*m),Math.round(b*m)]; }
 function expDuration(l){ return l.dur*(1-0.08*S.gear.armor)*(1-relicBonus('speed')); }   // seconds per depth
@@ -1155,6 +1172,10 @@ function runWorks(dt){ for(const [r,w] of Object.entries(WORKS)){ const l=S.work
   S.worksAcc[r]=(S.worksAcc[r]||0)+dt; const iv=w.lv[l-1].every, n=Math.floor(S.worksAcc[r]/iv); if(n){ S.worksAcc[r]-=n*iv; S.mat[w.res]+=n; S.stats.treasures=(S.stats.treasures||0)+n; } } }
 function buildWorks(r){ const w=WORKS[r], l=S.works[r]||0, nx=w&&w.lv[l]; if(!nx||!claimed(r)||!canPay(nx.cost)) return; pay(nx.cost); S.works[r]=l+1; logUnlock('works:'+r);
   toast(l?`${w.name} expanded: one ${ONE[w.res]} every ${nx.every}s.`:`${w.name} opened. They yield ${NAMES[w.res]}, a treasure only ${REALMS[r].name} makes.`); refresh(); }
+function buyProsper(r){ const w=WORKS[r], l=(S.prosper[r]||0), c=prospCost(l); if(charter(r)<3||S.mat[w.res]<c) return; S.mat[w.res]-=c; S.prosper[r]=l+1;
+  toast(`${REALMS[r].name} prospers (level ${l+1}): its holdings produce +${(l+1)*15}%.`); refresh(); }
+function presentPearls(){ const n=S.court||0, c=courtCost(n); if(S.mat.pearl<c) return; S.mat.pearl-=c; S.court=n+1; S.renown+=1;
+  chronicle('Pearls are presented at court. Your house rises in esteem.'); toast(`The court is dazzled: +1 Renown (${S.renown} in all). Spend it in the Legacy tree when you next ascend.`); refresh(); }
 function buyCharter(r){ const i=charter(r), c=CHARTER_COST[i], w=WORKS[r]; if(c==null||S.mat[w.res]<c) return; S.mat[w.res]-=c; S.charters[r]=i+1; logUnlock(`charter:${r}:${i}`);
   const ch=CHARTERS[r][i]; chronicle(`${REALMS[r].name} is granted the ${ch.name}.`); toast(`${ch.name}: ${ch.text}`); refresh(); }
 function mineCrystals(dt){
@@ -1419,6 +1440,7 @@ function logCatalog(){
     {id:'realm',title:'Your realms',items:Object.entries(REALMS).map(([k,r])=>({id:'realm:'+k,name:r.name,desc:`${ISLE[k].culture}, claimed. ${r.perk}`,hint:'Break its fleet, then take it.',icon:()=>glyphSvg(LOG_GLYPH.castle)}))},
     {id:'refit',title:'Shipwright’s work',items:Object.entries(SHIP).flatMap(([k,g])=>g.tiers.slice(1).map((t,i)=>({id:`refit:${k}:${i+1}`,name:t.name,desc:`${g.label}, tier ${i+1}. ${g.effect(i+1)}.`,hint:`Built by Maren (${g.label.toLowerCase()}).`,icon:()=>glyphSvg(LOG_GLYPH.ship)})))},
     {id:'works',title:'Works & charters',items:Object.entries(WORKS).flatMap(([r,w])=>[{id:'works:'+r,name:w.name,desc:`${w.desc} Makes ${NAMES[w.res]} in ${REALMS[r].name}.`,hint:`Built in a castle across the sea.`,icon:()=>ICON(w.res)},
+      ...(r==='sylvan'?[1,2,3].map(n=>({id:'satchel:'+n,name:`Moonsilk Satchel ${['I','II','III'][n-1]}`,desc:'Sewn from moonsilk: your hero carries two more draughts.',hint:'Sewn from a treasure of Sylvanreach.',icon:()=>ICON('moonsilk')})):[]),
       ...CHARTERS[r].map((c,i)=>({id:`charter:${r}:${i}`,name:c.name,desc:`${REALMS[r].name}’s royal charter. ${c.text}`,hint:`Granted for ${CHARTER_COST[i]} of a realm’s treasure.`,icon:()=>ICON(w.res)}))])},
     {id:'ship',title:'Ships of the sea',items:Object.entries(FLEET).map(([k,f])=>({id:'ship:'+k,name:f.name,desc:f.desc,hint:'Met under sail on the Ember Sea.',icon:()=>glyphSvg(LOG_GLYPH.ship)}))},
     {id:'mine',title:'Crystal Mine',items:MINE.map((m,i)=>({id:'mine:'+i,name:m.done,desc:`Yields ${m.els.map(e=>NAMES[e]).join(', ')}.`,hint:'Beneath the keep.',icon:()=>glyphSvg(LOG_GLYPH.mine)}))},
@@ -1439,6 +1461,7 @@ function logCatalog(){
     {title:'Realm treasures',goals:[10,100,1000,10000,100000].map(n=>({id:'ach:treasure:'+n,name:`${fmt(n)} treasures`,need:`Gather ${fmt(n)} pearls, mithril, frostglass or moonsilk across all your lives.`,test:()=>(S.stats.treasures||0)>=n}))},
     {title:'Transmutation',goals:[10,100,1000,5000,25000].map(n=>({id:'ach:trans:'+n,name:`${fmt(n)} crystals transmuted`,need:`Have Arthrex transmute ${fmt(n)} crystals.`,test:()=>(S.stats.transmuted||0)>=n}))},
     {title:'Enchanting',goals:[1,5,10,15,20].map(n=>({id:'ach:ench:'+n,name:`Enchanted to level ${n}`,need:`Enchant any item to level ${n}.`,test:()=>Math.max(...Object.values(S.ench))>=n}))},
+    {title:'Prosperity',goals:[1,5,10,20,40].map(n=>({id:'ach:prosper:'+n,name:`Prosperity ${n}`,need:`Raise any realm to Prosperity level ${n}.`,test:()=>Math.max(0,...Object.values(S.prosper||{}))>=n}))},
     {title:'Dynasties',goals:[2,5,10,25,100].map(n=>({id:'ach:life:'+n,name:`Life ${n}`,need:`Reach your ${n}${n===2?'nd':'th'} life by ascending.`,test:()=>(S.dynasty||1)>=n}))},
   ];
   const byId={}; cats.forEach(c=>c.items.forEach(it=>byId[it.id]=it)); ach.forEach(g=>g.goals.forEach((it,i)=>{ it.tier=i; it.group=g.title; byId[it.id]=it; }));
@@ -1549,7 +1572,7 @@ const ARTHREX_SVG=`<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" 
 function tap(x,y,auto){ const v=tapValue(); earn(v); if(!auto){ S.taps++; S.stats.tapGold+=v; } const f=S.realm!=='home'&&fief&&fief.shown?fief:scene; f&&f.fx(x,y,v,auto); }
 function pendingRenown(){ return Math.floor(Math.cbrt(S.total/1e7)); }
 function ascend(){
-  const p=pendingRenown(); if(p<1) return;
+  const p0=pendingRenown(); if(p0<1) return; const trib=tributeRenown(), p=p0+trib;
   // Full reset: only Renown, lifetime stats, story progress and UI preferences carry over.
   const keep={renown:S.renown+p,life:S.life,taps:S.taps,story:{...S.story},stats:JSON.parse(JSON.stringify(S.stats)),
     dynasty:(S.dynasty||1)+1,log:{...S.log},logNew:S.logNew||0,logInit:S.logInit||1,
@@ -1557,7 +1580,7 @@ function ascend(){
   S=Object.assign(fresh(),keep); applyTree(true); S.hp=maxHP(); upSet=new Set(); setView('keep');
   $('legIntro').textContent=`Life ${S.dynasty} begins with ${S.renown} Renown (+${S.renown*2}% gold). Spend it on your family’s legacy: head starts take effect at once, and in every life to come.`;
   $('boonList').dataset.k=''; $('legacySheet').hidden=false;
-  chronicle(`A new dynasty begins. Renown ${S.renown}.`); save(true); refresh();
+  chronicle(`A new dynasty begins. Renown ${S.renown}.`); if(trib) setTimeout(()=>toast(`Tribute of the realms: +${trib} Renown from your treasures.`),600); save(true); refresh();
 }
 function wipe(){ S=fresh(); S.hp=maxHP(); upSet=new Set(); setView('keep'); save(true); chronicle('Your keep stands alone on the hill. Tap it to collect the tithe.'); refresh(); setTimeout(introStory,300); }
 
@@ -1855,6 +1878,9 @@ function renderRealmExtra(){
   $('wkRate').textContent=l?`${fmt(S.mat[res])} ${NAMES[res]}`:'';
   setHTML($('wkCost'),nx?costHTML(nx.cost):''); $('wkBtn').disabled=!nx||!canPay(nx.cost); $('wkBs').textContent=l?'Expand':'Build'; $('wkBt').textContent=nx?(l?`Level ${l+1}`:'Open works'):'Complete';
   const i=charter(r); $('chHeld').textContent=`${i} / 3`;
+  $('prospBox').hidden=i<3; if(i>=3){ const pl=S.prosper[r]||0, pc=prospCost(pl); $('prLv').textContent=`Level ${pl}`;
+    $('prTxt').textContent=`With every charter granted, ${REALMS[r].name} can keep growing: each level adds +15% to its holdings (now +${pl*15}%). No limit.`;
+    setHTML($('prCost'),costHTML({[res]:pc})); $('prBtn').disabled=S.mat[res]<pc; $('prNext').textContent=`Level ${pl+1}`; }
   const key=r+'|'+i+'|'+(i<3&&S.mat[res]>=CHARTER_COST[i]);
   if($('chList').dataset.k!==key){ $('chList').dataset.k=key;
     $('chList').innerHTML=CHARTERS[r].map((c,j)=>`<div class="row"><div><div class="r-head"><span class="r-name"${j>i?' style="color:var(--muted)"':''}>${c.name}</span><span class="r-tag">${j<i?'Granted':`${CHARTER_COST[j]} ${NAMES[res]}`}</span></div><div class="r-desc">${c.text}</div></div>
@@ -2035,8 +2061,10 @@ function refresh(){
   { const ri=S.retreat??1, pm=packMax(), pk=Math.min(S.pack||0,pm,S.cry.verdant);
     $('retreatSeg').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',i===ri));
     $('packN').textContent=S.exp?S.exp.pack:pk; $('packDn').disabled=!!S.exp||pk<=0; $('packUp').disabled=!!S.exp||pk>=Math.min(pm,S.cry.verdant);
-    $('prepNote').textContent=(S.exp?'Draughts are packed for this trip. ':'')+`Your hero drinks one below 40% health (+50%). Carry up to ${pm} (2 + armor tier). Unused draughts come home; a beaten hero loses them.`
-      +(RETREATS[ri].p?` They turn home at ${RETREATS[ri].label} health, but the road back has foes too.`:' Never: they fight on until you call them home or they fall.'); }
+    $('prepNote').textContent=(S.exp?'Draughts are packed for this trip. ':'')+`Your hero drinks one below 40% health (+50%). Carry up to ${pm} (2 + armor tier, max 6${S.satchel?`, +${2*S.satchel} from Moonsilk satchels`:''}). Unused draughts come home; a beaten hero loses them.`
+      +(RETREATS[ri].p?` They turn home at ${RETREATS[ri].label} health, but the road back has foes too.`:' Never: they fight on until you call them home or they fall.');
+    const sl=S.satchel||0, sc=SATCHEL_COST[sl]; $('satRow').hidden=!(S.seen.moonsilk||sl);
+    $('satLbl').textContent=`Moonsilk satchel ${sl}/3`; setHTML($('satTxt'),sc?`Sew +2 \u00B7 ${ICON('moonsilk')} ${sc}`:'Finest satchel'); $('satBtn').disabled=!sc||S.mat.moonsilk<sc; }
   LOCS.forEach(l=>{
     const locked=S.gear.armor<l.danger, busy=!!S.exp, here=S.exp&&S.exp.id===l.id;
     $('l-'+l.id).classList.toggle('locked',locked);
@@ -2128,7 +2156,11 @@ function refresh(){
   $('reignGold').textContent=fmt(S.total); $('pending').textContent=p;
   $('lifeGold').textContent=fmt(S.life); $('taps').textContent=S.taps.toLocaleString('en-US');
   $('ascendBtn').disabled=p<1;
-  $('ascendHint').textContent=p<1?`Gather ${fmt(1e7)} gold in one reign to earn your first Renown.`:`+${p} Renown (+${p*2}% gold, and ${p} to spend in the tree)`;
+  { const any=RARE.some(k=>S.seen[k]); $('tribBox').hidden=!any;
+    if(any){ const t=tributeRenown(), h=treasuresHeld(), nxt=Math.pow(t+1,3)*50; $('tribTag').textContent=`+${t} Renown`;
+      $('tribTxt').textContent=`When you ascend, the treasures you hold (${fmt(h)} now) are offered to the crown: +${t} Renown. The next point needs ${fmt(nxt)}. Treasures spent before then don't count.`;
+      $('courtRow').hidden=!S.seen.pearl; const c=courtCost(S.court||0); $('courtTag').textContent=`${S.court||0} presented`; setHTML($('courtTxt'),`${ICON('pearl')} ${fmt(c)}`); $('courtBtn').disabled=(S.mat.pearl||0)<c; } }
+  $('ascendHint').textContent=p<1?`Gather ${fmt(1e7)} gold in one reign to earn your first Renown.`:`+${p}${tributeRenown()?` + ${tributeRenown()} tribute`:''} Renown (+${(p+tributeRenown())*2}% gold, and ${p+tributeRenown()} to spend in the tree)`;
 }
 
 let chronTimer;
@@ -2162,6 +2194,8 @@ function wireUI(){
   $('boonList').addEventListener('click',e=>{ const b=e.target.closest('button[data-tree]'); if(b&&!b.disabled) buyTree(b.dataset.tree); });
   $('jbHaste').addEventListener('click',hasten);
   $('jbReturn').addEventListener('click',()=>{ returnHome(); refresh(); });
+  $('satBtn').addEventListener('click',sewSatchel);
+  $('courtBtn').addEventListener('click',presentPearls);
   $('realmChip').addEventListener('click',()=>{ const rs=['home',...Object.keys(REALMS).filter(claimed)]; S.realm=rs[(rs.indexOf(S.realm)+1)%rs.length]; setView('keep'); refresh(); });
   $('seaTall').addEventListener('click',()=>{ S.sea.tall=!S.sea.tall; setTall(view==='sea'&&S.sea.tall); if(S.sea.tall) setTimeout(()=>$('realm').scrollIntoView({behavior:'smooth',block:'start'}),60); });
   $('sgClose').addEventListener('click',()=>$('siegeCard').hidden=true);
@@ -2216,6 +2250,7 @@ function wireUI(){
         lesson:()=>showDialog('arthrex',CRYSTAL_LESSON,'I understand',()=>{})})[d.spire](); }
     else if(d.stoke) stoke();
     else if(d.tree) buyTree(d.tree);
+    else if(d.prosper) buyProsper(S.realm);
     else if(d.works) buildWorks(S.realm); else if(d.charter) buyCharter(S.realm);
     else if(d.tm) transmute(d.tm,d.n); else if(d.ench) enchant(d.ench);
     else if(d.yard) buildYard(); else if(d.ship) upgradeShip(d.ship); else if(d.sail){ setView('sea'); $('realm').scrollIntoView({behavior:'smooth',block:'center'}); }
@@ -2506,9 +2541,9 @@ class Realm extends Phaser.Scene{
 
 /* ================= JOURNEY (side-scrolling expedition view) ================= */
 const SPEED=70, HERO_X=170, GROUND_Y=306, HIT_X=HERO_X+52, HS=1.6, NS=1.45;
-const ARMOR_COL=[0x6a563f,0x7b5b3a,0xb8703f,0xa8843e,0x9aa3b0];
-const WEAPON_COL=[0xe0b48a,0x7a5634,0xd4895a,0xc9a04a,0xc9ced6];
-const PICK_COL=[0xe0b48a,0x9a9aa0,0xd4895a,0xc9a04a,0xc9ced6];
+const ARMOR_COL=[0x6a563f,0x7b5b3a,0xb8703f,0xa8843e,0x9aa3b0,0xcfe0f0];
+const WEAPON_COL=[0xe0b48a,0x7a5634,0xd4895a,0xc9a04a,0xc9ced6,0xe6f2ff];
+const PICK_COL=[0xe0b48a,0x9a9aa0,0xd4895a,0xc9a04a,0xc9ced6,0xe6f2ff];
 const VEIN_COL={copper:0xe0915a,tin:0xe6ebf0,iron:0xa0584a,stone:0xb0b0b8};
 function skyCols(light,warm){
   return [mixColor(mixColor(0x0a0c19,0x3d7cc4,light),0x33345f,warm*0.7), mixColor(mixColor(0x2c2640,0xa9d3ee,light),0xe58a5e,warm*0.8)];
@@ -2562,7 +2597,7 @@ class Journey extends Phaser.Scene{
     b.fillStyle(skin); b.fillCircle(0,-34,5.5);
     if(a>=2){ b.fillStyle(armor); b.fillRect(-6,-40,12,5); b.fillStyle(armorS); b.fillRect(-1,-37,2,5); }
     else { b.fillStyle(dim(0x4a3222)); b.fillRect(-6,-40,11,4); }
-    if(a>=1){ b.fillStyle(dim([0,0x8a6a42,0xb8703f,0xa8843e,0x9aa3b0][a])); b.fillCircle(-8,-20,6); b.fillStyle(armorS); b.fillCircle(-8,-20,2); }
+    if(a>=1){ b.fillStyle(dim([0,0x8a6a42,0xb8703f,0xa8843e,0x9aa3b0,0xcfe0f0][a])); b.fillCircle(-8,-20,6); b.fillStyle(armorS); b.fillCircle(-8,-20,2); }
     this.toolKind='';
   }
   drawTool(kind){
@@ -2573,7 +2608,7 @@ class Journey extends Phaser.Scene{
       g.fillStyle(dim(0x6a4a2c)); g.fillRect(-1,-14,2.4,26); g.fillStyle(dim(PICK_COL[t])); g.fillTriangle(-10,-12,0,-17,1,-11); g.fillTriangle(10,-12,0,-17,-1,-11); }
     else { const t=S.gear.weapon; if(!t) return;
       if(t===1){ g.fillStyle(dim(0x6a4a2c)); g.fillRect(-1.2,-2,2.4,14); g.fillStyle(dim(0x7a5634)); g.fillRoundedRect(-3.5,-18,7,18,3); }
-      else { const len=[0,0,18,21,26][t]; g.fillStyle(dim(0x3a2e26)); g.fillRect(-1,4,2,8); g.fillStyle(dim(0x8a6a2a)); g.fillRect(-5,3,10,2);
+      else { const len=[0,0,18,21,26,29][t]; g.fillStyle(dim(0x3a2e26)); g.fillRect(-1,4,2,8); g.fillStyle(dim(0x8a6a2a)); g.fillRect(-5,3,10,2);
         g.fillStyle(dim(WEAPON_COL[t])); g.fillTriangle(-2,3,2,3,0,3-len-3); g.fillRect(-2,3-len,4,len); } }
   }
   /* ---------- world ---------- */
